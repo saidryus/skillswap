@@ -1,0 +1,22 @@
+{
+  "name": "trophe-api-testing",
+  "version": "1.0.0",
+  "description": "Automated API testing for Trophe Smart Campus Management System",
+  "main": "test-api.js",
+  "scripts": {
+    "test:api": "node test-api.js",
+    "test:api:verbose": "node test-api.js --verbose",
+    "prepare:submission": "node prepare-submission.js",
+    "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+    "start:backend": "cd backend && npm run dev",
+    "start:frontend": "cd frontend && npm run dev",
+    "seed": "cd backend && npm run seed"
+  },
+  "keywords": ["postman", "newman", "api-testing", "trophe"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "newman": "^6.1.1",
+    "newman-reporter-htmlextra": "^1.23.1"
+  }
+}
