@@ -43,7 +43,7 @@ function durationSlots(start, end) {
 }
 
 /* ── Draggable course card ──────────────────────────────────────── */
-function CourseCard({ course, isDragging }) {
+function CourseCard({ course, isDragging, scheduledDays = [] }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: `course-${course._id}`,
     data: { type: 'course', course },
@@ -52,6 +52,8 @@ function CourseCard({ course, isDragging }) {
   const style = transform
     ? { transform: `translate(${transform.x}px,${transform.y}px)`, zIndex: 999 }
     : {};
+
+  const dayAbbr = { Monday:'M', Tuesday:'T', Wednesday:'W', Thursday:'Th', Friday:'F', Saturday:'Sa' };
 
   return (
     <div
@@ -65,7 +67,18 @@ function CourseCard({ course, isDragging }) {
     >
       <p className="text-sm font-semibold text-slate-100">{course.courseCode}</p>
       <p className="text-xs text-slate-400 truncate">{course.courseName}</p>
-      <p className="text-xs text-slate-500 mt-0.5">{course.units} units</p>
+      <div className="flex items-center justify-between mt-1">
+        <p className="text-xs text-slate-500">{course.units} units</p>
+        {scheduledDays.length > 0 && (
+          <div className="flex gap-0.5">
+            {scheduledDays.map(d => (
+              <span key={d} className="text-xs bg-green-500/20 text-green-400 border border-green-500/30 rounded px-1">
+                {dayAbbr[d] || d.slice(0,2)}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -232,9 +245,13 @@ export default function SchedulesPage() {
     facultyCourseIds.includes(s.course?._id || s.course)
   );
 
-  /* courses that have NO schedule placed yet — hide from panel once scheduled */
-  const placedCourseIds = new Set(placedSchedules.map(s => s.course?._id || s.course));
-  const unscheduledCourses = courses.filter(c => !placedCourseIds.has(c._id));
+  /* build a map of courseId → days already scheduled */
+  const scheduledDaysMap = {};
+  placedSchedules.forEach(s => {
+    const cid = s.course?._id || s.course;
+    if (!scheduledDaysMap[cid]) scheduledDaysMap[cid] = [];
+    if (!scheduledDaysMap[cid].includes(s.day)) scheduledDaysMap[cid].push(s.day);
+  });
 
   /* build a lookup: day → time → schedule */
   const grid = {};
@@ -423,21 +440,18 @@ export default function SchedulesPage() {
             {/* Course panel */}
             <div className="w-52 shrink-0 flex flex-col">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                Courses ({unscheduledCourses.length})
+                Courses ({courses.length})
               </p>
               <div className="flex-1 overflow-y-auto pr-1">
-                {unscheduledCourses.length === 0 && (
-                  <p className="text-xs text-slate-500">
-                    {courses.length === 0
-                      ? 'No courses assigned to this faculty.'
-                      : '✓ All courses scheduled.'}
-                  </p>
+                {courses.length === 0 && (
+                  <p className="text-xs text-slate-500">No courses assigned to this faculty.</p>
                 )}
-                {unscheduledCourses.map(course => (
+                {courses.map(course => (
                   <CourseCard
                     key={course._id}
                     course={course}
                     isDragging={activeDrag?._id === course._id}
+                    scheduledDays={scheduledDaysMap[course._id] || []}
                   />
                 ))}
               </div>
