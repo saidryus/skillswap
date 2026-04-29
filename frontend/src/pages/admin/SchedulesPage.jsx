@@ -353,7 +353,62 @@ export default function SchedulesPage() {
     doc.save(`Schedule_${facName.replace(' ', '_')}_${semester}.pdf`);
   }
 
-  function handlePrint() { window.print(); }
+  function handlePrint() {
+    const fac = faculty.find(f => f._id === selectedFaculty);
+    const facName = fac ? `${fac.firstName} ${fac.lastName}` : '';
+
+    // Build a printable HTML table
+    const rows = [...placedSchedules]
+      .sort((a, b) => DAYS.indexOf(a.day) - DAYS.indexOf(b.day) || a.startTime.localeCompare(b.startTime))
+      .map(s => `
+        <tr>
+          <td>${s.course?.courseCode || ''}</td>
+          <td>${s.course?.courseName || ''}</td>
+          <td>${s.day}</td>
+          <td>${s.startTime} – ${s.endTime}</td>
+          <td>${s.room || 'TBA'}</td>
+          <td>${s.course?.units || ''}</td>
+        </tr>
+      `).join('');
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Schedule – ${facName}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; color: #000; }
+          h2 { text-align: center; margin-bottom: 4px; }
+          p  { text-align: center; color: #555; margin-bottom: 16px; font-size: 13px; }
+          table { width: 100%; border-collapse: collapse; font-size: 12px; }
+          th { background: #1d4ed8; color: white; padding: 8px 10px; text-align: left; }
+          td { padding: 7px 10px; border-bottom: 1px solid #e2e8f0; }
+          tr:nth-child(even) td { background: #f8fafc; }
+          @page { size: A4 landscape; margin: 15mm; }
+        </style>
+      </head>
+      <body>
+        <h2>TROPHE UNIVERSITY — Class Schedule</h2>
+        <p>Faculty: ${facName} &nbsp;|&nbsp; ${semester} &nbsp;|&nbsp; S.Y. ${schoolYear}</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Code</th><th>Course Name</th><th>Day</th>
+              <th>Time</th><th>Room</th><th>Units</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </body>
+      </html>
+    `;
+
+    const win = window.open('', '_blank');
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    setTimeout(() => { win.print(); win.close(); }, 500);
+  }
 
   const conflictColors = {
     room: 'bg-orange-500/15 border-orange-500/40 text-orange-300',
@@ -522,14 +577,6 @@ export default function SchedulesPage() {
       {/* Drop confirmation modal */}
       <DropModal pending={pending} onConfirm={handleConfirm} onCancel={() => setPending(null)} />
 
-      {/* Print styles */}
-      <style>{`
-        @media print {
-          body * { visibility: hidden }
-          .print-area, .print-area * { visibility: visible }
-          @page { size: A4 landscape; margin: 10mm }
-        }
-      `}</style>
     </div>
   );
 }
