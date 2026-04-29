@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { HiMail, HiLockClosed } from 'react-icons/hi';
 import { useAuth } from '../context/AuthContext';
@@ -88,15 +88,6 @@ export default function LoginPage() {
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-slate-400">
-              Don't have an account?{' '}
-              <Link to="/register" className="text-blue-400 hover:text-blue-300 font-medium">
-                Register here
-              </Link>
-            </p>
-          </div>
 
           <div className="mt-6 pt-6 border-t border-slate-700">
             <p className="text-xs text-slate-500 text-center mb-2">Demo Credentials:</p>
