@@ -232,6 +232,10 @@ export default function SchedulesPage() {
     facultyCourseIds.includes(s.course?._id || s.course)
   );
 
+  /* courses that have NO schedule placed yet — hide from panel once scheduled */
+  const placedCourseIds = new Set(placedSchedules.map(s => s.course?._id || s.course));
+  const unscheduledCourses = courses.filter(c => !placedCourseIds.has(c._id));
+
   /* build a lookup: day → time → schedule */
   const grid = {};
   placedSchedules.forEach(s => {
@@ -419,13 +423,17 @@ export default function SchedulesPage() {
             {/* Course panel */}
             <div className="w-52 shrink-0 flex flex-col">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                Courses ({courses.length})
+                Courses ({unscheduledCourses.length})
               </p>
               <div className="flex-1 overflow-y-auto pr-1">
-                {courses.length === 0 && (
-                  <p className="text-xs text-slate-500">No courses assigned to this faculty.</p>
+                {unscheduledCourses.length === 0 && (
+                  <p className="text-xs text-slate-500">
+                    {courses.length === 0
+                      ? 'No courses assigned to this faculty.'
+                      : '✓ All courses scheduled.'}
+                  </p>
                 )}
-                {courses.map(course => (
+                {unscheduledCourses.map(course => (
                   <CourseCard
                     key={course._id}
                     course={course}
