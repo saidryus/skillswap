@@ -7,10 +7,12 @@ const { createNotifications } = require('../utils/notify');
 // @access  Private
 const getAnnouncements = async (req, res) => {
   try {
-    const announcements = await Announcement.find({
-      targetRoles: req.user.role,
-      isActive: true,
-    })
+    // Admins see all active announcements regardless of targetRoles
+    const filter = req.user.role === 'admin'
+      ? { isActive: true }
+      : { targetRoles: req.user.role, isActive: true };
+
+    const announcements = await Announcement.find(filter)
       .populate('author', 'firstName lastName role')
       .sort({ isPinned: -1, createdAt: -1 });
     res.json(announcements);

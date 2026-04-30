@@ -119,7 +119,7 @@ export default function AnnouncementsPage() {
                     <span>{new Date(a.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                   </div>
                 </div>
-                {canManage && (
+                {canManage && (user?.role === 'admin' || a.author?._id === user?._id) && (
                   <div className="flex gap-1 shrink-0">
                     <button onClick={() => openEdit(a)} className="p-1.5 text-slate-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors">
                       <HiPencil className="w-4 h-4" />
