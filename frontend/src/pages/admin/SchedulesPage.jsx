@@ -330,23 +330,46 @@ export default function SchedulesPage() {
 
     const rows = [];
     placedSchedules.forEach(s => {
+      const [sh, sm] = s.startTime.split(':').map(Number);
+      const [eh, em] = s.endTime.split(':').map(Number);
+      const hrs = ((eh * 60 + em) - (sh * 60 + sm)) / 60;
       rows.push([
         s.course?.courseCode || '',
         s.course?.courseName || '',
+        s.course?.type === 'laboratory' ? 'Lab' : 'Lec',
         s.day,
         `${s.startTime} – ${s.endTime}`,
         s.room || 'TBA',
-        `${s.course?.units || ''} units`,
+        s.course?.units ?? '',
+        `${hrs}h`,
       ]);
     });
-    rows.sort((a, b) => DAYS.indexOf(a[2]) - DAYS.indexOf(b[2]) || a[3].localeCompare(b[3]));
+    rows.sort((a, b) => DAYS.indexOf(a[3]) - DAYS.indexOf(b[3]) || a[4].localeCompare(b[4]));
+
+    // Compute unique-course totals (avoid double-counting multi-day courses)
+    const seenCourseIds = new Set();
+    let totalUnits = 0;
+    placedSchedules.forEach(s => {
+      const cid = s.course?._id;
+      if (cid && !seenCourseIds.has(cid)) {
+        seenCourseIds.add(cid);
+        totalUnits += s.course?.units || 0;
+      }
+    });
+    const totalHrs = placedSchedules.reduce((sum, s) => {
+      const [sh, sm] = s.startTime.split(':').map(Number);
+      const [eh, em] = s.endTime.split(':').map(Number);
+      return sum + ((eh * 60 + em) - (sh * 60 + sm)) / 60;
+    }, 0);
 
     autoTable(doc, {
       startY: 28,
-      head: [['Code', 'Course Name', 'Day', 'Time', 'Room', 'Units']],
+      head: [['Code', 'Course Name', 'Type', 'Day', 'Time', 'Room', 'Units', 'Hrs']],
       body: rows,
+      foot: [['', 'TOTALS', '', '', '', '', totalUnits, `${totalHrs}h/wk`]],
       styles: { fontSize: 9 },
-      headStyles: { fillColor: [37, 99, 235] },
+      headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold' },
+      footStyles: { fillColor: [241, 245, 249], textColor: [30, 41, 59], fontStyle: 'bold' },
       alternateRowStyles: { fillColor: [248, 250, 252] },
     });
 
@@ -357,19 +380,47 @@ export default function SchedulesPage() {
     const fac = faculty.find(f => f._id === selectedFaculty);
     const facName = fac ? `${fac.firstName} ${fac.lastName}` : '';
 
-    // Build a printable HTML table
-    const rows = [...placedSchedules]
-      .sort((a, b) => DAYS.indexOf(a.day) - DAYS.indexOf(b.day) || a.startTime.localeCompare(b.startTime))
-      .map(s => `
+    const sorted = [...placedSchedules].sort(
+      (a, b) => DAYS.indexOf(a.day) - DAYS.indexOf(b.day) || a.startTime.localeCompare(b.startTime)
+    );
+
+    // Totals
+    const seenCourseIds = new Set();
+    let totalUnits = 0;
+    placedSchedules.forEach(s => {
+      const cid = s.course?._id;
+      if (cid && !seenCourseIds.has(cid)) {
+        seenCourseIds.add(cid);
+        totalUnits += s.course?.units || 0;
+      }
+    });
+    const totalHrs = placedSchedules.reduce((sum, s) => {
+      const [sh, sm] = s.startTime.split(':').map(Number);
+      const [eh, em] = s.endTime.split(':').map(Number);
+      return sum + ((eh * 60 + em) - (sh * 60 + sm)) / 60;
+    }, 0);
+
+    const rows = sorted.map(s => {
+      const [sh, sm] = s.startTime.split(':').map(Number);
+      const [eh, em] = s.endTime.split(':').map(Number);
+      const hrs = ((eh * 60 + em) - (sh * 60 + sm)) / 60;
+      const isLab = s.course?.type === 'laboratory';
+      const typeStyle = isLab
+        ? 'background:#f3e8ff;color:#7e22ce;'
+        : 'background:#dcfce7;color:#15803d;';
+      return `
         <tr>
           <td>${s.course?.courseCode || ''}</td>
           <td>${s.course?.courseName || ''}</td>
+          <td><span style="font-size:11px;font-weight:600;padding:2px 7px;border-radius:999px;${typeStyle}">${isLab ? 'Lab' : 'Lec'}</span></td>
           <td>${s.day}</td>
           <td>${s.startTime} – ${s.endTime}</td>
           <td>${s.room || 'TBA'}</td>
-          <td>${s.course?.units || ''}</td>
+          <td style="text-align:center">${s.course?.units ?? ''}</td>
+          <td style="text-align:center">${hrs}h</td>
         </tr>
-      `).join('');
+      `;
+    }).join('');
 
     const html = `
       <!DOCTYPE html>
@@ -384,6 +435,7 @@ export default function SchedulesPage() {
           th { background: #1d4ed8; color: white; padding: 8px 10px; text-align: left; }
           td { padding: 7px 10px; border-bottom: 1px solid #e2e8f0; }
           tr:nth-child(even) td { background: #f8fafc; }
+          tfoot td { background: #f1f5f9; font-weight: bold; border-top: 2px solid #cbd5e1; }
           @page { size: A4 landscape; margin: 15mm; }
         </style>
       </head>
@@ -393,11 +445,18 @@ export default function SchedulesPage() {
         <table>
           <thead>
             <tr>
-              <th>Code</th><th>Course Name</th><th>Day</th>
-              <th>Time</th><th>Room</th><th>Units</th>
+              <th>Code</th><th>Course Name</th><th>Type</th><th>Day</th>
+              <th>Time</th><th>Room</th><th style="text-align:center">Units</th><th style="text-align:center">Hrs</th>
             </tr>
           </thead>
           <tbody>${rows}</tbody>
+          <tfoot>
+            <tr>
+              <td colspan="6" style="text-align:right">TOTALS:</td>
+              <td style="text-align:center">${totalUnits}</td>
+              <td style="text-align:center">${totalHrs}h/wk</td>
+            </tr>
+          </tfoot>
         </table>
       </body>
       </html>
