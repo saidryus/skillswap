@@ -6,7 +6,7 @@ import Modal from '../../components/Modal';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
-const emptyForm = { courseCode: '', courseName: '', description: '', units: 3, department: '', faculty: '' };
+const emptyForm = { courseCode: '', courseName: '', description: '', units: 3, type: 'lecture', department: '', faculty: '' };
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState([]);
@@ -116,7 +116,12 @@ export default function CoursesPage() {
             <motion.div key={course._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="card hover:border-slate-600 transition-colors">
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <span className="text-xs font-semibold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded">{course.courseCode}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded">{course.courseCode}</span>
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded ${course.type === 'laboratory' ? 'bg-purple-500/10 text-purple-400' : 'bg-green-500/10 text-green-400'}`}>
+                      {course.type === 'laboratory' ? 'Lab' : 'Lec'}
+                    </span>
+                  </div>
                   <h3 className="text-base font-semibold text-slate-100 mt-1">{course.courseName}</h3>
                 </div>
                 <div className="flex gap-1">
@@ -184,14 +189,21 @@ export default function CoursesPage() {
               <input value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} className="input-field" />
             </div>
             <div>
-              <label className="label">Assign Faculty</label>
-              <select value={form.faculty} onChange={(e) => setForm({ ...form, faculty: e.target.value })} className="input-field">
-                <option value="">Unassigned</option>
-                {faculty.map((f) => (
-                  <option key={f._id} value={f._id}>{f.firstName} {f.lastName}</option>
-                ))}
+              <label className="label">Type</label>
+              <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })} className="input-field">
+                <option value="lecture">Lecture</option>
+                <option value="laboratory">Laboratory</option>
               </select>
             </div>
+          </div>
+          <div>
+            <label className="label">Assign Faculty</label>
+            <select value={form.faculty} onChange={(e) => setForm({ ...form, faculty: e.target.value })} className="input-field">
+              <option value="">Unassigned</option>
+              {faculty.map((f) => (
+                <option key={f._id} value={f._id}>{f.firstName} {f.lastName}</option>
+              ))}
+            </select>
           </div>
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary flex-1">Cancel</button>

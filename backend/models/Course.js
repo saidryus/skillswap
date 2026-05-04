@@ -6,6 +6,7 @@ const courseSchema = new mongoose.Schema(
     courseName: { type: String, required: true, trim: true },
     description: { type: String, trim: true },
     units: { type: Number, required: true, min: 1, max: 6 },
+    type: { type: String, enum: ['lecture', 'laboratory'], default: 'lecture' },
     department: { type: String, trim: true },
     faculty: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
     students: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],

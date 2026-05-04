@@ -6,7 +6,12 @@ import api from '../../utils/api';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+// Calculate hours between two "HH:MM" strings
+function calcHours(start, end) {
+  const [sh, sm] = start.split(':').map(Number);
+  const [eh, em] = end.split(':').map(Number);
+  return Math.max(0, (eh * 60 + em - (sh * 60 + sm)) / 60);
+}
 
 export default function PrintStudyLoad() {
   const { user } = useAuth();
@@ -37,65 +42,67 @@ export default function PrintStudyLoad() {
 
   const totalUnits = courses.reduce((sum, c) => sum + (c.units || 0), 0);
 
-  const getScheduleForCourse = (courseId) => {
-    return schedules
-      .filter((s) => s.course?._id === courseId)
-      .map((s) => `${s.day} ${s.startTime}–${s.endTime}`)
-      .join(', ');
-  };
+  // Total hours per week = sum of all schedule durations
+  const totalHoursPerWeek = schedules.reduce((sum, s) => sum + calcHours(s.startTime, s.endTime), 0);
 
-  const handlePrint = () => {
-    window.print();
-  };
+  const handlePrint = () => window.print();
 
   const handleDownloadPDF = () => {
     const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
 
-    // Header
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
     doc.text('TROPHE UNIVERSITY', 105, 20, { align: 'center' });
 
-    doc.setFontSize(12);
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
     doc.text('Smart Campus Management System', 105, 28, { align: 'center' });
 
     doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text('OFFICIAL STUDY LOAD', 105, 38, { align: 'center' });
+    doc.text('OFFICIAL STUDY LOAD', 105, 37, { align: 'center' });
 
-    // Divider
     doc.setLineWidth(0.5);
-    doc.line(15, 42, 195, 42);
+    doc.line(15, 41, 195, 41);
 
-    // Student Info
     doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Student Name: ${user.firstName} ${user.lastName}`, 15, 50);
-    doc.text(`Student ID: ${user.studentId || 'N/A'}`, 15, 57);
-    doc.text(`Department: ${user.department || 'N/A'}`, 15, 64);
-    doc.text(`School Year: 2024-2025`, 120, 50);
-    doc.text(`Semester: 1st Semester`, 120, 57);
-    doc.text(`Date Printed: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, 120, 64);
+    doc.text(`Student Name: ${user.firstName} ${user.lastName}`, 15, 49);
+    doc.text(`Student ID: ${user.studentId || 'N/A'}`, 15, 56);
+    doc.text(`Department: ${user.department || 'N/A'}`, 15, 63);
+    doc.text(`School Year: 2024-2025`, 120, 49);
+    doc.text(`Semester: 1st Semester`, 120, 56);
+    doc.text(`Date Printed: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, 120, 63);
 
-    doc.line(15, 68, 195, 68);
+    doc.line(15, 67, 195, 67);
 
-    // Table
     autoTable(doc, {
-      startY: 72,
-      head: [['Course Code', 'Course Name', 'Units', 'Schedule', 'Room', 'Instructor']],
+      startY: 71,
+      head: [['Course Code', 'Course Name', 'Type', 'Units', 'Hrs/Wk', 'Schedule', 'Room', 'Instructor']],
       body: courses.map((c) => {
-        const courseSchedules = schedules.filter((s) => s.course?._id === c._id);
-        const scheduleStr = courseSchedules.map((s) => `${s.day} ${s.startTime}-${s.endTime}`).join('\n');
-        const roomStr = courseSchedules.map((s) => s.room || 'TBA').join('\n');
+        const cs = schedules.filter((s) => s.course?._id === c._id);
+        const scheduleStr = cs.length ? cs.map((s) => `${s.day} ${s.startTime}-${s.endTime}`).join('\n') : 'TBA';
+        const roomStr = cs.length ? cs.map((s) => s.room || 'TBA').join('\n') : 'TBA';
+        const hrs = cs.reduce((sum, s) => sum + calcHours(s.startTime, s.endTime), 0);
         const instructor = c.faculty ? `${c.faculty.firstName} ${c.faculty.lastName}` : 'TBA';
-        return [c.courseCode, c.courseName, c.units, scheduleStr, roomStr, instructor];
+        const typeLabel = c.type === 'laboratory' ? 'Lab' : 'Lec';
+        return [c.courseCode, c.courseName, typeLabel, c.units, hrs > 0 ? `${hrs}h` : 'TBA', scheduleStr, roomStr, instructor];
       }),
-      foot: [['', 'TOTAL UNITS', totalUnits, '', '', '']],
-      styles: { fontSize: 9, cellPadding: 3 },
+      foot: [['', 'TOTALS', '', totalUnits, `${totalHoursPerWeek}h/wk`, '', '', '']],
+      styles: { fontSize: 8, cellPadding: 2.5 },
       headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold' },
       footStyles: { fillColor: [241, 245, 249], textColor: [30, 41, 59], fontStyle: 'bold' },
       alternateRowStyles: { fillColor: [248, 250, 252] },
+      columnStyles: {
+        0: { cellWidth: 22 },
+        1: { cellWidth: 40 },
+        2: { cellWidth: 14 },
+        3: { cellWidth: 12, halign: 'center' },
+        4: { cellWidth: 14, halign: 'center' },
+        5: { cellWidth: 30 },
+        6: { cellWidth: 20 },
+        7: { cellWidth: 28 },
+      },
     });
 
     const finalY = doc.lastAutoTable.finalY + 15;
@@ -116,40 +123,32 @@ export default function PrintStudyLoad() {
 
   return (
     <>
-      {/* Action Bar - hidden on print */}
+      {/* Action Bar */}
       <div className="no-print fixed top-0 left-0 right-0 z-50 bg-slate-900 border-b border-slate-700 px-6 py-3 flex items-center justify-between">
         <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-slate-400 hover:text-slate-100 transition-colors">
           <HiArrowLeft className="w-5 h-5" />
           <span className="text-sm">Back</span>
         </button>
         <div className="flex items-center gap-3">
-          <button
-            onClick={handleDownloadPDF}
-            className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-100 px-4 py-2 rounded-lg text-sm transition-colors"
-          >
-            <HiDownload className="w-4 h-4" />
-            Download PDF
+          <button onClick={handleDownloadPDF} className="flex items-center gap-2 bg-slate-700 hover:bg-slate-600 text-slate-100 px-4 py-2 rounded-lg text-sm transition-colors">
+            <HiDownload className="w-4 h-4" /> Download PDF
           </button>
-          <button
-            onClick={handlePrint}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors"
-          >
-            <HiPrinter className="w-4 h-4" />
-            Print
+          <button onClick={handlePrint} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+            <HiPrinter className="w-4 h-4" /> Print
           </button>
         </div>
       </div>
 
-      {/* Printable Document */}
+      {/* Preview */}
       <div className="min-h-screen bg-gray-100 no-print pt-16 pb-8 px-4 flex justify-center">
         <div ref={printRef} className="bg-white w-full max-w-4xl shadow-lg rounded-lg overflow-hidden print-document">
-          <PrintContent user={user} courses={courses} schedules={schedules} totalUnits={totalUnits} getScheduleForCourse={getScheduleForCourse} />
+          <PrintContent user={user} courses={courses} schedules={schedules} totalUnits={totalUnits} totalHoursPerWeek={totalHoursPerWeek} />
         </div>
       </div>
 
-      {/* Print-only version */}
+      {/* Print-only */}
       <div className="hidden print:block print-document">
-        <PrintContent user={user} courses={courses} schedules={schedules} totalUnits={totalUnits} getScheduleForCourse={getScheduleForCourse} />
+        <PrintContent user={user} courses={courses} schedules={schedules} totalUnits={totalUnits} totalHoursPerWeek={totalHoursPerWeek} />
       </div>
 
       <style>{`
@@ -164,13 +163,12 @@ export default function PrintStudyLoad() {
   );
 }
 
-function PrintContent({ user, courses, schedules, totalUnits, getScheduleForCourse }) {
+function PrintContent({ user, courses, schedules, totalUnits, totalHoursPerWeek }) {
   return (
     <div className="p-10 text-gray-900 font-sans">
       {/* University Header */}
       <div className="text-center border-b-2 border-blue-700 pb-6 mb-6">
         <div className="flex items-center justify-center gap-4 mb-2">
-          {/* Greek owl logo inline SVG for print */}
           <svg width="56" height="56" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="50" cy="50" r="48" fill="#1e3a8a" />
             <g fill="#22c55e" opacity="0.9">
@@ -223,7 +221,7 @@ function PrintContent({ user, courses, schedules, totalUnits, getScheduleForCour
         <h2 className="text-lg font-bold text-gray-700 mt-3 tracking-widest uppercase">Official Study Load</h2>
       </div>
 
-      {/* Student Information */}
+      {/* Student Info */}
       <div className="grid grid-cols-2 gap-x-8 gap-y-2 mb-6 text-sm">
         <div className="flex gap-2">
           <span className="font-semibold text-gray-600 w-32 shrink-0">Student Name:</span>
@@ -257,7 +255,9 @@ function PrintContent({ user, courses, schedules, totalUnits, getScheduleForCour
           <tr className="bg-blue-700 text-white">
             <th className="border border-blue-600 px-3 py-2.5 text-left font-semibold">Course Code</th>
             <th className="border border-blue-600 px-3 py-2.5 text-left font-semibold">Course Name</th>
+            <th className="border border-blue-600 px-3 py-2.5 text-center font-semibold">Type</th>
             <th className="border border-blue-600 px-3 py-2.5 text-center font-semibold">Units</th>
+            <th className="border border-blue-600 px-3 py-2.5 text-center font-semibold">Hrs/Wk</th>
             <th className="border border-blue-600 px-3 py-2.5 text-left font-semibold">Schedule</th>
             <th className="border border-blue-600 px-3 py-2.5 text-left font-semibold">Room</th>
             <th className="border border-blue-600 px-3 py-2.5 text-left font-semibold">Instructor</th>
@@ -266,33 +266,43 @@ function PrintContent({ user, courses, schedules, totalUnits, getScheduleForCour
         <tbody>
           {courses.length === 0 ? (
             <tr>
-              <td colSpan={6} className="border border-gray-300 px-3 py-4 text-center text-gray-400">No enrolled courses</td>
+              <td colSpan={8} className="border border-gray-300 px-3 py-4 text-center text-gray-400">No enrolled courses</td>
             </tr>
           ) : (
             courses.map((course, idx) => {
-              const courseSchedules = schedules.filter((s) => s.course?._id === course._id);
+              const cs = schedules.filter((s) => s.course?._id === course._id);
+              const hrs = cs.reduce((sum, s) => sum + calcHours(s.startTime, s.endTime), 0);
+              const isLab = course.type === 'laboratory';
               return (
                 <tr key={course._id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                   <td className="border border-gray-300 px-3 py-2.5 font-medium text-blue-700">{course.courseCode}</td>
                   <td className="border border-gray-300 px-3 py-2.5">{course.courseName}</td>
+                  <td className="border border-gray-300 px-3 py-2.5 text-center">
+                    <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-full ${isLab ? 'bg-purple-100 text-purple-700' : 'bg-green-100 text-green-700'}`}>
+                      {isLab ? 'Lab' : 'Lec'}
+                    </span>
+                  </td>
                   <td className="border border-gray-300 px-3 py-2.5 text-center font-semibold">{course.units}</td>
+                  <td className="border border-gray-300 px-3 py-2.5 text-center font-semibold">
+                    {hrs > 0 ? `${hrs}h` : <span className="text-gray-400 font-normal">TBA</span>}
+                  </td>
                   <td className="border border-gray-300 px-3 py-2.5">
-                    {courseSchedules.length === 0 ? (
+                    {cs.length === 0 ? (
                       <span className="text-gray-400">TBA</span>
                     ) : (
                       <div className="space-y-0.5">
-                        {courseSchedules.map((s, i) => (
+                        {cs.map((s, i) => (
                           <div key={i} className="text-xs">{s.day} {s.startTime}–{s.endTime}</div>
                         ))}
                       </div>
                     )}
                   </td>
                   <td className="border border-gray-300 px-3 py-2.5">
-                    {courseSchedules.length === 0 ? (
+                    {cs.length === 0 ? (
                       <span className="text-gray-400">TBA</span>
                     ) : (
                       <div className="space-y-0.5">
-                        {courseSchedules.map((s, i) => (
+                        {cs.map((s, i) => (
                           <div key={i} className="text-xs">{s.room || 'TBA'}</div>
                         ))}
                       </div>
@@ -308,9 +318,12 @@ function PrintContent({ user, courses, schedules, totalUnits, getScheduleForCour
         </tbody>
         <tfoot>
           <tr className="bg-gray-100 font-semibold">
-            <td colSpan={2} className="border border-gray-300 px-3 py-2.5 text-right">TOTAL UNITS:</td>
+            <td colSpan={3} className="border border-gray-300 px-3 py-2.5 text-right text-gray-600">TOTALS:</td>
             <td className="border border-gray-300 px-3 py-2.5 text-center text-blue-700 font-bold text-base">{totalUnits}</td>
-            <td colSpan={3} className="border border-gray-300 px-3 py-2.5"></td>
+            <td className="border border-gray-300 px-3 py-2.5 text-center text-blue-700 font-bold text-base">{totalHoursPerWeek}h</td>
+            <td colSpan={3} className="border border-gray-300 px-3 py-2.5 text-xs text-gray-500">
+              {totalUnits} total units &nbsp;·&nbsp; {totalHoursPerWeek} hrs/week
+            </td>
           </tr>
         </tfoot>
       </table>
