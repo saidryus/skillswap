@@ -11,12 +11,14 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
     try {
       const { data } = await api.post('/auth/login', { email, password });
       login(data);
@@ -25,7 +27,9 @@ export default function LoginPage() {
       else if (data.role === 'faculty') navigate('/faculty');
       else navigate('/student');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Login failed');
+      const msg = error.response?.data?.message || 'Invalid email or password';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -61,7 +65,7 @@ export default function LoginPage() {
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => { setEmail(e.target.value); setError(''); }}
                   className="input-field pl-10"
                   placeholder="your.email@trophe.edu"
                   required
@@ -76,7 +80,7 @@ export default function LoginPage() {
                 <input
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => { setPassword(e.target.value); setError(''); }}
                   className="input-field pl-10"
                   placeholder="••••••••"
                   required
@@ -87,6 +91,17 @@ export default function LoginPage() {
             <button type="submit" disabled={loading} className="btn-primary w-full">
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
+
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-lg px-4 py-3"
+              >
+                <span>⚠</span>
+                <span>{error}</span>
+              </motion.div>
+            )}
           </form>
 
           <div className="mt-6 pt-6 border-t border-slate-700">

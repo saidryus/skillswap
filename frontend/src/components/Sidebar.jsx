@@ -4,17 +4,19 @@ import { useAuth } from '../context/AuthContext';
 import Logo from './Logo';
 import {
   HiHome, HiUsers, HiAcademicCap, HiCalendar,
-  HiClipboardList, HiBell, HiLogout, HiChevronLeft, HiChevronRight
+  HiClipboardList, HiBell, HiLogout, HiChevronLeft, HiChevronRight,
+  HiBeaker
 } from 'react-icons/hi';
 
 const navItems = {
   admin: [
-    { to: '/admin', label: 'Dashboard', icon: HiHome, end: true },
-    { to: '/admin/users', label: 'Users', icon: HiUsers },
-    { to: '/admin/courses', label: 'Courses', icon: HiAcademicCap },
-    { to: '/admin/schedules', label: 'Schedules', icon: HiCalendar },
-    { to: '/admin/attendance', label: 'Attendance', icon: HiClipboardList },
-    { to: '/admin/announcements', label: 'Announcements', icon: HiBell },
+    { to: '/admin', label: 'Dashboard', icon: HiHome, end: true, permission: null }, // always visible
+    { to: '/admin/users', label: 'Users', icon: HiUsers, permission: 'users' },
+    { to: '/admin/courses', label: 'Courses', icon: HiAcademicCap, permission: 'courses' },
+    { to: '/admin/schedules', label: 'Schedules', icon: HiCalendar, permission: 'schedules' },
+    { to: '/admin/lab-schedules', label: 'Lab Schedules', icon: HiBeaker, permission: 'lab-schedules' },
+    { to: '/admin/attendance', label: 'Attendance', icon: HiClipboardList, permission: 'attendance' },
+    { to: '/admin/announcements', label: 'Announcements', icon: HiBell, permission: 'announcements' },
   ],
   faculty: [
     { to: '/faculty', label: 'Dashboard', icon: HiHome, end: true },
@@ -35,7 +37,13 @@ export default function Sidebar({ open, setOpen }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  const items = navItems[user?.role] || [];
+  let items = navItems[user?.role] || [];
+
+  // Filter admin nav items based on permissions (sub-admin)
+  if (user?.role === 'admin' && !user?.isSuperAdmin) {
+    const userPermissions = user?.permissions || [];
+    items = items.filter(item => !item.permission || userPermissions.includes(item.permission));
+  }
 
   const handleLogout = () => {
     logout();

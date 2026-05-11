@@ -27,6 +27,7 @@ const seed = async () => {
     password: 'admin123',
     role: 'admin',
     department: 'Administration',
+    isSuperAdmin: true,
   });
 
   const faculty1 = await User.create({

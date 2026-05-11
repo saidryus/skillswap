@@ -66,6 +66,8 @@ const login = async (req, res) => {
       role: user.role,
       studentId: user.studentId,
       department: user.department,
+      isSuperAdmin: user.isSuperAdmin || false,
+      permissions: user.permissions || [],
       token: generateToken(user._id),
     });
   } catch (error) {

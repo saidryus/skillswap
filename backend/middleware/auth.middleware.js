@@ -38,4 +38,35 @@ const authorize = (...roles) => {
   };
 };
 
-module.exports = { protect, authorize };
+/**
+ * Permission-based authorization for sub-admins.
+ * Super admins (isSuperAdmin: true) always pass.
+ * Sub-admins must have the required permission in their permissions array.
+ * Non-admin roles are rejected.
+ *
+ * Usage: requirePermission('users')
+ */
+const requirePermission = (permission) => {
+  return (req, res, next) => {
+    const user = req.user;
+
+    // Must be admin role
+    if (user.role !== 'admin') {
+      return res.status(403).json({ message: 'Admin access required' });
+    }
+
+    // Super admin always has full access
+    if (user.isSuperAdmin) return next();
+
+    // Sub-admin: check permissions array
+    if (!user.permissions || !user.permissions.includes(permission)) {
+      return res.status(403).json({
+        message: `You do not have permission to access: ${permission}`,
+      });
+    }
+
+    next();
+  };
+};
+
+module.exports = { protect, authorize, requirePermission };

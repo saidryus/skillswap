@@ -6,6 +6,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import UsersPage from './pages/admin/UsersPage';
 import CoursesPage from './pages/admin/CoursesPage';
 import SchedulesPage from './pages/admin/SchedulesPage';
+import LabSchedulesPage from './pages/admin/LabSchedulesPage';
 import AttendancePage from './pages/admin/AttendancePage';
 import AnnouncementsPage from './pages/shared/AnnouncementsPage';
 import FacultyDashboard from './pages/faculty/FacultyDashboard';
@@ -52,6 +53,7 @@ function AppRoutes() {
         <Route path="users" element={<UsersPage />} />
         <Route path="courses" element={<CoursesPage />} />
         <Route path="schedules" element={<SchedulesPage />} />
+        <Route path="lab-schedules" element={<LabSchedulesPage />} />
         <Route path="attendance" element={<AttendancePage />} />
         <Route path="announcements" element={<AnnouncementsPage />} />
       </Route>

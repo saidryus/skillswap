@@ -21,6 +21,7 @@ router.get('/', async (req, res) => {
       firstName: 'Admin', lastName: 'Trophe',
       email: 'admin@trophe.edu', password: 'admin123',
       role: 'admin', department: 'Administration',
+      isSuperAdmin: true,
     });
 
     const faculty1 = await User.create({
@@ -126,6 +127,26 @@ router.get('/', async (req, res) => {
         student3: 'carlos.mendoza@trophe.edu / student123',
       },
     });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @desc    One-time migration: mark admin@trophe.edu as super admin
+// @route   GET /api/seed/migrate-super-admin
+// @access  Public (temporary)
+router.get('/migrate-super-admin', async (req, res) => {
+  try {
+    const admin = await User.findOne({ email: 'admin@trophe.edu' });
+    if (!admin) {
+      return res.status(404).json({ message: 'admin@trophe.edu not found' });
+    }
+    if (admin.isSuperAdmin) {
+      return res.json({ message: 'Already a super admin' });
+    }
+    admin.isSuperAdmin = true;
+    await admin.save();
+    res.json({ message: '✅ admin@trophe.edu is now a super admin' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
