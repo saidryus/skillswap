@@ -43,7 +43,11 @@ const createUser = async (req, res) => {
     const userExists = await User.findOne({ email });
     if (userExists) return res.status(400).json({ message: 'Email already in use' });
 
-    const userData = { firstName, lastName, email, password, role, department, studentId };
+    const userData = { firstName, lastName, email, password, role, department };
+    // Only set studentId if it's actually provided (avoids duplicate key errors on the unique index)
+    if (studentId && studentId.trim() !== '') {
+      userData.studentId = studentId.trim();
+    }
 
     // If creating a sub-admin, attach permissions
     if (role === 'admin') {
@@ -83,7 +87,10 @@ const updateUser = async (req, res) => {
     user.email = email || user.email;
     user.role = role || user.role;
     user.department = department !== undefined ? department : user.department;
-    user.studentId = studentId !== undefined ? studentId : user.studentId;
+    // Only update studentId if provided; clear it if explicitly set to empty string
+    if (studentId !== undefined) {
+      user.studentId = (studentId && studentId.trim() !== '') ? studentId.trim() : undefined;
+    }
     if (isActive !== undefined) user.isActive = isActive;
     if (password) user.password = password;
 
