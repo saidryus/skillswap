@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const { ADMIN_PERMISSIONS } = require('../models/User');
+const { getSettings } = require('./settings.controller');
 
 // @desc    Get all users
 // @route   GET /api/users
@@ -33,7 +34,7 @@ const getUserById = async (req, res) => {
 // @access  Admin
 const createUser = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, role, department, studentId, permissions } = req.body;
+    const { firstName, lastName, email, password, role, department, yearLevel, phone, permissions } = req.body;
 
     // Only super admin can create other admins
     if (role === 'admin' && !req.user.isSuperAdmin) {
@@ -44,9 +45,17 @@ const createUser = async (req, res) => {
     if (userExists) return res.status(400).json({ message: 'Email already in use' });
 
     const userData = { firstName, lastName, email, password, role, department };
-    // Only set studentId if it's actually provided (avoids duplicate key errors on the unique index)
-    if (studentId && studentId.trim() !== '') {
-      userData.studentId = studentId.trim();
+
+    if (phone && phone.trim() !== '') userData.phone = phone.trim();
+
+    if (role === 'student') {
+      // Auto-generate student ID using prefix + zero-padded counter
+      const settings = await getSettings();
+      settings.studentIdCounter += 1;
+      await settings.save();
+      const padded = String(settings.studentIdCounter).padStart(4, '0');
+      userData.studentId = `${settings.studentIdPrefix}-${padded}`;
+      if (yearLevel) userData.yearLevel = Number(yearLevel);
     }
 
     // If creating a sub-admin, attach permissions
@@ -80,17 +89,15 @@ const updateUser = async (req, res) => {
       return res.status(403).json({ message: 'Only the super admin can modify admin accounts' });
     }
 
-    const { firstName, lastName, email, role, department, studentId, isActive, password, permissions } = req.body;
+    const { firstName, lastName, email, role, department, yearLevel, phone, isActive, password, permissions } = req.body;
 
     user.firstName = firstName || user.firstName;
     user.lastName = lastName || user.lastName;
     user.email = email || user.email;
     user.role = role || user.role;
     user.department = department !== undefined ? department : user.department;
-    // Only update studentId if provided; clear it if explicitly set to empty string
-    if (studentId !== undefined) {
-      user.studentId = (studentId && studentId.trim() !== '') ? studentId.trim() : undefined;
-    }
+    if (phone !== undefined) user.phone = phone && phone.trim() !== '' ? phone.trim() : undefined;
+    if (yearLevel !== undefined) user.yearLevel = yearLevel ? Number(yearLevel) : null;
     if (isActive !== undefined) user.isActive = isActive;
     if (password) user.password = password;
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { HiPlus, HiPencil, HiTrash, HiSearch, HiShieldCheck, HiLockClosed } from 'react-icons/hi';
+import { HiPlus, HiPencil, HiTrash, HiSearch, HiShieldCheck, HiLockClosed, HiCog } from 'react-icons/hi';
 import PageHeader from '../../components/PageHeader';
 import Modal from '../../components/Modal';
 import api from '../../utils/api';
@@ -16,9 +16,11 @@ const ALL_PERMISSIONS = [
   { key: 'announcements', label: 'Announcements' },
 ];
 
+const YEAR_LABELS = { 1: '1st Year', 2: '2nd Year', 3: '3rd Year', 4: '4th Year' };
+
 const emptyForm = {
   firstName: '', lastName: '', email: '', password: '',
-  role: 'student', department: '', studentId: '',
+  role: 'student', department: '', yearLevel: '', phone: '',
   isActive: true, permissions: [],
 };
 
@@ -30,10 +32,15 @@ export default function UsersPage() {
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [editUser, setEditUser] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
+
+  // Settings state
+  const [prefix, setPrefix] = useState('UC');
+  const [prefixInput, setPrefixInput] = useState('UC');
 
   const fetchUsers = async () => {
     try {
@@ -47,12 +54,20 @@ export default function UsersPage() {
     }
   };
 
-  useEffect(() => { fetchUsers(); }, []);
+  const fetchSettings = async () => {
+    try {
+      const { data } = await api.get('/settings');
+      setPrefix(data.studentIdPrefix);
+      setPrefixInput(data.studentIdPrefix);
+    } catch {}
+  };
+
+  useEffect(() => { fetchUsers(); fetchSettings(); }, []);
 
   useEffect(() => {
     let result = users;
     if (search) result = result.filter(u =>
-      `${u.firstName} ${u.lastName} ${u.email}`.toLowerCase().includes(search.toLowerCase())
+      `${u.firstName} ${u.lastName} ${u.email} ${u.studentId || ''}`.toLowerCase().includes(search.toLowerCase())
     );
     if (roleFilter) result = result.filter(u => u.role === roleFilter);
     setFiltered(result);
@@ -61,7 +76,7 @@ export default function UsersPage() {
   const openCreate = () => { setEditUser(null); setForm(emptyForm); setModalOpen(true); };
   const openEdit = (u) => {
     setEditUser(u);
-    setForm({ ...u, password: '', permissions: u.permissions || [] });
+    setForm({ ...u, password: '', yearLevel: u.yearLevel ?? '', phone: u.phone ?? '', permissions: u.permissions || [] });
     setModalOpen(true);
   };
 
@@ -78,7 +93,6 @@ export default function UsersPage() {
     e.preventDefault();
     try {
       const payload = { ...form };
-      // Only send permissions when creating/editing an admin
       if (form.role !== 'admin') delete payload.permissions;
 
       if (editUser) {
@@ -106,6 +120,17 @@ export default function UsersPage() {
     }
   };
 
+  const handleSavePrefix = async () => {
+    try {
+      await api.put('/settings', { studentIdPrefix: prefixInput });
+      setPrefix(prefixInput.toUpperCase());
+      toast.success('Prefix updated');
+      setSettingsOpen(false);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update prefix');
+    }
+  };
+
   const getRoleBadge = (u) => {
     if (u.role === 'admin') {
       if (u.isSuperAdmin) return (
@@ -128,9 +153,21 @@ export default function UsersPage() {
         title="User Management"
         subtitle="Manage all campus users"
         action={
-          <button onClick={openCreate} className="btn-primary flex items-center gap-2">
-            <HiPlus className="w-4 h-4" /> Add User
-          </button>
+          <div className="flex gap-2">
+            {isSuperAdmin && (
+              <button
+                onClick={() => setSettingsOpen(true)}
+                className="btn-secondary flex items-center gap-2"
+                title="Student ID Settings"
+              >
+                <HiCog className="w-4 h-4" />
+                <span className="text-xs font-mono text-slate-300">{prefix}-####</span>
+              </button>
+            )}
+            <button onClick={openCreate} className="btn-primary flex items-center gap-2">
+              <HiPlus className="w-4 h-4" /> Add User
+            </button>
+          </div>
         }
       />
 
@@ -167,15 +204,17 @@ export default function UsersPage() {
                 <th className="table-header">Role</th>
                 <th className="table-header">Department</th>
                 <th className="table-header">Student ID</th>
+                <th className="table-header">Year</th>
+                <th className="table-header">Phone</th>
                 <th className="table-header">Status</th>
                 <th className="table-header">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700/50">
               {loading ? (
-                <tr><td colSpan={7} className="text-center py-8 text-slate-400">Loading...</td></tr>
+                <tr><td colSpan={9} className="text-center py-8 text-slate-400">Loading...</td></tr>
               ) : filtered.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-8 text-slate-400">No users found</td></tr>
+                <tr><td colSpan={9} className="text-center py-8 text-slate-400">No users found</td></tr>
               ) : filtered.map((u) => (
                 <motion.tr
                   key={u._id}
@@ -203,7 +242,15 @@ export default function UsersPage() {
                   <td className="table-cell">{u.email}</td>
                   <td className="table-cell">{getRoleBadge(u)}</td>
                   <td className="table-cell">{u.department || '—'}</td>
-                  <td className="table-cell">{u.studentId || '—'}</td>
+                  <td className="table-cell font-mono text-xs">{u.studentId || '—'}</td>
+                  <td className="table-cell">
+                    {u.yearLevel ? (
+                      <span className="badge bg-indigo-500/20 text-indigo-300 border-indigo-500/30">
+                        {YEAR_LABELS[u.yearLevel]}
+                      </span>
+                    ) : '—'}
+                  </td>
+                  <td className="table-cell text-xs">{u.phone || '—'}</td>
                   <td className="table-cell">
                     <span className={`badge ${u.isActive
                       ? 'bg-green-500/20 text-green-300 border-green-500/30'
@@ -214,7 +261,6 @@ export default function UsersPage() {
                   </td>
                   <td className="table-cell">
                     <div className="flex items-center gap-2">
-                      {/* Can't edit super admin unless you are super admin */}
                       {(!u.isSuperAdmin || isSuperAdmin) && (
                         <button
                           onClick={() => openEdit(u)}
@@ -223,7 +269,6 @@ export default function UsersPage() {
                           <HiPencil className="w-4 h-4" />
                         </button>
                       )}
-                      {/* Can't delete super admin or other admins unless super admin */}
                       {!u.isSuperAdmin && (isSuperAdmin || u.role !== 'admin') && (
                         <button
                           onClick={() => handleDelete(u._id)}
@@ -240,6 +285,36 @@ export default function UsersPage() {
           </table>
         </div>
       </motion.div>
+
+      {/* Student ID Prefix Settings Modal */}
+      <Modal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} title="Student ID Settings">
+        <div className="space-y-4">
+          <p className="text-sm text-slate-400">
+            Set the prefix used when auto-generating student IDs. The system will append a zero-padded counter.
+          </p>
+          <div className="bg-slate-700/40 rounded-lg p-3 text-center">
+            <p className="text-xs text-slate-500 mb-1">Preview</p>
+            <p className="text-2xl font-mono font-bold text-blue-400">
+              {(prefixInput || 'UC').toUpperCase()}-0001
+            </p>
+          </div>
+          <div>
+            <label className="label">Prefix</label>
+            <input
+              value={prefixInput}
+              onChange={e => setPrefixInput(e.target.value.toUpperCase())}
+              className="input-field font-mono uppercase"
+              placeholder="UC"
+              maxLength={6}
+            />
+            <p className="text-xs text-slate-500 mt-1">Max 6 characters. Existing student IDs are not affected.</p>
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button onClick={() => setSettingsOpen(false)} className="btn-secondary flex-1">Cancel</button>
+            <button onClick={handleSavePrefix} className="btn-primary flex-1">Save</button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Create / Edit Modal */}
       <Modal
@@ -302,7 +377,6 @@ export default function UsersPage() {
               >
                 <option value="student">Student</option>
                 <option value="faculty">Faculty</option>
-                {/* Only super admin can assign admin role */}
                 {isSuperAdmin && <option value="admin">Admin (Sub-Admin)</option>}
               </select>
             </div>
@@ -316,18 +390,71 @@ export default function UsersPage() {
             </div>
           </div>
 
+          {/* Student-only fields */}
           {form.role === 'student' && (
+            <>
+              {/* Auto-generated ID notice */}
+              {!editUser && (
+                <div className="flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 rounded-lg px-3 py-2">
+                  <span className="text-xs text-blue-400">
+                    Student ID will be auto-generated as <span className="font-mono font-semibold">{prefix}-####</span>
+                  </span>
+                </div>
+              )}
+              {editUser && (
+                <div>
+                  <label className="label">Student ID</label>
+                  <input
+                    value={form.studentId || ''}
+                    readOnly
+                    className="input-field opacity-60 cursor-not-allowed font-mono"
+                  />
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="label">Year Level</label>
+                  <select
+                    value={form.yearLevel}
+                    onChange={(e) => setForm({ ...form, yearLevel: e.target.value })}
+                    className="input-field"
+                  >
+                    <option value="">Select year</option>
+                    <option value="1">1st Year</option>
+                    <option value="2">2nd Year</option>
+                    <option value="3">3rd Year</option>
+                    <option value="4">4th Year</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="label">Phone Number</label>
+                  <input
+                    type="tel"
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    className="input-field"
+                    placeholder="+63 9XX XXX XXXX"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Faculty phone */}
+          {form.role === 'faculty' && (
             <div>
-              <label className="label">Student ID</label>
+              <label className="label">Phone Number</label>
               <input
-                value={form.studentId}
-                onChange={(e) => setForm({ ...form, studentId: e.target.value })}
+                type="tel"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 className="input-field"
+                placeholder="+63 9XX XXX XXXX"
               />
             </div>
           )}
 
-          {/* Permissions panel — only shown when creating/editing an admin and current user is super admin */}
+          {/* Permissions panel */}
           {form.role === 'admin' && isSuperAdmin && !editUser?.isSuperAdmin && (
             <div className="bg-slate-700/40 border border-slate-600/50 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-3">

@@ -37,12 +37,12 @@ const getCourseById = async (req, res) => {
 // @access  Admin
 const createCourse = async (req, res) => {
   try {
-    const { courseCode, courseName, description, units, type, department, faculty } = req.body;
+    const { courseCode, courseName, description, units, type, department, yearLevel, faculty } = req.body;
 
     const exists = await Course.findOne({ courseCode });
     if (exists) return res.status(400).json({ message: 'Course code already exists' });
 
-    const course = await Course.create({ courseCode, courseName, description, units, type, department, faculty });
+    const course = await Course.create({ courseCode, courseName, description, units, type, yearLevel, department, faculty });
     res.status(201).json(course);
   } catch (error) {
     res.status(500).json({ message: error.message });

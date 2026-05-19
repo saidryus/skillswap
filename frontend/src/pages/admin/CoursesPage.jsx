@@ -6,7 +6,7 @@ import Modal from '../../components/Modal';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
-const emptyForm = { courseCode: '', courseName: '', description: '', units: 3, type: 'lecture', department: '', faculty: '' };
+const emptyForm = { courseCode: '', courseName: '', description: '', units: 3, type: 'lecture', yearLevel: '', department: '', faculty: '' };
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState([]);
@@ -19,6 +19,7 @@ export default function CoursesPage() {
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [selectedStudent, setSelectedStudent] = useState('');
+  const [yearFilter, setYearFilter] = useState('');
 
   const fetchData = async () => {
     try {
@@ -108,19 +109,43 @@ export default function CoursesPage() {
         }
       />
 
+      {/* Year filter */}
+      <div className="flex gap-3 mb-6">
+        {['', '1', '2', '3', '4'].map(y => (
+          <button
+            key={y}
+            onClick={() => setYearFilter(y)}
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors border
+              ${yearFilter === y
+                ? 'bg-blue-600 border-blue-500 text-white'
+                : 'bg-slate-700/50 border-slate-600 text-slate-400 hover:border-slate-500 hover:text-slate-200'
+              }`}
+          >
+            {y === '' ? 'All Years' : `${y}${y === '1' ? 'st' : y === '2' ? 'nd' : y === '3' ? 'rd' : 'th'} Year`}
+          </button>
+        ))}
+      </div>
+
       {loading ? (
         <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500" /></div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-          {courses.map((course) => (
+          {courses
+            .filter(c => yearFilter === '' || String(c.yearLevel) === yearFilter)
+            .map((course) => (
             <motion.div key={course._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="card hover:border-slate-600 transition-colors">
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs font-semibold text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded">{course.courseCode}</span>
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded ${course.type === 'laboratory' ? 'bg-purple-500/10 text-purple-400' : 'bg-green-500/10 text-green-400'}`}>
                       {course.type === 'laboratory' ? 'Lab' : 'Lec'}
                     </span>
+                    {course.yearLevel && (
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400">
+                        {course.yearLevel}{course.yearLevel === 1 ? 'st' : course.yearLevel === 2 ? 'nd' : course.yearLevel === 3 ? 'rd' : 'th'} Year
+                      </span>
+                    )}
                   </div>
                   <h3 className="text-base font-semibold text-slate-100 mt-1">{course.courseName}</h3>
                 </div>
@@ -196,14 +221,26 @@ export default function CoursesPage() {
               </select>
             </div>
           </div>
-          <div>
-            <label className="label">Assign Faculty</label>
-            <select value={form.faculty} onChange={(e) => setForm({ ...form, faculty: e.target.value })} className="input-field">
-              <option value="">Unassigned</option>
-              {faculty.map((f) => (
-                <option key={f._id} value={f._id}>{f.firstName} {f.lastName}</option>
-              ))}
-            </select>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="label">Year Level</label>
+              <select value={form.yearLevel} onChange={(e) => setForm({ ...form, yearLevel: e.target.value })} className="input-field">
+                <option value="">Not specified</option>
+                <option value="1">1st Year</option>
+                <option value="2">2nd Year</option>
+                <option value="3">3rd Year</option>
+                <option value="4">4th Year</option>
+              </select>
+            </div>
+            <div>
+              <label className="label">Assign Faculty</label>
+              <select value={form.faculty} onChange={(e) => setForm({ ...form, faculty: e.target.value })} className="input-field">
+                <option value="">Unassigned</option>
+                {faculty.map((f) => (
+                  <option key={f._id} value={f._id}>{f.firstName} {f.lastName}</option>
+                ))}
+              </select>
+            </div>
           </div>
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary flex-1">Cancel</button>

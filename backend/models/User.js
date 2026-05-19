@@ -20,6 +20,8 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true, minlength: 6 },
     role: { type: String, enum: ['admin', 'faculty', 'student'], default: 'student' },
     department: { type: String, trim: true },
+    yearLevel: { type: Number, enum: [1, 2, 3, 4], default: null }, // students only
+    phone: { type: String, trim: true },                             // for SMS notifications
     isActive: { type: Boolean, default: true },
     // Super admin flag — only admin@trophe.edu gets this
     isSuperAdmin: { type: Boolean, default: false },

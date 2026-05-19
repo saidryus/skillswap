@@ -46,6 +46,7 @@ const createAnnouncement = async (req, res) => {
         message: `"${title}" — posted by ${req.user.firstName} ${req.user.lastName}.`,
         link: `/${req.user.role === 'admin' ? 'admin' : req.user.role}/announcements`,
         meta: { announcementId: announcement._id },
+        sms: true, // also send SMS to recipients who have a phone number
       }))
     );
 

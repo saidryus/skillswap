@@ -22,6 +22,7 @@ app.use('/api/schedules', require('./routes/schedule.routes'));
 app.use('/api/attendance', require('./routes/attendance.routes'));
 app.use('/api/announcements', require('./routes/announcement.routes'));
 app.use('/api/notifications', require('./routes/notification.routes'));
+app.use('/api/settings', require('./routes/settings.routes'));
 
 // Seed route (only in non-production or when ENABLE_SEED is set)
 if (process.env.NODE_ENV !== 'production' || process.env.ENABLE_SEED === 'true') {
