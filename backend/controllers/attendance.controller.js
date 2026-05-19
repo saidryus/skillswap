@@ -79,4 +79,59 @@ const getAttendanceSummary = async (req, res) => {
   }
 };
 
-module.exports = { markAttendance, getCourseAttendance, getMyAttendance, getAttendanceSummary };
+// @desc    Export attendance as CSV for a course within a date range
+// @route   GET /api/attendance/export?courseId=&dateFrom=&dateTo=
+// @access  Faculty, Admin
+const exportAttendance = async (req, res) => {
+  try {
+    const { courseId, dateFrom, dateTo } = req.query;
+    if (!courseId) return res.status(400).json({ message: 'courseId is required' });
+
+    const filter = { course: courseId };
+    if (dateFrom || dateTo) {
+      filter.date = {};
+      if (dateFrom) filter.date.$gte = new Date(dateFrom);
+      if (dateTo) {
+        const end = new Date(dateTo);
+        end.setHours(23, 59, 59, 999);
+        filter.date.$lte = end;
+      }
+    }
+
+    const records = await Attendance.find(filter)
+      .populate('student', 'firstName lastName studentId email')
+      .populate('course', 'courseCode courseName')
+      .sort({ date: 1, 'student.lastName': 1 });
+
+    if (records.length === 0) {
+      return res.status(404).json({ message: 'No attendance records found for the selected range' });
+    }
+
+    const courseName = records[0].course?.courseName || 'Course';
+    const courseCode = records[0].course?.courseCode || '';
+
+    // Build CSV
+    const header = ['Date', 'Student ID', 'Last Name', 'First Name', 'Status', 'Remarks'];
+    const rows = records.map(r => [
+      new Date(r.date).toISOString().split('T')[0],
+      r.student?.studentId || '',
+      r.student?.lastName || '',
+      r.student?.firstName || '',
+      r.status,
+      r.remarks || '',
+    ]);
+
+    const csv = [header, ...rows]
+      .map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
+      .join('\r\n');
+
+    const filename = `Attendance_${courseCode}_${dateFrom || 'all'}_to_${dateTo || 'all'}.csv`;
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(csv);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { markAttendance, getCourseAttendance, getMyAttendance, getAttendanceSummary, exportAttendance };

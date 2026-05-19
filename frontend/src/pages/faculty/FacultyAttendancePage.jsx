@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { HiDownload } from 'react-icons/hi';
 import PageHeader from '../../components/PageHeader';
+import Modal from '../../components/Modal';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
@@ -14,6 +16,13 @@ export default function FacultyAttendancePage() {
   const [attendance, setAttendance] = useState({});
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  // Export modal state
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exportCourse, setExportCourse] = useState('');
+  const [exportFrom, setExportFrom] = useState('');
+  const [exportTo, setExportTo] = useState('');
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     api.get('/courses').then(({ data }) => {
@@ -62,6 +71,42 @@ export default function FacultyAttendancePage() {
     }
   };
 
+  const handleExport = async () => {
+    if (!exportCourse) { toast.error('Please select a course'); return; }
+    setExporting(true);
+    try {
+      const params = new URLSearchParams({ courseId: exportCourse });
+      if (exportFrom) params.append('dateFrom', exportFrom);
+      if (exportTo) params.append('dateTo', exportTo);
+
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/attendance/export?${params}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        toast.error(err.message || 'Export failed');
+        return;
+      }
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const course = courses.find(c => c._id === exportCourse);
+      a.href = url;
+      a.download = `Attendance_${course?.courseCode || 'export'}_${exportFrom || 'all'}_to_${exportTo || 'all'}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('Exported successfully');
+      setExportOpen(false);
+    } catch (err) {
+      toast.error('Export failed');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const statusColors = {
     present: 'bg-green-500/20 text-green-300 border-green-500/30',
     absent: 'bg-red-500/20 text-red-300 border-red-500/30',
@@ -71,7 +116,15 @@ export default function FacultyAttendancePage() {
 
   return (
     <div>
-      <PageHeader title="Mark Attendance" subtitle="Record student attendance for your courses" />
+      <PageHeader
+        title="Mark Attendance"
+        subtitle="Record student attendance for your courses"
+        action={
+          <button onClick={() => { setExportCourse(selectedCourse || ''); setExportOpen(true); }} className="btn-secondary flex items-center gap-2">
+            <HiDownload className="w-4 h-4" /> Export CSV
+          </button>
+        }
+      />
 
       <div className="card mb-6">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -139,6 +192,48 @@ export default function FacultyAttendancePage() {
       ) : (
         <div className="card text-center py-12 text-slate-400">Select a course to mark attendance</div>
       )}
+
+      {/* Export Modal */}
+      <Modal isOpen={exportOpen} onClose={() => setExportOpen(false)} title="Export Attendance">
+        <div className="space-y-4">
+          <p className="text-sm text-slate-400">
+            Select a course and optional date range. Leave dates blank to export all records.
+          </p>
+          <div>
+            <label className="label">Course</label>
+            <select value={exportCourse} onChange={e => setExportCourse(e.target.value)} className="input-field">
+              <option value="">Select a course</option>
+              {courses.map(c => <option key={c._id} value={c._id}>{c.courseCode} — {c.courseName}</option>)}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="label">From</label>
+              <input type="date" value={exportFrom} onChange={e => setExportFrom(e.target.value)} className="input-field" />
+            </div>
+            <div>
+              <label className="label">To</label>
+              <input type="date" value={exportTo} onChange={e => setExportTo(e.target.value)} className="input-field" />
+            </div>
+          </div>
+          {exportFrom && exportTo && exportFrom > exportTo && (
+            <p className="text-xs text-red-400">⚠ "From" date is after "To" date</p>
+          )}
+          <div className="flex gap-3 pt-2">
+            <button onClick={() => setExportOpen(false)} className="btn-secondary flex-1">Cancel</button>
+            <button
+              onClick={handleExport}
+              disabled={exporting || !exportCourse || (exportFrom && exportTo && exportFrom > exportTo)}
+              className="btn-primary flex-1 flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              {exporting
+                ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Exporting...</>
+                : <><HiDownload className="w-4 h-4" /> Download CSV</>
+              }
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
