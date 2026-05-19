@@ -176,9 +176,56 @@ const unenrollStudent = async (req, res) => {
   }
 };
 
-// @desc    Get courses for logged-in student
-// @route   GET /api/courses/my-courses
-// @access  Student
+// @desc    Bulk import courses from CSV (parsed to JSON array)
+// @route   POST /api/courses/import
+// @access  Admin
+const importCourses = async (req, res) => {
+  try {
+    const rows = req.body; // array of course objects
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return res.status(400).json({ message: 'No data provided' });
+    }
+
+    const results = { created: 0, skipped: 0, errors: [] };
+
+    for (const row of rows) {
+      const courseCode = row.courseCode?.toString().trim().toUpperCase();
+      const courseName = row.courseName?.toString().trim();
+
+      if (!courseCode || !courseName) {
+        results.errors.push({ row: courseCode || '?', reason: 'Missing courseCode or courseName' });
+        continue;
+      }
+
+      const exists = await Course.findOne({ courseCode });
+      if (exists) {
+        results.skipped++;
+        continue;
+      }
+
+      try {
+        await Course.create({
+          courseCode,
+          courseName,
+          description: row.description?.toString().trim() || '',
+          units: Number(row.units) || 3,
+          type: ['lecture', 'laboratory'].includes(row.type?.toLowerCase())
+            ? row.type.toLowerCase() : 'lecture',
+          yearLevel: [1, 2, 3, 4].includes(Number(row.yearLevel))
+            ? Number(row.yearLevel) : null,
+          department: row.department?.toString().trim() || '',
+        });
+        results.created++;
+      } catch (err) {
+        results.errors.push({ row: courseCode, reason: err.message });
+      }
+    }
+
+    res.status(201).json(results);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 const getMyCourses = async (req, res) => {
   try {
     const courses = await Course.find({ students: req.user._id })
@@ -214,4 +261,5 @@ module.exports = {
   unenrollStudent,
   getMyCourses,
   getMyTeachingCourses,
+  importCourses,
 };

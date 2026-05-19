@@ -10,6 +10,7 @@ const {
   unenrollStudent,
   getMyCourses,
   getMyTeachingCourses,
+  importCourses,
 } = require('../controllers/course.controller');
 const { protect, authorize } = require('../middleware/auth.middleware');
 
@@ -17,6 +18,7 @@ router.use(protect);
 
 router.get('/my-courses', getMyCourses);
 router.get('/my-teaching', authorize('faculty'), getMyTeachingCourses);
+router.post('/import', authorize('admin'), importCourses);
 router.route('/').get(getCourses).post(authorize('admin'), createCourse);
 router
   .route('/:id')
