@@ -2,38 +2,35 @@ const Notification = require('../models/Notification');
 const User = require('../models/User');
 
 /**
- * Normalize a Philippine phone number to E.164 format (+63XXXXXXXXXX).
- * Accepts:  09XXXXXXXXX  →  +639XXXXXXXXX
- *           9XXXXXXXXX   →  +639XXXXXXXXX
- *           +639XXXXXXXX →  unchanged
+ * Normalize a Philippine phone number to the format Semaphore expects (09XXXXXXXXX).
+ * Accepts:  +639XXXXXXXXX  →  09XXXXXXXXX
+ *           9XXXXXXXXX     →  09XXXXXXXXX
+ *           09XXXXXXXXX    →  unchanged
  * Returns null if the number doesn't look valid.
  */
 function normalizePhone(phone) {
   if (!phone) return null;
-  const digits = phone.replace(/[\s\-().]/g, '');
-  if (digits.startsWith('+63')) return digits;
-  if (digits.startsWith('09') && digits.length === 11) return '+63' + digits.slice(1);
-  if (digits.startsWith('9') && digits.length === 10) return '+63' + digits;
-  return null; // unrecognized format — skip
+  const digits = phone.replace(/[\s\-().+]/g, '');
+  if (digits.startsWith('639') && digits.length === 12) return '0' + digits.slice(2);
+  if (digits.startsWith('09') && digits.length === 11) return digits;
+  if (digits.startsWith('9') && digits.length === 10) return '0' + digits;
+  return null;
 }
 
 /**
- * Send an SMS via Twilio.
+ * Send an SMS via Semaphore (https://semaphore.co).
  * Requires in .env:
- *   TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
- *   TWILIO_AUTH_TOKEN=your_auth_token
- *   TWILIO_FROM_NUMBER=+1XXXXXXXXXX   (your Twilio number)
+ *   SEMAPHORE_API_KEY=your_api_key
+ *   SEMAPHORE_SENDER_NAME=TROPHE   (optional, defaults to SEMAPHORE)
  */
 async function sendSms(phone, message) {
   if (!phone) return;
 
-  const sid   = process.env.TWILIO_ACCOUNT_SID;
-  const token = process.env.TWILIO_AUTH_TOKEN;
-  const from  = process.env.TWILIO_FROM_NUMBER;
+  const apiKey     = process.env.SEMAPHORE_API_KEY;
+  const senderName = process.env.SEMAPHORE_SENDER_NAME || 'SEMAPHORE';
 
-  // Skip silently if Twilio is not configured
-  if (!sid || !token || !from) {
-    console.warn('[SMS] Twilio not configured — skipping SMS to', phone);
+  if (!apiKey) {
+    console.warn('[SMS] Semaphore API key not configured — skipping SMS to', phone);
     return;
   }
 
@@ -44,10 +41,24 @@ async function sendSms(phone, message) {
   }
 
   try {
-    const twilio = require('twilio');
-    const client = twilio(sid, token);
-    const result = await client.messages.create({ body: message, from, to });
-    console.log(`[SMS] Sent to ${to} — SID: ${result.sid}`);
+    const res = await fetch('https://api.semaphore.co/api/v4/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        apikey:      apiKey,
+        number:      to,
+        message:     message,
+        sendername:  senderName,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.error(`[SMS] Semaphore error to ${to}:`, JSON.stringify(data));
+    } else {
+      console.log(`[SMS] Sent to ${to} — message_id: ${data[0]?.message_id}`);
+    }
   } catch (err) {
     console.error(`[SMS] Failed to send to ${to}:`, err.message);
   }
@@ -88,7 +99,6 @@ const createNotifications = async (notifications) => {
       );
     }
   } catch (err) {
-    // Notifications are non-critical — log but don't crash the request
     console.error('Notification error:', err.message);
   }
 };
