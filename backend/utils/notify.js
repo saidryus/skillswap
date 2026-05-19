@@ -2,18 +2,55 @@ const Notification = require('../models/Notification');
 const User = require('../models/User');
 
 /**
- * Send an SMS to a phone number.
- * Currently a stub — wire up a real provider (e.g. Twilio) by setting
- * TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, and TWILIO_FROM_NUMBER in .env
- * and replacing the body of this function.
+ * Normalize a Philippine phone number to E.164 format (+63XXXXXXXXXX).
+ * Accepts:  09XXXXXXXXX  →  +639XXXXXXXXX
+ *           9XXXXXXXXX   →  +639XXXXXXXXX
+ *           +639XXXXXXXX →  unchanged
+ * Returns null if the number doesn't look valid.
+ */
+function normalizePhone(phone) {
+  if (!phone) return null;
+  const digits = phone.replace(/[\s\-().]/g, '');
+  if (digits.startsWith('+63')) return digits;
+  if (digits.startsWith('09') && digits.length === 11) return '+63' + digits.slice(1);
+  if (digits.startsWith('9') && digits.length === 10) return '+63' + digits;
+  return null; // unrecognized format — skip
+}
+
+/**
+ * Send an SMS via Twilio.
+ * Requires in .env:
+ *   TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+ *   TWILIO_AUTH_TOKEN=your_auth_token
+ *   TWILIO_FROM_NUMBER=+1XXXXXXXXXX   (your Twilio number)
  */
 async function sendSms(phone, message) {
   if (!phone) return;
-  // Uncomment and configure when a provider is available:
-  // const twilio = require('twilio');
-  // const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-  // await client.messages.create({ body: message, from: process.env.TWILIO_FROM_NUMBER, to: phone });
-  console.log(`[SMS stub] To: ${phone} | Message: ${message}`);
+
+  const sid   = process.env.TWILIO_ACCOUNT_SID;
+  const token = process.env.TWILIO_AUTH_TOKEN;
+  const from  = process.env.TWILIO_FROM_NUMBER;
+
+  // Skip silently if Twilio is not configured
+  if (!sid || !token || !from) {
+    console.warn('[SMS] Twilio not configured — skipping SMS to', phone);
+    return;
+  }
+
+  const to = normalizePhone(phone);
+  if (!to) {
+    console.warn('[SMS] Unrecognized phone format, skipping:', phone);
+    return;
+  }
+
+  try {
+    const twilio = require('twilio');
+    const client = twilio(sid, token);
+    const result = await client.messages.create({ body: message, from, to });
+    console.log(`[SMS] Sent to ${to} — SID: ${result.sid}`);
+  } catch (err) {
+    console.error(`[SMS] Failed to send to ${to}:`, err.message);
+  }
 }
 
 /**
@@ -35,7 +72,11 @@ const createNotifications = async (notifications) => {
     const smsItems = items.filter(n => n.sms);
     if (smsItems.length > 0) {
       const recipientIds = [...new Set(smsItems.map(n => n.recipient?.toString()))];
-      const users = await User.find({ _id: { $in: recipientIds }, phone: { $exists: true, $ne: '' } }).select('_id phone');
+      const users = await User.find({
+        _id: { $in: recipientIds },
+        phone: { $exists: true, $ne: '' },
+      }).select('_id phone');
+
       const phoneMap = {};
       users.forEach(u => { phoneMap[u._id.toString()] = u.phone; });
 
