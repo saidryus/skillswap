@@ -4,7 +4,7 @@ import {
   DndContext, DragOverlay, useDraggable, useDroppable,
   PointerSensor, useSensor, useSensors
 } from '@dnd-kit/core';
-import { HiPrinter, HiDownload, HiTrash, HiX, HiExclamation } from 'react-icons/hi';
+import { HiPrinter, HiDownload, HiTrash, HiX, HiExclamation, HiCheck } from 'react-icons/hi';
 import PageHeader from '../../components/PageHeader';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
@@ -26,6 +26,23 @@ const TIME_SLOTS = (() => {
 
 const SLOT_HEIGHT = 36; // px per 30-min slot
 
+// Palette of distinct, readable colors for schedule blocks
+// Each entry: { id, bg (tailwind), border (tailwind), hex (for swatch) }
+const COLOR_PALETTE = [
+  { id: 'blue',    bg: 'bg-blue-600/80',    border: 'border-blue-400',    hex: '#2563eb' },
+  { id: 'purple',  bg: 'bg-purple-600/80',  border: 'border-purple-400',  hex: '#9333ea' },
+  { id: 'green',   bg: 'bg-green-600/80',   border: 'border-green-400',   hex: '#16a34a' },
+  { id: 'orange',  bg: 'bg-orange-500/80',  border: 'border-orange-400',  hex: '#ea580c' },
+  { id: 'pink',    bg: 'bg-pink-600/80',    border: 'border-pink-400',    hex: '#db2777' },
+  { id: 'teal',    bg: 'bg-teal-600/80',    border: 'border-teal-400',    hex: '#0d9488' },
+  { id: 'red',     bg: 'bg-red-600/80',     border: 'border-red-400',     hex: '#dc2626' },
+  { id: 'yellow',  bg: 'bg-yellow-500/80',  border: 'border-yellow-400',  hex: '#ca8a04' },
+  { id: 'indigo',  bg: 'bg-indigo-600/80',  border: 'border-indigo-400',  hex: '#4f46e5' },
+  { id: 'cyan',    bg: 'bg-cyan-600/80',    border: 'border-cyan-400',    hex: '#0891b2' },
+  { id: 'rose',    bg: 'bg-rose-600/80',    border: 'border-rose-400',    hex: '#e11d48' },
+  { id: 'lime',    bg: 'bg-lime-600/80',    border: 'border-lime-400',    hex: '#65a30d' },
+];
+
 function addMinutes(time, mins) {
   const [h, m] = time.split(':').map(Number);
   const total = h * 60 + m + mins;
@@ -43,11 +60,13 @@ function durationSlots(start, end) {
 }
 
 /* ── Draggable course card ──────────────────────────────────────── */
-function CourseCard({ course, isDragging, scheduledDays = [] }) {
+function CourseCard({ course, isDragging, scheduledDays = [], color, usedColorIds, onColorChange }) {
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: `course-${course._id}`,
     data: { type: 'course', course },
   });
+
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const style = transform
     ? { transform: `translate(${transform.x}px,${transform.y}px)`, zIndex: 999 }
@@ -56,28 +75,90 @@ function CourseCard({ course, isDragging, scheduledDays = [] }) {
   const dayAbbr = { Monday:'M', Tuesday:'T', Wednesday:'W', Thursday:'Th', Friday:'F', Saturday:'Sa' };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...listeners}
-      {...attributes}
-      className={`select-none cursor-grab active:cursor-grabbing rounded-lg p-3 mb-2 border transition-all
-        ${isDragging ? 'opacity-40' : 'opacity-100'}
-        bg-slate-700 border-slate-600 hover:border-blue-500`}
-    >
-      <p className="text-sm font-semibold text-slate-100">{course.courseCode}</p>
-      <p className="text-xs text-slate-400 truncate">{course.courseName}</p>
-      <div className="flex items-center justify-between mt-1">
-        <p className="text-xs text-slate-500">{course.units} units</p>
-        {scheduledDays.length > 0 && (
-          <div className="flex gap-0.5">
-            {scheduledDays.map(d => (
-              <span key={d} className="text-xs bg-green-500/20 text-green-400 border border-green-500/30 rounded px-1">
-                {dayAbbr[d] || d.slice(0,2)}
-              </span>
-            ))}
-          </div>
-        )}
+    <div className="mb-2">
+      <div
+        ref={setNodeRef}
+        style={style}
+        {...listeners}
+        {...attributes}
+        className={`select-none cursor-grab active:cursor-grabbing rounded-lg p-3 border transition-all
+          ${isDragging ? 'opacity-40' : 'opacity-100'}
+          bg-slate-700 border-slate-600 hover:border-blue-500`}
+      >
+        {/* Color swatch strip */}
+        <div
+          className="h-1 rounded-full mb-2 -mx-0.5"
+          style={{ backgroundColor: color?.hex || '#475569' }}
+        />
+        <p className="text-sm font-semibold text-slate-100">{course.courseCode}</p>
+        <p className="text-xs text-slate-400 truncate">{course.courseName}</p>
+        <div className="flex items-center justify-between mt-1">
+          <p className="text-xs text-slate-500">{course.units} units</p>
+          {scheduledDays.length > 0 && (
+            <div className="flex gap-0.5">
+              {scheduledDays.map(d => (
+                <span key={d} className="text-xs bg-green-500/20 text-green-400 border border-green-500/30 rounded px-1">
+                  {dayAbbr[d] || d.slice(0,2)}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Color picker toggle — outside drag listeners so clicks don't start a drag */}
+      <div className="relative">
+        <button
+          onPointerDown={e => e.stopPropagation()}
+          onClick={e => { e.stopPropagation(); setPickerOpen(o => !o); }}
+          className="w-full flex items-center gap-1.5 px-2 py-1 rounded-b-lg bg-slate-800 border border-t-0 border-slate-600 hover:bg-slate-700 transition-colors"
+        >
+          <span
+            className="w-3 h-3 rounded-full border border-white/20 shrink-0"
+            style={{ backgroundColor: color?.hex || '#475569' }}
+          />
+          <span className="text-xs text-slate-400 flex-1 text-left">
+            {color ? color.id : 'Pick color'}
+          </span>
+          <svg className={`w-3 h-3 text-slate-500 transition-transform ${pickerOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+        </button>
+
+        <AnimatePresence>
+          {pickerOpen && (
+            <motion.div
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              onPointerDown={e => e.stopPropagation()}
+              className="absolute left-0 right-0 z-50 mt-1 bg-slate-800 border border-slate-600 rounded-lg p-2 shadow-2xl"
+            >
+              <p className="text-xs text-slate-500 mb-2">Choose a color</p>
+              <div className="grid grid-cols-6 gap-1.5">
+                {COLOR_PALETTE.map(c => {
+                  const isUsed = usedColorIds.has(c.id) && color?.id !== c.id;
+                  const isSelected = color?.id === c.id;
+                  return (
+                    <button
+                      key={c.id}
+                      title={isUsed ? `${c.id} (in use)` : c.id}
+                      disabled={isUsed}
+                      onClick={() => { onColorChange(c); setPickerOpen(false); }}
+                      className={`relative w-6 h-6 rounded-full border-2 transition-all
+                        ${isSelected ? 'border-white scale-110' : 'border-transparent'}
+                        ${isUsed ? 'opacity-25 cursor-not-allowed' : 'hover:scale-110 hover:border-white/60 cursor-pointer'}
+                      `}
+                      style={{ backgroundColor: c.hex }}
+                    >
+                      {isSelected && (
+                        <HiCheck className="absolute inset-0 m-auto w-3 h-3 text-white" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
@@ -102,21 +183,16 @@ function GridCell({ day, time, children, hasConflict }) {
 }
 
 /* ── Placed schedule block ──────────────────────────────────────── */
-function ScheduleBlock({ schedule, onRemove }) {
+function ScheduleBlock({ schedule, onRemove, color }) {
   const slots = durationSlots(schedule.startTime, schedule.endTime);
-  const colors = [
-    'bg-blue-600/80 border-blue-400',
-    'bg-purple-600/80 border-purple-400',
-    'bg-green-600/80 border-green-400',
-    'bg-orange-600/80 border-orange-400',
-    'bg-pink-600/80 border-pink-400',
-    'bg-teal-600/80 border-teal-400',
-  ];
-  const colorIdx = schedule.course?.courseCode?.charCodeAt(0) % colors.length || 0;
+  // Fallback color if none assigned
+  const blockColor = color
+    ? `${color.bg} ${color.border}`
+    : 'bg-slate-600/80 border-slate-400';
 
   return (
     <div
-      className={`absolute inset-x-0.5 rounded border text-xs overflow-hidden z-10 ${colors[colorIdx]}`}
+      className={`absolute inset-x-0.5 rounded border text-xs overflow-hidden z-10 ${blockColor}`}
       style={{ height: slots * SLOT_HEIGHT - 2, top: 1 }}
     >
       <div className="flex items-start justify-between p-1 h-full">
@@ -216,6 +292,7 @@ export default function SchedulesPage() {
   const [conflictError, setConflictError] = useState(null);
   const [semester, setSemester] = useState('1st Semester');
   const [schoolYear, setSchoolYear] = useState('2024-2025');
+  const [courseColors, setCourseColors] = useState({}); // courseId → COLOR_PALETTE entry
   const gridRef = useRef();
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
@@ -233,9 +310,25 @@ export default function SchedulesPage() {
 
   /* fetch courses for selected faculty */
   useEffect(() => {
-    if (!selectedFaculty) { setCourses([]); return; }
+    if (!selectedFaculty) { setCourses([]); setCourseColors({}); return; }
     api.get('/courses').then(({ data }) => {
-      setCourses(data.filter(c => c.faculty?._id === selectedFaculty));
+      const filtered = data.filter(c => c.faculty?._id === selectedFaculty);
+      setCourses(filtered);
+      // Auto-assign colors to courses that don't have one yet
+      setCourseColors(prev => {
+        const next = { ...prev };
+        const usedIds = new Set(Object.values(next).map(c => c.id));
+        filtered.forEach(course => {
+          if (!next[course._id]) {
+            const available = COLOR_PALETTE.find(c => !usedIds.has(c.id));
+            if (available) {
+              next[course._id] = available;
+              usedIds.add(available.id);
+            }
+          }
+        });
+        return next;
+      });
     });
   }, [selectedFaculty]);
 
@@ -259,6 +352,13 @@ export default function SchedulesPage() {
     if (!grid[s.day]) grid[s.day] = {};
     grid[s.day][s.startTime] = s;
   });
+
+  /* set of color IDs currently in use */
+  const usedColorIds = new Set(Object.values(courseColors).map(c => c.id));
+
+  function handleColorChange(courseId, color) {
+    setCourseColors(prev => ({ ...prev, [courseId]: color }));
+  }
 
   /* drag handlers */
   function handleDragStart({ active }) {
@@ -566,6 +666,9 @@ export default function SchedulesPage() {
                     course={course}
                     isDragging={activeDrag?._id === course._id}
                     scheduledDays={scheduledDaysMap[course._id] || []}
+                    color={courseColors[course._id] || null}
+                    usedColorIds={usedColorIds}
+                    onColorChange={(c) => handleColorChange(course._id, c)}
                   />
                 ))}
               </div>
@@ -609,6 +712,7 @@ export default function SchedulesPage() {
                               <ScheduleBlock
                                 schedule={sched}
                                 onRemove={handleRemove}
+                                color={courseColors[sched.course?._id] || null}
                               />
                             )}
                           </GridCell>
