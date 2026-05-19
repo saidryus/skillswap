@@ -284,7 +284,7 @@ function DropModal({ pending, onConfirm, onCancel }) {
 /* ── Main page ──────────────────────────────────────────────────── */
 const LS_KEY = 'trophe_schedule_colors';
 
-function loadColors() {
+function loadAllColors() {
   try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch { return {}; }
 }
 
@@ -298,15 +298,26 @@ export default function SchedulesPage() {
   const [conflictError, setConflictError] = useState(null);
   const [semester, setSemester] = useState('1st Semester');
   const [schoolYear, setSchoolYear] = useState('2024-2025');
-  const [courseColors, setCourseColors] = useState(loadColors); // courseId → COLOR_PALETTE entry
+  // allColors: { [facultyId]: { [courseId]: colorEntry } }
+  const [allColors, setAllColors] = useState(loadAllColors);
   const gridRef = useRef();
+
+  // Colors for the currently selected faculty only
+  const courseColors = selectedFaculty ? (allColors[selectedFaculty] || {}) : {};
+
+  function setCourseColors(updater) {
+    setAllColors(prev => {
+      const facColors = typeof updater === 'function' ? updater(prev[selectedFaculty] || {}) : updater;
+      return { ...prev, [selectedFaculty]: facColors };
+    });
+  }
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
   /* persist colors to localStorage whenever they change */
   useEffect(() => {
-    localStorage.setItem(LS_KEY, JSON.stringify(courseColors));
-  }, [courseColors]);
+    localStorage.setItem(LS_KEY, JSON.stringify(allColors));
+  }, [allColors]);
 
   /* fetch faculty + all schedules */
   useEffect(() => {
