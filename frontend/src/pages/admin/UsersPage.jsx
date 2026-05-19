@@ -69,9 +69,20 @@ export default function UsersPage() {
     if (search) result = result.filter(u =>
       `${u.firstName} ${u.lastName} ${u.email} ${u.studentId || ''}`.toLowerCase().includes(search.toLowerCase())
     );
-    if (roleFilter) result = result.filter(u => u.role === roleFilter);
+    if (roleFilter === 'subadmin') result = result.filter(u => u.role === 'admin' && !u.isSuperAdmin);
+    else if (roleFilter === 'superadmin') result = result.filter(u => u.isSuperAdmin);
+    else if (roleFilter) result = result.filter(u => u.role === roleFilter);
     setFiltered(result);
   }, [search, roleFilter, users]);
+
+  // Counts for category tabs
+  const counts = {
+    all:        users.length,
+    student:    users.filter(u => u.role === 'student').length,
+    faculty:    users.filter(u => u.role === 'faculty').length,
+    subadmin:   users.filter(u => u.role === 'admin' && !u.isSuperAdmin).length,
+    superadmin: users.filter(u => u.isSuperAdmin).length,
+  };
 
   const openCreate = () => { setEditUser(null); setForm(emptyForm); setModalOpen(true); };
   const openEdit = (u) => {
@@ -171,9 +182,37 @@ export default function UsersPage() {
         }
       />
 
-      {/* Filters */}
-      <div className="flex gap-3 mb-6">
-        <div className="relative flex-1 max-w-xs">
+      {/* Category tabs + search */}
+      <div className="flex flex-wrap items-center gap-3 mb-6">
+        {/* Role tabs */}
+        <div className="flex gap-1 bg-slate-800 border border-slate-700 rounded-lg p-1">
+          {[
+            { key: '',           label: 'All',        count: counts.all },
+            { key: 'student',    label: 'Students',   count: counts.student },
+            { key: 'faculty',    label: 'Faculty',    count: counts.faculty },
+            { key: 'subadmin',   label: 'Sub-Admin',  count: counts.subadmin },
+            ...(isSuperAdmin ? [{ key: 'superadmin', label: 'Super Admin', count: counts.superadmin }] : []),
+          ].map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setRoleFilter(tab.key)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors
+                ${roleFilter === tab.key
+                  ? 'bg-blue-600 text-white shadow'
+                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-700'
+                }`}
+            >
+              {tab.label}
+              <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold
+                ${roleFilter === tab.key ? 'bg-blue-500/50 text-blue-100' : 'bg-slate-700 text-slate-400'}`}>
+                {tab.count}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Search */}
+        <div className="relative flex-1 max-w-xs ml-auto">
           <HiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
           <input
             value={search}
@@ -182,16 +221,6 @@ export default function UsersPage() {
             placeholder="Search users..."
           />
         </div>
-        <select
-          value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)}
-          className="input-field w-36 py-2"
-        >
-          <option value="">All Roles</option>
-          <option value="admin">Admin</option>
-          <option value="faculty">Faculty</option>
-          <option value="student">Student</option>
-        </select>
       </div>
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card p-0 overflow-hidden">
