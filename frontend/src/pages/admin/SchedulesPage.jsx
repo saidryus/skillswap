@@ -282,6 +282,12 @@ function DropModal({ pending, onConfirm, onCancel }) {
 }
 
 /* ── Main page ──────────────────────────────────────────────────── */
+const LS_KEY = 'trophe_schedule_colors';
+
+function loadColors() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch { return {}; }
+}
+
 export default function SchedulesPage() {
   const [faculty, setFaculty] = useState([]);
   const [selectedFaculty, setSelectedFaculty] = useState('');
@@ -292,10 +298,15 @@ export default function SchedulesPage() {
   const [conflictError, setConflictError] = useState(null);
   const [semester, setSemester] = useState('1st Semester');
   const [schoolYear, setSchoolYear] = useState('2024-2025');
-  const [courseColors, setCourseColors] = useState({}); // courseId → COLOR_PALETTE entry
+  const [courseColors, setCourseColors] = useState(loadColors); // courseId → COLOR_PALETTE entry
   const gridRef = useRef();
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
+
+  /* persist colors to localStorage whenever they change */
+  useEffect(() => {
+    localStorage.setItem(LS_KEY, JSON.stringify(courseColors));
+  }, [courseColors]);
 
   /* fetch faculty + all schedules */
   useEffect(() => {
@@ -310,11 +321,11 @@ export default function SchedulesPage() {
 
   /* fetch courses for selected faculty */
   useEffect(() => {
-    if (!selectedFaculty) { setCourses([]); setCourseColors({}); return; }
+    if (!selectedFaculty) { setCourses([]); return; }
     api.get('/courses').then(({ data }) => {
       const filtered = data.filter(c => c.faculty?._id === selectedFaculty);
       setCourses(filtered);
-      // Auto-assign colors to courses that don't have one yet
+      // Auto-assign colors only to courses that don't already have one saved
       setCourseColors(prev => {
         const next = { ...prev };
         const usedIds = new Set(Object.values(next).map(c => c.id));
