@@ -537,7 +537,7 @@ export default function SchedulesPage() {
 <head>
   <title>${title} – ${facName}</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     body { font-family: Arial, sans-serif; padding: 16px; color: #111; }
     h2 { text-align:center; font-size:16px; margin-bottom:3px; }
     .sub { text-align:center; color:#555; font-size:12px; margin-bottom:14px; }
