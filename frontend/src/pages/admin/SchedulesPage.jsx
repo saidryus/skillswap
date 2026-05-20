@@ -483,9 +483,13 @@ export default function SchedulesPage() {
     });
 
     const CELL_H = 28; // px per 30-min slot
-    const COLORS = ['#2563eb','#9333ea','#16a34a','#ea580c','#db2777','#0d9488','#dc2626','#ca8a04','#4f46e5','#0891b2','#e11d48','#65a30d'];
+    const FALLBACK_COLORS = ['#2563eb','#9333ea','#16a34a','#ea580c','#db2777','#0d9488','#dc2626','#ca8a04','#4f46e5','#0891b2','#e11d48','#65a30d'];
+
+    // Use the user-chosen colors from the plotter; fall back to palette if not set
     const courseColorMap = {};
-    uniqueCourses.forEach((c, i) => { courseColorMap[c._id] = COLORS[i % COLORS.length]; });
+    uniqueCourses.forEach((c, i) => {
+      courseColorMap[c._id] = courseColors[c._id]?.hex || FALLBACK_COLORS[i % FALLBACK_COLORS.length];
+    });
 
     const headerCells = DAYS.map(d =>
       `<th style="background:${accentColor};color:#fff;padding:6px 4px;font-size:11px;text-align:center;border:1px solid #ddd;">${d.slice(0,3).toUpperCase()}</th>`
