@@ -79,7 +79,7 @@ export default function FacultyAttendancePage() {
       if (exportFrom) params.append('dateFrom', exportFrom);
       if (exportTo) params.append('dateTo', exportTo);
 
-      const token = localStorage.getItem('token');
+      const token = JSON.parse(localStorage.getItem('trophe_user'))?.token;
       const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/attendance/export?${params}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
