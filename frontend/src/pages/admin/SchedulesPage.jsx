@@ -8,8 +8,6 @@ import { HiPrinter, HiDownload, HiTrash, HiX, HiExclamation, HiCheck } from 'rea
 import PageHeader from '../../components/PageHeader';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 
 /* ── Constants ─────────────────────────────────────────────────── */
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -438,157 +436,151 @@ export default function SchedulesPage() {
   }
 
   /* PDF export */
-  function handleDownloadPDF() {
-    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-    const fac = faculty.find(f => f._id === selectedFaculty);
-    const facName = fac ? `${fac.firstName} ${fac.lastName}` : 'All Faculty';
-
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.text('TROPHE UNIVERSITY — Class Schedule', 148, 15, { align: 'center' });
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Faculty: ${facName}   |   ${semester}   |   S.Y. ${schoolYear}`, 148, 22, { align: 'center' });
-
-    const rows = [];
-    placedSchedules.forEach(s => {
-      const [sh, sm] = s.startTime.split(':').map(Number);
-      const [eh, em] = s.endTime.split(':').map(Number);
-      const hrs = ((eh * 60 + em) - (sh * 60 + sm)) / 60;
-      rows.push([
-        s.course?.courseCode || '',
-        s.course?.courseName || '',
-        s.course?.type === 'laboratory' ? 'Lab' : 'Lec',
-        s.day,
-        `${s.startTime} – ${s.endTime}`,
-        s.room || 'TBA',
-        s.course?.units ?? '',
-        `${hrs}h`,
-      ]);
+  /* ── Shared grid HTML builder ─────────────────────────────────── */
+  function buildGridHtml({ facName, title, accentColor, schedules: sched, isLab }) {
+    // Only show time rows that have content + a small buffer around them
+    const usedSlots = new Set();
+    sched.forEach(s => {
+      const si = TIME_SLOTS.indexOf(s.startTime);
+      const slots = durationSlots(s.startTime, s.endTime);
+      for (let i = 0; i < slots; i++) usedSlots.add(si + i);
     });
-    rows.sort((a, b) => DAYS.indexOf(a[3]) - DAYS.indexOf(b[3]) || a[4].localeCompare(b[4]));
+    if (usedSlots.size === 0) return null;
+    const minSlot = Math.max(0, Math.min(...usedSlots) - 2);
+    const maxSlot = Math.min(TIME_SLOTS.length - 1, Math.max(...usedSlots) + 2);
+    const visibleSlots = TIME_SLOTS.slice(minSlot, maxSlot + 1);
 
-    // Compute unique-course totals (avoid double-counting multi-day courses)
-    const seenCourseIds = new Set();
-    let totalUnits = 0;
-    placedSchedules.forEach(s => {
-      const cid = s.course?._id;
-      if (cid && !seenCourseIds.has(cid)) {
-        seenCourseIds.add(cid);
-        totalUnits += s.course?.units || 0;
-      }
+    // Build a grid: for each day+slot, what schedule block starts here?
+    // Track which cells are "consumed" by a rowspan above
+    const consumed = {}; // `${day}-${slotIdx}` → true
+    const cellMap = {}; // `${day}-${slotIdx}` → { schedule, span }
+    sched.forEach(s => {
+      const si = TIME_SLOTS.indexOf(s.startTime);
+      const span = durationSlots(s.startTime, s.endTime);
+      cellMap[`${s.day}-${si}`] = { schedule: s, span };
+      for (let i = 1; i < span; i++) consumed[`${s.day}-${si + i}`] = true;
     });
-    const totalHrs = placedSchedules.reduce((sum, s) => {
-      const [sh, sm] = s.startTime.split(':').map(Number);
-      const [eh, em] = s.endTime.split(':').map(Number);
-      return sum + ((eh * 60 + em) - (sh * 60 + sm)) / 60;
-    }, 0);
-
-    autoTable(doc, {
-      startY: 28,
-      head: [['Code', 'Course Name', 'Type', 'Day', 'Time', 'Room', 'Units', 'Hrs']],
-      body: rows,
-      foot: [['', 'TOTALS', '', '', '', '', totalUnits, `${totalHrs}h/wk`]],
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold' },
-      footStyles: { fillColor: [241, 245, 249], textColor: [30, 41, 59], fontStyle: 'bold' },
-      alternateRowStyles: { fillColor: [248, 250, 252] },
-    });
-
-    doc.save(`Schedule_${facName.replace(' ', '_')}_${semester}.pdf`);
-  }
-
-  function handlePrint() {
-    const fac = faculty.find(f => f._id === selectedFaculty);
-    const facName = fac ? `${fac.firstName} ${fac.lastName}` : '';
-
-    const sorted = [...placedSchedules].sort(
-      (a, b) => DAYS.indexOf(a.day) - DAYS.indexOf(b.day) || a.startTime.localeCompare(b.startTime)
-    );
 
     // Totals
-    const seenCourseIds = new Set();
+    const seenIds = new Set();
     let totalUnits = 0;
-    placedSchedules.forEach(s => {
+    sched.forEach(s => {
       const cid = s.course?._id;
-      if (cid && !seenCourseIds.has(cid)) {
-        seenCourseIds.add(cid);
-        totalUnits += s.course?.units || 0;
-      }
+      if (cid && !seenIds.has(cid)) { seenIds.add(cid); totalUnits += s.course?.units || 0; }
     });
-    const totalHrs = placedSchedules.reduce((sum, s) => {
+    const totalHrs = sched.reduce((sum, s) => {
       const [sh, sm] = s.startTime.split(':').map(Number);
       const [eh, em] = s.endTime.split(':').map(Number);
       return sum + ((eh * 60 + em) - (sh * 60 + sm)) / 60;
     }, 0);
 
-    const rows = sorted.map(s => {
-      const [sh, sm] = s.startTime.split(':').map(Number);
-      const [eh, em] = s.endTime.split(':').map(Number);
-      const hrs = ((eh * 60 + em) - (sh * 60 + sm)) / 60;
-      const isLab = s.course?.type === 'laboratory';
-      const typeStyle = isLab
-        ? 'background:#f3e8ff;color:#7e22ce;'
-        : 'background:#dcfce7;color:#15803d;';
-      return `
-        <tr>
-          <td>${s.course?.courseCode || ''}</td>
-          <td>${s.course?.courseName || ''}</td>
-          <td><span style="font-size:11px;font-weight:600;padding:2px 7px;border-radius:999px;${typeStyle}">${isLab ? 'Lab' : 'Lec'}</span></td>
-          <td>${s.day}</td>
-          <td>${s.startTime} – ${s.endTime}</td>
-          <td>${s.room || 'TBA'}</td>
-          <td style="text-align:center">${s.course?.units ?? ''}</td>
-          <td style="text-align:center">${hrs}h</td>
-        </tr>
-      `;
+    // Course legend
+    const uniqueCourses = [];
+    const seen = new Set();
+    sched.forEach(s => {
+      const cid = s.course?._id;
+      if (cid && !seen.has(cid)) { seen.add(cid); uniqueCourses.push(s.course); }
+    });
+
+    const CELL_H = 28; // px per 30-min slot
+    const COLORS = ['#2563eb','#9333ea','#16a34a','#ea580c','#db2777','#0d9488','#dc2626','#ca8a04','#4f46e5','#0891b2','#e11d48','#65a30d'];
+    const courseColorMap = {};
+    uniqueCourses.forEach((c, i) => { courseColorMap[c._id] = COLORS[i % COLORS.length]; });
+
+    const headerCells = DAYS.map(d =>
+      `<th style="background:${accentColor};color:#fff;padding:6px 4px;font-size:11px;text-align:center;border:1px solid #ddd;">${d.slice(0,3).toUpperCase()}</th>`
+    ).join('');
+
+    const bodyRows = visibleSlots.map((time, vi) => {
+      const absIdx = minSlot + vi;
+      const isHour = time.endsWith(':00');
+      const timeLabel = isHour ? `<span style="font-size:10px;color:#666;">${time}</span>` : '';
+
+      const dayCells = DAYS.map(day => {
+        const key = `${day}-${absIdx}`;
+        if (consumed[key]) return ''; // covered by rowspan above
+        const cell = cellMap[key];
+        if (!cell) {
+          return `<td style="border:1px solid #e5e7eb;height:${CELL_H}px;"></td>`;
+        }
+        const { schedule: s, span } = cell;
+        const bg = courseColorMap[s.course?._id] || accentColor;
+        const [sh, sm] = s.startTime.split(':').map(Number);
+        const [eh, em] = s.endTime.split(':').map(Number);
+        const hrs = ((eh * 60 + em) - (sh * 60 + sm)) / 60;
+        return `<td rowspan="${span}" style="border:1px solid #e5e7eb;background:${bg};color:#fff;padding:4px 5px;vertical-align:top;border-radius:4px;">
+          <div style="font-weight:700;font-size:10px;line-height:1.3;">${s.course?.courseCode || ''}</div>
+          <div style="font-size:9px;opacity:.85;line-height:1.3;">${s.startTime}–${s.endTime}</div>
+          ${s.room ? `<div style="font-size:9px;opacity:.75;">${s.room}</div>` : ''}
+        </td>`;
+      }).join('');
+
+      return `<tr>
+        <td style="border:1px solid #e5e7eb;padding:2px 6px;white-space:nowrap;background:#f9fafb;height:${CELL_H}px;vertical-align:top;">${timeLabel}</td>
+        ${dayCells}
+      </tr>`;
     }).join('');
 
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Schedule – ${facName}</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 20px; color: #000; }
-          h2 { text-align: center; margin-bottom: 4px; }
-          p  { text-align: center; color: #555; margin-bottom: 16px; font-size: 13px; }
-          table { width: 100%; border-collapse: collapse; font-size: 12px; }
-          th { background: #1d4ed8; color: white; padding: 8px 10px; text-align: left; }
-          td { padding: 7px 10px; border-bottom: 1px solid #e2e8f0; }
-          tr:nth-child(even) td { background: #f8fafc; }
-          tfoot td { background: #f1f5f9; font-weight: bold; border-top: 2px solid #cbd5e1; }
-          @page { size: A4 landscape; margin: 15mm; }
-        </style>
-      </head>
-      <body>
-        <h2>TROPHE UNIVERSITY — Class Schedule</h2>
-        <p>Faculty: ${facName} &nbsp;|&nbsp; ${semester} &nbsp;|&nbsp; S.Y. ${schoolYear}</p>
-        <table>
-          <thead>
-            <tr>
-              <th>Code</th><th>Course Name</th><th>Type</th><th>Day</th>
-              <th>Time</th><th>Room</th><th style="text-align:center">Units</th><th style="text-align:center">Hrs</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-          <tfoot>
-            <tr>
-              <td colspan="6" style="text-align:right">TOTALS:</td>
-              <td style="text-align:center">${totalUnits}</td>
-              <td style="text-align:center">${totalHrs}h/wk</td>
-            </tr>
-          </tfoot>
-        </table>
-      </body>
-      </html>
-    `;
+    const legendItems = uniqueCourses.map(c => {
+      const color = courseColorMap[c._id];
+      return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+        <div style="width:12px;height:12px;border-radius:3px;background:${color};flex-shrink:0;"></div>
+        <span style="font-size:11px;"><strong>${c.courseCode}</strong> — ${c.courseName} (${c.units} units)</span>
+      </div>`;
+    }).join('');
 
+    return `<!DOCTYPE html><html>
+<head>
+  <title>${title} – ${facName}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; padding: 16px; color: #111; }
+    h2 { text-align:center; font-size:16px; margin-bottom:3px; }
+    .sub { text-align:center; color:#555; font-size:12px; margin-bottom:14px; }
+    table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+    .summary { margin-top:14px; display:flex; gap:24px; justify-content:flex-end; font-size:12px; }
+    .summary span { font-weight:700; }
+    .legend { margin-top:12px; }
+    .legend-title { font-size:11px; font-weight:700; color:#555; text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px; }
+    @page { size: A4 landscape; margin: 12mm; }
+  </style>
+</head>
+<body>
+  <h2>TROPHE UNIVERSITY — ${title}</h2>
+  <p class="sub">Faculty: ${facName} &nbsp;|&nbsp; ${semester} &nbsp;|&nbsp; S.Y. ${schoolYear}</p>
+  <table>
+    <thead>
+      <tr>
+        <th style="background:${accentColor};color:#fff;padding:6px 4px;font-size:11px;width:52px;border:1px solid #ddd;">Time</th>
+        ${headerCells}
+      </tr>
+    </thead>
+    <tbody>${bodyRows}</tbody>
+  </table>
+  <div class="summary">
+    Total Units: <span>${totalUnits}</span> &nbsp;&nbsp; Total Hours/Week: <span>${totalHrs}h</span>
+  </div>
+  <div class="legend">
+    <div class="legend-title">Courses</div>
+    ${legendItems}
+  </div>
+</body></html>`;
+  }
+
+  function handleDownloadPDF() {
+    const fac = faculty.find(f => f._id === selectedFaculty);
+    const facName = fac ? `${fac.firstName} ${fac.lastName}` : 'Faculty';
+    const html = buildGridHtml({ facName, title: 'Class Schedule', accentColor: '#1d4ed8', schedules: placedSchedules, isLab: false });
+    if (!html) { toast.error('No schedules to export'); return; }
     const win = window.open('', '_blank');
     win.document.write(html);
     win.document.close();
     win.focus();
-    setTimeout(() => { win.print(); win.close(); }, 500);
+    setTimeout(() => { win.print(); win.close(); }, 600);
+  }
+
+  function handlePrint() {
+    handleDownloadPDF();
   }
 
   const conflictColors = {

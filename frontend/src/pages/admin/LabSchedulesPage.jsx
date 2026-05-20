@@ -8,8 +8,6 @@ import { HiPrinter, HiDownload, HiTrash, HiX, HiExclamation, HiBeaker, HiCheck }
 import PageHeader from '../../components/PageHeader';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 
 /* ── Constants ─────────────────────────────────────────────────── */
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -446,144 +444,141 @@ export default function LabSchedulesPage() {
   }
 
   /* PDF export */
-  function handleDownloadPDF() {
-    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-    const fac = faculty.find(f => f._id === selectedFaculty);
-    const facName = fac ? `${fac.firstName} ${fac.lastName}` : 'All Faculty';
-
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.text('TROPHE UNIVERSITY — Laboratory Schedule', 148, 15, { align: 'center' });
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`Faculty: ${facName}   |   ${semester}   |   S.Y. ${schoolYear}`, 148, 22, { align: 'center' });
-
-    const rows = placedSchedules.map(s => {
-      const [sh, sm] = s.startTime.split(':').map(Number);
-      const [eh, em] = s.endTime.split(':').map(Number);
-      const hrs = ((eh * 60 + em) - (sh * 60 + sm)) / 60;
-      return [
-        s.course?.courseCode || '',
-        s.course?.courseName || '',
-        s.day,
-        `${s.startTime} – ${s.endTime}`,
-        s.room || 'TBA',
-        s.course?.units ?? '',
-        `${hrs}h`,
-      ];
+  /* ── Shared grid HTML builder ─────────────────────────────────── */
+  function buildGridHtml({ facName, title, accentColor, schedules: sched }) {
+    const usedSlots = new Set();
+    sched.forEach(s => {
+      const si = TIME_SLOTS.indexOf(s.startTime);
+      const slots = durationSlots(s.startTime, s.endTime);
+      for (let i = 0; i < slots; i++) usedSlots.add(si + i);
     });
-    rows.sort((a, b) => DAYS.indexOf(a[2]) - DAYS.indexOf(b[2]) || a[3].localeCompare(b[3]));
+    if (usedSlots.size === 0) return null;
+    const minSlot = Math.max(0, Math.min(...usedSlots) - 2);
+    const maxSlot = Math.min(TIME_SLOTS.length - 1, Math.max(...usedSlots) + 2);
+    const visibleSlots = TIME_SLOTS.slice(minSlot, maxSlot + 1);
+
+    const consumed = {};
+    const cellMap = {};
+    sched.forEach(s => {
+      const si = TIME_SLOTS.indexOf(s.startTime);
+      const span = durationSlots(s.startTime, s.endTime);
+      cellMap[`${s.day}-${si}`] = { schedule: s, span };
+      for (let i = 1; i < span; i++) consumed[`${s.day}-${si + i}`] = true;
+    });
 
     const seenIds = new Set();
     let totalUnits = 0;
-    placedSchedules.forEach(s => {
+    sched.forEach(s => {
       const cid = s.course?._id;
       if (cid && !seenIds.has(cid)) { seenIds.add(cid); totalUnits += s.course?.units || 0; }
     });
-    const totalHrs = placedSchedules.reduce((sum, s) => {
+    const totalHrs = sched.reduce((sum, s) => {
       const [sh, sm] = s.startTime.split(':').map(Number);
       const [eh, em] = s.endTime.split(':').map(Number);
       return sum + ((eh * 60 + em) - (sh * 60 + sm)) / 60;
     }, 0);
 
-    autoTable(doc, {
-      startY: 28,
-      head: [['Code', 'Course Name', 'Day', 'Time', 'Lab Room', 'Units', 'Hrs']],
-      body: rows,
-      foot: [['', 'TOTALS', '', '', '', totalUnits, `${totalHrs}h/wk`]],
-      styles: { fontSize: 9 },
-      headStyles: { fillColor: [126, 34, 206], textColor: 255, fontStyle: 'bold' },
-      footStyles: { fillColor: [245, 243, 255], textColor: [88, 28, 135], fontStyle: 'bold' },
-      alternateRowStyles: { fillColor: [250, 245, 255] },
-    });
-
-    doc.save(`LabSchedule_${facName.replace(' ', '_')}_${semester}.pdf`);
-  }
-
-  function handlePrint() {
-    const fac = faculty.find(f => f._id === selectedFaculty);
-    const facName = fac ? `${fac.firstName} ${fac.lastName}` : '';
-
-    const sorted = [...placedSchedules].sort(
-      (a, b) => DAYS.indexOf(a.day) - DAYS.indexOf(b.day) || a.startTime.localeCompare(b.startTime)
-    );
-
-    const seenIds = new Set();
-    let totalUnits = 0;
-    placedSchedules.forEach(s => {
+    const uniqueCourses = [];
+    const seen = new Set();
+    sched.forEach(s => {
       const cid = s.course?._id;
-      if (cid && !seenIds.has(cid)) { seenIds.add(cid); totalUnits += s.course?.units || 0; }
+      if (cid && !seen.has(cid)) { seen.add(cid); uniqueCourses.push(s.course); }
     });
-    const totalHrs = placedSchedules.reduce((sum, s) => {
-      const [sh, sm] = s.startTime.split(':').map(Number);
-      const [eh, em] = s.endTime.split(':').map(Number);
-      return sum + ((eh * 60 + em) - (sh * 60 + sm)) / 60;
-    }, 0);
 
-    const rows = sorted.map(s => {
-      const [sh, sm] = s.startTime.split(':').map(Number);
-      const [eh, em] = s.endTime.split(':').map(Number);
-      const hrs = ((eh * 60 + em) - (sh * 60 + sm)) / 60;
-      return `
-        <tr>
-          <td>${s.course?.courseCode || ''}</td>
-          <td>${s.course?.courseName || ''}</td>
-          <td>${s.day}</td>
-          <td>${s.startTime} – ${s.endTime}</td>
-          <td>${s.room || 'TBA'}</td>
-          <td style="text-align:center">${s.course?.units ?? ''}</td>
-          <td style="text-align:center">${hrs}h</td>
-        </tr>
-      `;
+    const CELL_H = 28;
+    const COLORS = ['#9333ea','#2563eb','#16a34a','#ea580c','#db2777','#0d9488','#dc2626','#ca8a04','#4f46e5','#0891b2','#e11d48','#65a30d'];
+    const courseColorMap = {};
+    uniqueCourses.forEach((c, i) => { courseColorMap[c._id] = COLORS[i % COLORS.length]; });
+
+    const headerCells = DAYS.map(d =>
+      `<th style="background:${accentColor};color:#fff;padding:6px 4px;font-size:11px;text-align:center;border:1px solid #ddd;">${d.slice(0,3).toUpperCase()}</th>`
+    ).join('');
+
+    const bodyRows = visibleSlots.map((time, vi) => {
+      const absIdx = minSlot + vi;
+      const isHour = time.endsWith(':00');
+      const timeLabel = isHour ? `<span style="font-size:10px;color:#666;">${time}</span>` : '';
+
+      const dayCells = DAYS.map(day => {
+        const key = `${day}-${absIdx}`;
+        if (consumed[key]) return '';
+        const cell = cellMap[key];
+        if (!cell) return `<td style="border:1px solid #e5e7eb;height:${CELL_H}px;"></td>`;
+        const { schedule: s, span } = cell;
+        const bg = courseColorMap[s.course?._id] || accentColor;
+        return `<td rowspan="${span}" style="border:1px solid #e5e7eb;background:${bg};color:#fff;padding:4px 5px;vertical-align:top;border-radius:4px;">
+          <div style="font-weight:700;font-size:10px;line-height:1.3;">🧪 ${s.course?.courseCode || ''}</div>
+          <div style="font-size:9px;opacity:.85;line-height:1.3;">${s.startTime}–${s.endTime}</div>
+          ${s.room ? `<div style="font-size:9px;opacity:.75;">${s.room}</div>` : ''}
+        </td>`;
+      }).join('');
+
+      return `<tr>
+        <td style="border:1px solid #e5e7eb;padding:2px 6px;white-space:nowrap;background:#f9fafb;height:${CELL_H}px;vertical-align:top;">${timeLabel}</td>
+        ${dayCells}
+      </tr>`;
     }).join('');
 
-    const html = `
-      <!DOCTYPE html><html>
-      <head>
-        <title>Lab Schedule – ${facName}</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 20px; color: #000; }
-          h2 { text-align: center; margin-bottom: 4px; }
-          .sub { text-align:center; color:#555; margin-bottom:16px; font-size:13px; }
-          .badge { display:inline-block; background:#f3e8ff; color:#7e22ce; font-size:11px;
-                   font-weight:600; padding:2px 8px; border-radius:999px; margin-bottom:12px; }
-          table { width: 100%; border-collapse: collapse; font-size: 12px; }
-          th { background: #7e22ce; color: white; padding: 8px 10px; text-align: left; }
-          td { padding: 7px 10px; border-bottom: 1px solid #e9d5ff; }
-          tr:nth-child(even) td { background: #faf5ff; }
-          tfoot td { background: #f3e8ff; font-weight: bold; border-top: 2px solid #d8b4fe; }
-          @page { size: A4 landscape; margin: 15mm; }
-        </style>
-      </head>
-      <body>
-        <h2>TROPHE UNIVERSITY — Laboratory Schedule</h2>
-        <p class="sub">Faculty: ${facName} &nbsp;|&nbsp; ${semester} &nbsp;|&nbsp; S.Y. ${schoolYear}</p>
-        <div style="text-align:center"><span class="badge">🧪 Laboratory Courses Only</span></div>
-        <table>
-          <thead>
-            <tr>
-              <th>Code</th><th>Course Name</th><th>Day</th>
-              <th>Time</th><th>Lab Room</th>
-              <th style="text-align:center">Units</th><th style="text-align:center">Hrs</th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-          <tfoot>
-            <tr>
-              <td colspan="5" style="text-align:right">TOTALS:</td>
-              <td style="text-align:center">${totalUnits}</td>
-              <td style="text-align:center">${totalHrs}h/wk</td>
-            </tr>
-          </tfoot>
-        </table>
-      </body></html>
-    `;
+    const legendItems = uniqueCourses.map(c => {
+      const color = courseColorMap[c._id];
+      return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+        <div style="width:12px;height:12px;border-radius:3px;background:${color};flex-shrink:0;"></div>
+        <span style="font-size:11px;"><strong>${c.courseCode}</strong> — ${c.courseName} (${c.units} units)</span>
+      </div>`;
+    }).join('');
 
+    return `<!DOCTYPE html><html>
+<head>
+  <title>${title} – ${facName}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; padding: 16px; color: #111; }
+    h2 { text-align:center; font-size:16px; margin-bottom:3px; }
+    .sub { text-align:center; color:#555; font-size:12px; margin-bottom:14px; }
+    table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+    .summary { margin-top:14px; display:flex; gap:24px; justify-content:flex-end; font-size:12px; }
+    .summary span { font-weight:700; }
+    .legend { margin-top:12px; }
+    .legend-title { font-size:11px; font-weight:700; color:#555; text-transform:uppercase; letter-spacing:.05em; margin-bottom:6px; }
+    @page { size: A4 landscape; margin: 12mm; }
+  </style>
+</head>
+<body>
+  <h2>TROPHE UNIVERSITY — ${title}</h2>
+  <p class="sub">Faculty: ${facName} &nbsp;|&nbsp; ${semester} &nbsp;|&nbsp; S.Y. ${schoolYear}</p>
+  <table>
+    <thead>
+      <tr>
+        <th style="background:${accentColor};color:#fff;padding:6px 4px;font-size:11px;width:52px;border:1px solid #ddd;">Time</th>
+        ${headerCells}
+      </tr>
+    </thead>
+    <tbody>${bodyRows}</tbody>
+  </table>
+  <div class="summary">
+    Total Units: <span>${totalUnits}</span> &nbsp;&nbsp; Total Hours/Week: <span>${totalHrs}h</span>
+  </div>
+  <div class="legend">
+    <div class="legend-title">Laboratory Courses</div>
+    ${legendItems}
+  </div>
+</body></html>`;
+  }
+
+  function handleDownloadPDF() {
+    const fac = faculty.find(f => f._id === selectedFaculty);
+    const facName = fac ? `${fac.firstName} ${fac.lastName}` : 'Faculty';
+    const html = buildGridHtml({ facName, title: 'Laboratory Schedule', accentColor: '#7e22ce', schedules: placedSchedules });
+    if (!html) { toast.error('No schedules to export'); return; }
     const win = window.open('', '_blank');
     win.document.write(html);
     win.document.close();
     win.focus();
-    setTimeout(() => { win.print(); win.close(); }, 500);
+    setTimeout(() => { win.print(); win.close(); }, 600);
+  }
+
+  function handlePrint() {
+    handleDownloadPDF();
   }
 
   const conflictColors = {
