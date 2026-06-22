@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillSwap - Business Roadmap</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: white;
+            padding: 40px 30px;
+        }
+        .page-title {
+            font-size: 20px;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 30px;
+        }
+
+        /* Top timeline row */
+        .timeline-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .timeline-line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #94a3b8;
+            z-index: 0;
+        }
+        .phase-marker {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1;
+            background: white;
+            padding-right: 30px;
+        }
+        .phase-marker:last-child {
+            padding-right: 0;
+            margin-left: auto;
+        }
+        .phase-label {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        .year-badge {
+            background: #f59e0b;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        /* Quarter cards row */
+        .quarters-row {
+            display: flex;
+            gap: 16px;
+        }
+        .quarter-card {
+            flex: 1;
+            border: 1.5px solid #d1d5db;
+            border-radius: 4px;
+            overflow: hidden;
+            background: #fafaf5;
+        }
+        .quarter-top {
+            padding: 12px 16px 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            border-bottom: none;
+        }
+        .quarter-header {
+            background: #1e3a5f;
+            color: white;
+            padding: 10px 16px;
+            font-size: 20px;
+            font-weight: 800;
+        }
+        .quarter-body {
+            padding: 14px 16px;
+        }
+        .quarter-body ul {
+            list-style: none;
+            padding: 0;
+        }
+        .quarter-body li {
+            font-size: 13px;
+            font-weight: 500;
+            color: #1e293b;
+            margin-bottom: 6px;
+            padding-left: 14px;
+            position: relative;
+            line-height: 1.5;
+        }
+        .quarter-body li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: #1e293b;
+        }
+
+        /* Vertical connectors from timeline to cards */
+        .connectors-row {
+            display: flex;
+            margin-bottom: 0;
+            padding-left: 60px;
+        }
+        .connector-v {
+            width: 2px;
+            height: 20px;
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-title">Business Roadmap</div>
+
+    <!-- Timeline markers -->
+    <div class="timeline-row">
+        <div class="timeline-line"></div>
+        <div class="phase-marker">
+            <span class="phase-label">Foundation</span>
+            <div class="year-badge">Y1</div>
+        </div>
+        <div class="phase-marker" style="margin-left: auto;">
+            <span class="phase-label">Growth and Expansion</span>
+            <div class="year-badge">Y2</div>
+        </div>
+        <div class="phase-marker" style="margin-left: auto;">
+            <span class="phase-label">Optimization and Scaling</span>
+            <div class="year-badge">Y3</div>
+        </div>
+    </div>
+
+    <!-- Quarter cards -->
+    <div class="quarters-row">
+        <!-- Q1 -->
+        <div class="quarter-card">
+            <div class="quarter-top">Core platform development</div>
+            <div class="quarter-header">Q1</div>
+            <div class="quarter-body">
+                <ul>
+                    <li>Requirements gathering and analysis</li>
+                    <li>UI/UX wireframes and prototyping</li>
+                    <li>Database design (MongoDB)</li>
+                    <li>Initial system architecture (MERN stack)</li>
+                    <li>Authentication module (JWT)</li>
+                    <li>User management CRUD</li>
+                    <li>Course management module</li>
+                    <li>Student schedule input</li>
+                    <li>Tutor application with grade upload</li>
+                    <li>OCR grade extraction (Tesseract.js)</li>
+                    <li>Admin review and approval workflow</li>
+                    <li>Constraint-based scheduling engine</li>
+                    <li>Begin developing user dashboard</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Q2 -->
+        <div class="quarter-card">
+            <div class="quarter-top">Feature completion and testing</div>
+            <div class="quarter-header">Q2</div>
+            <div class="quarter-body">
+                <ul>
+                    <li>Competency scoring algorithm</li>
+                    <li>Session lifecycle management</li>
+                    <li>Rating and feedback system</li>
+                    <li>Notification system (in-app)</li>
+                    <li>Announcements module</li>
+                    <li>Admin analytics dashboard</li>
+                    <li>Visual timetable comparison</li>
+                    <li>System testing and bug fixes</li>
+                    <li>Alpha deployment to IT department</li>
+                    <li>Qualitative evaluation with users</li>
+                    <li>UI/UX refinements from feedback</li>
+                    <li>Documentation and study write-up</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Q3 -->
+        <div class="quarter-card">
+            <div class="quarter-top">Multi-department expansion</div>
+            <div class="quarter-header">Q3</div>
+            <div class="quarter-body">
+                <ul>
+                    <li>Expand to other academic departments</li>
+                    <li>Student self-registration module</li>
+                    <li>Mobile-responsive optimization</li>
+                    <li>Bulk schedule import (CSV)</li>
+                    <li>Group tutoring sessions support</li>
+                    <li>Session reminders (SMS/email)</li>
+                    <li>Real-time chat integration</li>
+                    <li>Advanced analytics and reports</li>
+                    <li>Faculty monitoring dashboard</li>
+                    <li>Integration with institutional LMS</li>
+                    <li>First-year impact report published</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Q4 -->
+        <div class="quarter-card">
+            <div class="quarter-top">Multi-institution scaling</div>
+            <div class="quarter-header">Q4</div>
+            <div class="quarter-body">
+                <ul>
+                    <li>Multi-institution deployment support</li>
+                    <li>White-label version for other HEIs</li>
+                    <li>API for registrar system integration</li>
+                    <li>Automated schedule sync from enrollment</li>
+                    <li>AI-enhanced tutor recommendation</li>
+                    <li>Video session integration (built-in)</li>
+                    <li>Tutor certification program</li>
+                    <li>CHED partnership for wider adoption</li>
+                    <li>Open-source release for schools</li>
+                    <li>Sustainability and maintenance plan</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

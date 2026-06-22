@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillSwap - Business Model Canvas</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8fafc;
+            padding: 40px;
+        }
+        .title {
+            text-align: center;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #1e293b;
+        }
+        .subtitle {
+            text-align: center;
+            font-size: 16px;
+            color: #64748b;
+            margin-bottom: 30px;
+        }
+        .canvas {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+            grid-template-rows: auto auto auto;
+            gap: 0;
+            border: 2px solid #334155;
+            border-radius: 12px;
+            overflow: hidden;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .cell {
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            min-height: 200px;
+        }
+        .cell-header {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid;
+        }
+        .cell-content {
+            font-size: 14px;
+            font-weight: 500;
+            color: #334155;
+            line-height: 1.7;
+        }
+        .cell-content li {
+            margin-bottom: 6px;
+            list-style: none;
+            position: relative;
+            padding-left: 14px;
+        }
+        .cell-content li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: #94a3b8;
+        }
+
+        /* Grid layout matching standard BMC */
+        .key-partners { grid-column: 1; grid-row: 1 / 3; }
+        .key-activities { grid-column: 2; grid-row: 1; }
+        .key-resources { grid-column: 2; grid-row: 2; }
+        .value-propositions { grid-column: 3; grid-row: 1 / 3; }
+        .customer-relationships { grid-column: 4; grid-row: 1; }
+        .channels { grid-column: 4; grid-row: 2; }
+        .customer-segments { grid-column: 5; grid-row: 1 / 3; }
+        .cost-structure { grid-column: 1 / 4; grid-row: 3; }
+        .revenue-streams { grid-column: 4 / 6; grid-row: 3; }
+
+        /* Colors */
+        .key-partners .cell-header { color: #7c3aed; border-color: #7c3aed; }
+        .key-activities .cell-header { color: #2563eb; border-color: #2563eb; }
+        .key-resources .cell-header { color: #0891b2; border-color: #0891b2; }
+        .value-propositions .cell-header { color: #dc2626; border-color: #dc2626; }
+        .customer-relationships .cell-header { color: #059669; border-color: #059669; }
+        .channels .cell-header { color: #d97706; border-color: #d97706; }
+        .customer-segments .cell-header { color: #be185d; border-color: #be185d; }
+        .cost-structure .cell-header { color: #475569; border-color: #475569; }
+        .revenue-streams .cell-header { color: #16a34a; border-color: #16a34a; }
+    </style>
+</head>
+<body>
+    <div class="title">Business Model Canvas</div>
+    <div class="subtitle">SkillSwap: Peer-to-Peer Academic Tutoring Platform</div>
+
+    <div class="canvas">
+        <!-- Key Partners -->
+        <div class="cell key-partners">
+            <div class="cell-header">Key Partners</div>
+            <div class="cell-content">
+                <ul>
+                    <li>Philippine colleges and universities</li>
+                    <li>Registrar offices (schedule & grade data)</li>
+                    <li>University IT/infrastructure teams</li>
+                    <li>Academic departments</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Key Activities -->
+        <div class="cell key-activities">
+            <div class="cell-header">Key Activities</div>
+            <div class="cell-content">
+                <ul>
+                    <li>System development & maintenance</li>
+                    <li>Tutor application verification</li>
+                    <li>Student schedule encoding</li>
+                    <li>Platform monitoring & bug fixes</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Key Resources -->
+        <div class="cell key-resources">
+            <div class="cell-header">Key Resources</div>
+            <div class="cell-content">
+                <ul>
+                    <li>MERN stack expertise</li>
+                    <li>MongoDB database</li>
+                    <li>Institutional class schedule data</li>
+                    <li>Server infrastructure</li>
+                    <li>Tesseract.js (OCR)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Value Propositions -->
+        <div class="cell value-propositions">
+            <div class="cell-header">Value Propositions</div>
+            <div class="cell-content">
+                <ul>
+                    <li>Automated conflict-free scheduling via constraint engine</li>
+                    <li>Verified competency-based tutor matching</li>
+                    <li>Reduced coordination overhead for peer tutoring</li>
+                    <li>Structured peer learning platform</li>
+                    <li>OCR-assisted grade verification</li>
+                    <li>Visual timetable comparison</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Customer Relationships -->
+        <div class="cell customer-relationships">
+            <div class="cell-header">Customer Relationships</div>
+            <div class="cell-content">
+                <ul>
+                    <li>Self-service platform with admin oversight</li>
+                    <li>Automated in-app notifications</li>
+                    <li>Rating-based quality assurance</li>
+                    <li>Admin-managed onboarding</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Channels -->
+        <div class="cell channels">
+            <div class="cell-header">Channels</div>
+            <div class="cell-content">
+                <ul>
+                    <li>Web application (browser-based)</li>
+                    <li>University intranet/network</li>
+                    <li>Institutional announcements</li>
+                    <li>Social media (awareness)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Customer Segments -->
+        <div class="cell customer-segments">
+            <div class="cell-header">Customer Segments</div>
+            <div class="cell-content">
+                <ul>
+                    <li>College students needing academic help (tutees)</li>
+                    <li>Students with strong grades (potential tutors)</li>
+                    <li>University administrators</li>
+                    <li>Academic coordinators</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Cost Structure -->
+        <div class="cell cost-structure">
+            <div class="cell-header">Cost Structure</div>
+            <div class="cell-content">
+                <ul>
+                    <li>Development time (labor)</li>
+                    <li>Server hosting</li>
+                    <li>Domain registration (optional)</li>
+                    <li>Maintenance overhead</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Revenue Streams -->
+        <div class="cell revenue-streams">
+            <div class="cell-header">Revenue Streams</div>
+            <div class="cell-content">
+                <ul>
+                    <li>Institutional subscription (annual SaaS license per HEI)</li>
+                    <li>One-time implementation & setup fee per institution</li>
+                    <li>Technical support & maintenance contracts</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

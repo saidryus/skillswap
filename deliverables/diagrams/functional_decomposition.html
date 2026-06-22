@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillSwap - Functional Decomposition Diagram</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: white;
+            padding: 40px 20px;
+        }
+        .page-title {
+            font-size: 20px;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 50px;
+        }
+        .diagram {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .root {
+            background: #1e3a5f;
+            color: white;
+            padding: 14px 40px;
+            border-radius: 6px;
+            font-weight: 800;
+            font-size: 17px;
+            text-align: center;
+        }
+        .root-stem {
+            width: 2px;
+            height: 30px;
+            background: #475569;
+        }
+        .rail {
+            position: relative;
+            width: 100%;
+            max-width: 1360px;
+            height: 2px;
+            background: #475569;
+        }
+        .modules {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 1360px;
+            margin-top: 0;
+        }
+        .module {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 120px;
+        }
+        .module-stem {
+            width: 2px;
+            height: 24px;
+            background: #475569;
+        }
+        .module-header {
+            background: #1e3a5f;
+            color: white;
+            padding: 8px 6px;
+            border-radius: 5px;
+            font-size: 11px;
+            font-weight: 700;
+            text-align: center;
+            width: 114px;
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1.3;
+        }
+        /* Stem from module header down to sub-functions */
+        .sub-stem {
+            width: 2px;
+            height: 14px;
+            background: #475569;
+        }
+        .sub-functions {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            width: 114px;
+        }
+        /* Each sub-function has a tiny connector + the box */
+        .sub-fn-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        .sub-fn-connector {
+            width: 2px;
+            height: 6px;
+            background: #94a3b8;
+        }
+        .sub-fn {
+            background: white;
+            border: 1.5px solid #94a3b8;
+            padding: 5px 5px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            color: #1e293b;
+            text-align: center;
+            line-height: 1.3;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-title">Functional Decomposition Diagram</div>
+
+    <div class="diagram">
+        <div class="root">SkillSwap System</div>
+        <div class="root-stem"></div>
+        <div class="rail"></div>
+
+        <div class="modules">
+            <!-- 1. Authentication -->
+            <div class="module">
+                <div class="module-stem"></div>
+                <div class="module-header">Authentication</div>
+                <div class="sub-stem"></div>
+                <div class="sub-functions">
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Login (Student ID + Password)</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Forced Password Change</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">JWT Token Generation</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Token Validation</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Role-Based Access Control</div></div>
+                </div>
+            </div>
+
+            <!-- 2. User Management -->
+            <div class="module">
+                <div class="module-stem"></div>
+                <div class="module-header">User Management</div>
+                <div class="sub-stem"></div>
+                <div class="sub-functions">
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Create Student Account</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Edit Student Account</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Bulk Import (CSV)</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Activate / Deactivate</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Assign Permissions</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Set Availability Cap</div></div>
+                </div>
+            </div>
+
+            <!-- 3. Course Management -->
+            <div class="module">
+                <div class="module-stem"></div>
+                <div class="module-header">Course Management</div>
+                <div class="sub-stem"></div>
+                <div class="sub-functions">
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Add Course</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Edit Course</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Delete Course</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Assign Year Level</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Toggle Active Status</div></div>
+                </div>
+            </div>
+
+            <!-- 4. Schedule Management -->
+            <div class="module">
+                <div class="module-stem"></div>
+                <div class="module-header">Schedule Management</div>
+                <div class="sub-stem"></div>
+                <div class="sub-functions">
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Input Weekly Schedule</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Edit Schedule Entry</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Delete Schedule Entry</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">View Personal Timetable</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Conflict Detection</div></div>
+                </div>
+            </div>
+
+            <!-- 5. Tutor Application -->
+            <div class="module">
+                <div class="module-stem"></div>
+                <div class="module-header">Tutor Application</div>
+                <div class="sub-stem"></div>
+                <div class="sub-functions">
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Select Course to Tutor</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Upload Grade Slip (PDF)</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">OCR Grade Extraction</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Confidence Flagging</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Admin Review</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Approve / Reject</div></div>
+                </div>
+            </div>
+
+            <!-- 6. Tutor Matching -->
+            <div class="module">
+                <div class="module-stem"></div>
+                <div class="module-header">Tutor Matching</div>
+                <div class="sub-stem"></div>
+                <div class="sub-functions">
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Competency Score Calc</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Ratings Weight (35%)</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Grade Weight (25%)</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Completion Rate (20%)</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Sessions Count (20%)</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Course-Based Search</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Availability Cap Check</div></div>
+                </div>
+            </div>
+
+            <!-- 7. Session Scheduling -->
+            <div class="module">
+                <div class="module-stem"></div>
+                <div class="module-header">Session Scheduling</div>
+                <div class="sub-stem"></div>
+                <div class="sub-functions">
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Constraint Engine</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Free Slot Detection</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Timetable Comparison</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Submit Session Request</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Tutor Accept / Reject</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Mark as Completed</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Cancel Session</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Venue Selection</div></div>
+                </div>
+            </div>
+
+            <!-- 8. Rating & Feedback -->
+            <div class="module">
+                <div class="module-stem"></div>
+                <div class="module-header">Rating &amp; Feedback</div>
+                <div class="sub-stem"></div>
+                <div class="sub-functions">
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Star Rating (1–5)</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Comment Submission</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">One Rating Per Session</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Score Aggregation</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">View Tutor Ratings</div></div>
+                </div>
+            </div>
+
+            <!-- 9. Notifications -->
+            <div class="module">
+                <div class="module-stem"></div>
+                <div class="module-header">Notifications</div>
+                <div class="sub-stem"></div>
+                <div class="sub-functions">
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">In-App Alerts</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Event-Driven Triggers</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Read / Unread Status</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Link Navigation</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">9 Notification Types</div></div>
+                </div>
+            </div>
+
+            <!-- 10. Announcements -->
+            <div class="module">
+                <div class="module-stem"></div>
+                <div class="module-header">Announcements</div>
+                <div class="sub-stem"></div>
+                <div class="sub-functions">
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Create Announcement</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Edit Announcement</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Pin / Unpin</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Role-Based Targeting</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Activate / Deactivate</div></div>
+                </div>
+            </div>
+
+            <!-- 11. Dashboard & Analytics -->
+            <div class="module">
+                <div class="module-stem"></div>
+                <div class="module-header">Dashboard &amp; Analytics</div>
+                <div class="sub-stem"></div>
+                <div class="sub-functions">
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Admin Overview Stats</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Student Dashboard</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Session Frequency</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Active Tutors Count</div></div>
+                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Pending Applications</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

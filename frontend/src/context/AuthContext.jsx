@@ -8,7 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem('trophe_user');
+    const stored = localStorage.getItem('skillswap_user');
     if (stored) {
       const parsed = JSON.parse(stored);
       setUser(parsed);
@@ -19,13 +19,13 @@ export const AuthProvider = ({ children }) => {
 
   const login = (userData) => {
     setUser(userData);
-    localStorage.setItem('trophe_user', JSON.stringify(userData));
+    localStorage.setItem('skillswap_user', JSON.stringify(userData));
     api.defaults.headers.common['Authorization'] = `Bearer ${userData.token}`;
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('trophe_user');
+    localStorage.removeItem('skillswap_user');
     delete api.defaults.headers.common['Authorization'];
   };
 

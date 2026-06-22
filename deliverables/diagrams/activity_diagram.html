@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillSwap - Activity Diagram (Session Booking)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8fafc;
+            padding: 40px;
+        }
+        .title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #1e293b;
+        }
+        .subtitle {
+            text-align: center;
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 40px;
+        }
+        .diagram-container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px 60px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .swimlanes {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0;
+            border: 2px solid #334155;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .lane {
+            border-right: 1.5px dashed #cbd5e1;
+            padding: 20px 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            min-height: 900px;
+        }
+        .lane:last-child { border-right: none; }
+        .lane-header {
+            background: #1e293b;
+            color: white;
+            padding: 8px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 6px;
+            text-align: center;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .node {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        .action {
+            background: #eff6ff;
+            border: 2px solid #3b82f6;
+            border-radius: 20px;
+            padding: 10px 16px;
+            font-size: 11px;
+            color: #1e293b;
+            text-align: center;
+            width: 90%;
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .action.system {
+            background: #f5f3ff;
+            border-color: #8b5cf6;
+        }
+        .action.tutor-action {
+            background: #ecfdf5;
+            border-color: #10b981;
+        }
+        .decision {
+            width: 36px;
+            height: 36px;
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            transform: rotate(45deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .decision-label {
+            font-size: 10px;
+            color: #92400e;
+            margin-top: 4px;
+            text-align: center;
+        }
+        .start-node {
+            width: 24px;
+            height: 24px;
+            background: #1e293b;
+            border-radius: 50%;
+        }
+        .end-node {
+            width: 24px;
+            height: 24px;
+            background: white;
+            border: 3px solid #1e293b;
+            border-radius: 50%;
+            position: relative;
+        }
+        .end-node::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            right: 4px;
+            bottom: 4px;
+            background: #1e293b;
+            border-radius: 50%;
+        }
+        .arrow {
+            width: 2px;
+            height: 16px;
+            background: #64748b;
+            position: relative;
+        }
+        .arrow::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 4px solid transparent;
+            border-right: 4px solid transparent;
+            border-top: 6px solid #64748b;
+        }
+        .branch-label {
+            font-size: 9px;
+            color: #64748b;
+            font-style: italic;
+        }
+        .spacer { height: 20px; }
+    </style>
+</head>
+<body>
+    <div class="title">Activity Diagram — Session Booking Workflow</div>
+    <div class="subtitle">SkillSwap: Shows the flow from tutor search to session completion</div>
+
+    <div class="diagram-container">
+        <div class="swimlanes">
+            <!-- TUTEE Lane -->
+            <div class="lane">
+                <div class="lane-header">Tutee (Student)</div>
+                <div class="node"><div class="start-node"></div></div>
+                <div class="arrow"></div>
+                <div class="node"><div class="action">Search for tutor by course</div></div>
+                <div class="arrow"></div>
+                <div class="node"><div class="action">View ranked tutor list (by competency score)</div></div>
+                <div class="arrow"></div>
+                <div class="node"><div class="action">Select a tutor</div></div>
+                <div class="arrow"></div>
+                <div class="node"><div class="action">View visual timetable comparison</div></div>
+                <div class="arrow"></div>
+                <div class="node"><div class="action">Select available time slot</div></div>
+                <div class="arrow"></div>
+                <div class="node"><div class="action">Enter venue details & notes</div></div>
+                <div class="arrow"></div>
+                <div class="node"><div class="action">Submit session request</div></div>
+                <div class="spacer"></div>
+                <div class="spacer"></div>
+                <div class="spacer"></div>
+                <div class="spacer"></div>
+                <div class="spacer"></div>
+                <div class="node"><div class="action">Attend tutoring session</div></div>
+                <div class="arrow"></div>
+                <div class="node"><div class="action">Rate tutor (1-5 stars + comment)</div></div>
+                <div class="arrow"></div>
+                <div class="node"><div class="end-node"></div></div>
+            </div>
+
+            <!-- SYSTEM Lane -->
+            <div class="lane">
+                <div class="lane-header">System (SkillSwap)</div>
+                <div class="spacer"></div>
+                <div class="spacer"></div>
+                <div class="spacer"></div>
+                <div class="node"><div class="action system">Compute competency scores & rank tutors</div></div>
+                <div class="spacer"></div>
+                <div class="spacer"></div>
+                <div class="spacer"></div>
+                <div class="node"><div class="action system">Run constraint engine: cross-reference schedules</div></div>
+                <div class="arrow"></div>
+                <div class="node"><div class="action system">Return mutually free time slots</div></div>
+                <div class="spacer"></div>
+                <div class="spacer"></div>
+                <div class="spacer"></div>
+                <div class="node"><div class="action system">Create session (status: pending)</div></div>
+                <div class="arrow"></div>
+                <div class="node"><div class="action system">Send notification to tutor</div></div>
+                <div class="spacer"></div>
+                <div class="spacer"></div>
+                <div class="node">
+                    <div class="decision"></div>
+                    <div class="decision-label">Tutor response?</div>
+                </div>
+                <div class="spacer"></div>
+                <div class="node"><div class="action system">Update session status (scheduled / rejected)</div></div>
+                <div class="arrow"></div>
+                <div class="node"><div class="action system">Notify tutee of decision</div></div>
+                <div class="spacer"></div>
+                <div class="node"><div class="action system">Update competency score with new rating</div></div>
+            </div>
+
+            <!-- TUTOR Lane -->
+            <div class="lane">
+                <div class="lane-header">Tutor (Student)</div>
+                <div class="spacer"></div>
+                <div class="spacer"></div>
+                <div class="spacer"></div>
+                <div class="spacer"></div>
+                <div class="spacer"></div>
+                <div class="spacer"></div>
+                <div class="spacer"></div>
+                <div class="spacer"></div>
+                <div class="spacer"></div>
+                <div class="spacer"></div>
+                <div class="spacer"></div>
+                <div class="spacer"></div>
+                <div class="spacer"></div>
+                <div class="spacer"></div>
+                <div class="node"><div class="action tutor-action">Receive session request notification</div></div>
+                <div class="arrow"></div>
+                <div class="node"><div class="action tutor-action">Review session details (course, time, tutee)</div></div>
+                <div class="arrow"></div>
+                <div class="node">
+                    <div class="decision"></div>
+                    <div class="decision-label">Accept?</div>
+                </div>
+                <div class="arrow"></div>
+                <div class="node">
+                    <div class="action tutor-action">Accept or Reject session</div>
+                </div>
+                <div class="spacer"></div>
+                <div class="spacer"></div>
+                <div class="node"><div class="action tutor-action">Conduct tutoring session</div></div>
+                <div class="arrow"></div>
+                <div class="node"><div class="action tutor-action">Mark session as completed</div></div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

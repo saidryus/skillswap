@@ -1,56 +1,101 @@
-import { HiMenu, HiPrinter } from 'react-icons/hi';
-import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { HiMenu, HiSun, HiMoon, HiVolumeUp, HiVolumeOff } from 'react-icons/hi';
 import { motion } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
+import { playSound, isSoundEnabled, setSoundEnabled } from '../utils/sounds';
+import { useState } from 'react';
 import NotificationBell from './NotificationBell';
 
 export default function Topbar({ onMenuClick }) {
   const { user } = useAuth();
-  const navigate = useNavigate();
+  const { isDark, toggleTheme } = useTheme();
+  const [soundOn, setSoundOn] = useState(isSoundEnabled());
+
+  const handleThemeToggle = () => {
+    playSound('toggle');
+    toggleTheme();
+  };
+
+  const handleSoundToggle = () => {
+    const newState = !soundOn;
+    setSoundOn(newState);
+    setSoundEnabled(newState);
+    if (newState) playSound('pop');
+  };
 
   return (
-    <header className="h-16 bg-slate-900 border-b border-slate-700/50 flex items-center justify-between px-6 shrink-0">
-      <div className="flex items-center gap-4">
-        <button
-          onClick={onMenuClick}
-          className="text-slate-400 hover:text-slate-100 transition-colors"
+    <header className="h-16 shrink-0 flex items-center justify-between px-4 sm:px-6 
+                        bg-white/80 dark:bg-surface-900/80 backdrop-blur-xl
+                        border-b border-surface-200/50 dark:border-surface-800/50
+                        transition-colors duration-300 z-30 sticky top-0">
+      <div className="flex items-center gap-3">
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={() => { playSound('click'); onMenuClick(); }}
+          className="btn-icon"
+          aria-label="Toggle menu"
         >
-          <HiMenu className="w-6 h-6" />
-        </button>
-        <div>
-          <h1 className="text-sm font-semibold text-slate-100">
-            Smart Campus Management
-          </h1>
-          <p className="text-xs text-slate-400">
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          <HiMenu className="w-5 h-5" />
+        </motion.button>
+        <div className="hidden sm:block">
+          <p className="text-xs font-medium text-surface-500 dark:text-surface-400">
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
           </p>
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        {user?.role === 'student' && (
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => navigate('/print/study-load')}
-            className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg text-sm transition-all duration-200"
+      <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Sound toggle */}
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={handleSoundToggle}
+          className="btn-icon"
+          aria-label={soundOn ? 'Mute sounds' : 'Enable sounds'}
+          title={soundOn ? 'Mute sounds' : 'Enable sounds'}
+        >
+          {soundOn ? <HiVolumeUp className="w-4 h-4" /> : <HiVolumeOff className="w-4 h-4" />}
+        </motion.button>
+
+        {/* Theme toggle */}
+        <motion.button
+          whileTap={{ scale: 0.9 }}
+          onClick={handleThemeToggle}
+          className="btn-icon relative overflow-hidden"
+          aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          <motion.div
+            initial={false}
+            animate={{ rotate: isDark ? 0 : 180, scale: 1 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
           >
-            <HiPrinter className="w-4 h-4" />
-            <span>Study Load</span>
-          </motion.button>
-        )}
+            {isDark ? <HiSun className="w-4 h-4 text-amber-400" /> : <HiMoon className="w-4 h-4 text-primary-500" />}
+          </motion.div>
+        </motion.button>
+
+        {/* Notifications */}
         <NotificationBell />
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-            <span className="text-white text-xs font-semibold">
+
+        {/* User avatar */}
+        <motion.div
+          whileHover={{ scale: 1.02 }}
+          className="flex items-center gap-2.5 pl-2 sm:pl-3 ml-1 sm:ml-2 
+                     border-l border-surface-200 dark:border-surface-700"
+        >
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary-500 to-purple-600 
+                          flex items-center justify-center shadow-glow-sm">
+            <span className="text-white text-xs font-bold">
               {user?.firstName?.[0]}{user?.lastName?.[0]}
             </span>
           </div>
           <div className="hidden sm:block">
-            <p className="text-sm font-medium text-slate-100">{user?.firstName} {user?.lastName}</p>
-            <p className="text-xs text-slate-400 capitalize">{user?.role}</p>
+            <p className="text-sm font-semibold text-surface-800 dark:text-surface-100 leading-tight">
+              {user?.firstName} {user?.lastName}
+            </p>
+            <p className="text-xs text-surface-500 dark:text-surface-400 capitalize leading-tight">
+              {user?.isTutor ? 'Student · Tutor' : user?.role}
+            </p>
           </div>
-        </div>
+        </motion.div>
       </div>
     </header>
   );

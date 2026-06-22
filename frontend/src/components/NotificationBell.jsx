@@ -1,18 +1,21 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { HiBell, HiX, HiCheck, HiCheckCircle } from 'react-icons/hi';
+import { playSound } from '../utils/sounds';
+import { useAuth } from '../context/AuthContext';
 import api from '../utils/api';
 
 const TYPE_ICONS = {
-  schedule_changed:  { emoji: '📅', color: 'text-orange-400' },
-  schedule_created:  { emoji: '📅', color: 'text-blue-400' },
-  instructor_assigned: { emoji: '👨‍🏫', color: 'text-purple-400' },
-  instructor_changed:  { emoji: '👨‍🏫', color: 'text-yellow-400' },
-  announcement:      { emoji: '📢', color: 'text-blue-400' },
-  attendance_marked: { emoji: '✅', color: 'text-green-400' },
-  enrollment:        { emoji: '🎓', color: 'text-green-400' },
-  unenrollment:      { emoji: '🚫', color: 'text-red-400' },
-  course_updated:    { emoji: '📚', color: 'text-indigo-400' },
+  tutor_application:  { emoji: '📝', color: 'text-amber-500' },
+  tutor_approved:     { emoji: '✅', color: 'text-emerald-500' },
+  tutor_rejected:     { emoji: '❌', color: 'text-red-500' },
+  session_request:    { emoji: '📅', color: 'text-blue-500' },
+  session_accepted:   { emoji: '🤝', color: 'text-emerald-500' },
+  session_rejected:   { emoji: '🚫', color: 'text-red-500' },
+  session_cancelled:  { emoji: '❌', color: 'text-orange-500' },
+  session_completed:  { emoji: '🎉', color: 'text-purple-500' },
+  announcement:       { emoji: '📢', color: 'text-blue-500' },
 };
 
 function timeAgo(date) {
@@ -29,10 +32,36 @@ export default function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const panelRef = useRef(null);
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Map notification types to routes
+  const TYPE_ROUTES = {
+    admin: {
+      tutor_application: '/admin/tutor-applications',
+      session_request: '/admin/sessions',
+      session_accepted: '/admin/sessions',
+      session_rejected: '/admin/sessions',
+      session_cancelled: '/admin/sessions',
+      session_completed: '/admin/sessions',
+      announcement: '/admin/announcements',
+    },
+    student: {
+      tutor_approved: '/student/become-tutor',
+      tutor_rejected: '/student/become-tutor',
+      session_request: '/student/my-sessions',
+      session_accepted: '/student/my-sessions',
+      session_rejected: '/student/my-sessions',
+      session_cancelled: '/student/my-sessions',
+      session_completed: '/student/my-sessions',
+      announcement: '/student/announcements',
+    },
+  };
 
   const fetchUnread = async () => {
     try {
       const { data } = await api.get('/notifications/unread-count');
+      if (data.count > unread && unread > 0) playSound('notification');
       setUnread(data.count);
     } catch (_) {}
   };
@@ -47,19 +76,16 @@ export default function NotificationBell() {
     setLoading(false);
   };
 
-  // Poll unread count every 30s
   useEffect(() => {
     fetchUnread();
     const interval = setInterval(fetchUnread, 30000);
     return () => clearInterval(interval);
   }, []);
 
-  // Load full list when panel opens
   useEffect(() => {
     if (open) fetchNotifications();
   }, [open]);
 
-  // Close on outside click
   useEffect(() => {
     const handler = (e) => {
       if (panelRef.current && !panelRef.current.contains(e.target)) setOpen(false);
@@ -70,31 +96,46 @@ export default function NotificationBell() {
 
   const handleMarkRead = async (id) => {
     await api.put(`/notifications/${id}/read`);
-    setNotifications((prev) =>
-      prev.map((n) => (n._id === id ? { ...n, isRead: true } : n))
-    );
+    setNotifications((prev) => prev.map((n) => (n._id === id ? { ...n, isRead: true } : n)));
     setUnread((c) => Math.max(0, c - 1));
+  };
+
+  const handleClickNotification = async (n) => {
+    // Mark as read
+    if (!n.isRead) {
+      await api.put(`/notifications/${n._id}/read`);
+      setNotifications((prev) => prev.map((x) => (x._id === n._id ? { ...x, isRead: true } : x)));
+      setUnread((c) => Math.max(0, c - 1));
+    }
+    // Navigate to relevant page
+    const route = n.link || (TYPE_ROUTES[user?.role] || {})[n.type];
+    if (route) {
+      setOpen(false);
+      navigate(route);
+    }
   };
 
   const handleMarkAllRead = async () => {
     await api.put('/notifications/mark-all-read');
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     setUnread(0);
+    playSound('success');
   };
 
   const handleDelete = async (id) => {
-    await api.delete(`/notifications/${id}`);
     const removed = notifications.find((n) => n._id === id);
     setNotifications((prev) => prev.filter((n) => n._id !== id));
     if (removed && !removed.isRead) setUnread((c) => Math.max(0, c - 1));
+    await api.delete(`/notifications/${id}`);
   };
 
   return (
     <div className="relative" ref={panelRef}>
       {/* Bell button */}
-      <button
-        onClick={() => setOpen(!open)}
-        className="relative p-2 text-slate-400 hover:text-slate-100 hover:bg-slate-700 rounded-lg transition-colors"
+      <motion.button
+        whileTap={{ scale: 0.9 }}
+        onClick={() => { playSound('click'); setOpen(!open); }}
+        className="btn-icon relative"
         aria-label="Notifications"
       >
         <HiBell className="w-5 h-5" />
@@ -105,37 +146,48 @@ export default function NotificationBell() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               exit={{ scale: 0 }}
-              className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center px-1"
+              className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] 
+                         bg-red-500 text-white text-[10px] font-bold rounded-full 
+                         flex items-center justify-center px-1 shadow-lg"
             >
               {unread > 99 ? '99+' : unread}
             </motion.span>
           )}
         </AnimatePresence>
-      </button>
+      </motion.button>
 
       {/* Dropdown panel */}
       <AnimatePresence>
         {open && (
           <motion.div
-            initial={{ opacity: 0, y: -8, scale: 0.97 }}
+            initial={{ opacity: 0, y: -8, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.97 }}
-            transition={{ duration: 0.15 }}
-            className="absolute right-0 top-11 w-96 bg-slate-800 border border-slate-700 rounded-2xl shadow-2xl z-50 overflow-hidden"
+            exit={{ opacity: 0, y: -8, scale: 0.95 }}
+            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute right-0 top-12 w-96 z-50 overflow-hidden
+                       bg-white dark:bg-surface-900 
+                       border border-surface-200 dark:border-surface-800 
+                       rounded-2xl shadow-elevated-lg"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
+            <div className="flex items-center justify-between px-5 py-3.5 
+                            border-b border-surface-200 dark:border-surface-800">
               <div className="flex items-center gap-2">
-                <HiBell className="w-4 h-4 text-blue-400" />
-                <span className="text-sm font-semibold text-slate-100">Notifications</span>
+                <span className="text-sm font-bold text-surface-900 dark:text-white">
+                  Notifications
+                </span>
                 {unread > 0 && (
-                  <span className="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">{unread}</span>
+                  <span className="bg-primary-100 dark:bg-primary-900/50 text-primary-700 dark:text-primary-300 
+                                   text-xs font-bold px-2 py-0.5 rounded-full">
+                    {unread}
+                  </span>
                 )}
               </div>
               {unread > 0 && (
                 <button
                   onClick={handleMarkAllRead}
-                  className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                  className="flex items-center gap-1 text-xs font-medium text-primary-600 dark:text-primary-400 
+                             hover:text-primary-700 dark:hover:text-primary-300 transition-colors"
                 >
                   <HiCheckCircle className="w-3.5 h-3.5" />
                   Mark all read
@@ -147,76 +199,82 @@ export default function NotificationBell() {
             <div className="max-h-[420px] overflow-y-auto">
               {loading ? (
                 <div className="flex items-center justify-center py-10">
-                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500" />
+                  <div className="w-6 h-6 border-2 border-primary-200 dark:border-primary-800 
+                                  border-t-primary-500 rounded-full animate-spin" />
                 </div>
               ) : notifications.length === 0 ? (
-                <div className="text-center py-12">
-                  <HiBell className="w-10 h-10 text-slate-600 mx-auto mb-2" />
-                  <p className="text-sm text-slate-400">No notifications yet</p>
+                <div className="text-center py-12 px-4">
+                  <div className="w-12 h-12 rounded-2xl bg-surface-100 dark:bg-surface-800 
+                                  flex items-center justify-center mx-auto mb-3">
+                    <HiBell className="w-6 h-6 text-surface-400" />
+                  </div>
+                  <p className="text-sm font-medium text-surface-500 dark:text-surface-400">
+                    No notifications yet
+                  </p>
+                  <p className="text-xs text-surface-400 dark:text-surface-500 mt-1">
+                    You're all caught up
+                  </p>
                 </div>
               ) : (
-                notifications.map((n) => {
-                  const icon = TYPE_ICONS[n.type] || { emoji: '🔔', color: 'text-slate-400' };
+                notifications.map((n, idx) => {
+                  const icon = TYPE_ICONS[n.type] || { emoji: '🔔', color: 'text-surface-400' };
+                  const hasRoute = n.link || (TYPE_ROUTES[user?.role] || {})[n.type];
                   return (
                     <motion.div
                       key={n._id}
-                      layout
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className={`flex items-start gap-3 px-4 py-3 border-b border-slate-700/50 hover:bg-slate-700/40 transition-colors group ${!n.isRead ? 'bg-blue-500/5' : ''}`}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.03 }}
+                      onClick={() => handleClickNotification(n)}
+                      className={`flex items-start gap-3 px-5 py-3.5 
+                                  border-b border-surface-100 dark:border-surface-800/50 
+                                  hover:bg-surface-50 dark:hover:bg-surface-800/50 
+                                  transition-colors group
+                                  ${hasRoute ? 'cursor-pointer' : 'cursor-default'}
+                                  ${!n.isRead ? 'bg-primary-50/50 dark:bg-primary-950/20' : ''}`}
                     >
-                      {/* Unread dot */}
-                      <div className="mt-1 shrink-0">
-                        {!n.isRead ? (
-                          <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                        ) : (
-                          <div className="w-2 h-2" />
-                        )}
-                      </div>
-
-                      {/* Icon */}
                       <span className="text-lg shrink-0 mt-0.5">{icon.emoji}</span>
-
-                      {/* Content */}
                       <div className="flex-1 min-w-0">
-                        <p className={`text-sm font-medium ${n.isRead ? 'text-slate-300' : 'text-slate-100'}`}>
+                        <p className={`text-sm font-medium leading-tight
+                          ${n.isRead ? 'text-surface-600 dark:text-surface-300' : 'text-surface-900 dark:text-white'}`}>
                           {n.title}
                         </p>
-                        <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">{n.message}</p>
-                        <p className="text-xs text-slate-500 mt-1">{timeAgo(n.createdAt)}</p>
+                        <p className="text-xs text-surface-500 dark:text-surface-400 mt-0.5 leading-relaxed line-clamp-2">
+                          {n.message}
+                        </p>
+                        <p className="text-[10px] text-surface-400 dark:text-surface-500 mt-1 font-medium">
+                          {timeAgo(n.createdAt)}
+                        </p>
                       </div>
-
-                      {/* Actions */}
-                      <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-0.5 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                         {!n.isRead && (
-                          <button
+                          <motion.button
+                            whileTap={{ scale: 0.8 }}
                             onClick={() => handleMarkRead(n._id)}
-                            className="p-1 text-slate-400 hover:text-green-400 hover:bg-green-500/10 rounded transition-colors"
+                            className="p-1.5 rounded-lg text-surface-400 
+                                       hover:text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 
+                                       transition-colors"
                             title="Mark as read"
                           >
                             <HiCheck className="w-3.5 h-3.5" />
-                          </button>
+                          </motion.button>
                         )}
-                        <button
+                        <motion.button
+                          whileTap={{ scale: 0.8 }}
                           onClick={() => handleDelete(n._id)}
-                          className="p-1 text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                          className="p-1.5 rounded-lg text-surface-400 
+                                     hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 
+                                     transition-colors"
                           title="Delete"
                         >
                           <HiX className="w-3.5 h-3.5" />
-                        </button>
+                        </motion.button>
                       </div>
                     </motion.div>
                   );
                 })
               )}
             </div>
-
-            {/* Footer */}
-            {notifications.length > 0 && (
-              <div className="px-4 py-2 border-t border-slate-700 text-center">
-                <p className="text-xs text-slate-500">{notifications.length} notification{notifications.length !== 1 ? 's' : ''} total</p>
-              </div>
-            )}
           </motion.div>
         )}
       </AnimatePresence>

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillSwap - Program Workflow</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: white;
+            padding: 20px;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .page-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .workflow {
+            display: flex;
+            gap: 0;
+            align-items: flex-start;
+            justify-content: center;
+            height: calc(100vh - 60px);
+        }
+        .column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+        }
+        .process {
+            background: #10b981;
+            color: white;
+            padding: 6px 10px;
+            border-radius: 5px;
+            font-size: 10px;
+            font-weight: 500;
+            text-align: center;
+            width: 220px;
+            line-height: 1.3;
+        }
+        .terminal {
+            background: #10b981;
+            color: white;
+            padding: 5px 24px;
+            border-radius: 50px;
+            font-size: 11px;
+            font-weight: 700;
+            text-align: center;
+        }
+        .diamond-wrap {
+            width: 60px;
+            height: 60px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .diamond {
+            width: 46px;
+            height: 46px;
+            background: #10b981;
+            transform: rotate(45deg);
+        }
+        .diamond-text {
+            position: absolute;
+            color: white;
+            font-size: 8px;
+            font-weight: 700;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .arrow-down {
+            width: 2px;
+            height: 8px;
+            background: #1e293b;
+            position: relative;
+        }
+        .arrow-down::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 3px solid transparent;
+            border-right: 3px solid transparent;
+            border-top: 4px solid #1e293b;
+        }
+        .label-yes {
+            font-size: 8px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+        /* Horizontal connectors between columns */
+        .connector-right {
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+        .h-line {
+            width: 30px;
+            height: 2px;
+            background: #1e293b;
+            position: relative;
+        }
+        .h-line.arrow-right::after {
+            content: '';
+            position: absolute;
+            right: -1px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-top: 3px solid transparent;
+            border-bottom: 3px solid transparent;
+            border-left: 4px solid #1e293b;
+        }
+        .h-line.arrow-left::after {
+            content: '';
+            position: absolute;
+            left: -1px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-top: 3px solid transparent;
+            border-bottom: 3px solid transparent;
+            border-right: 4px solid #1e293b;
+        }
+        /* Branch boxes */
+        .branch-box {
+            background: white;
+            border: 1.5px solid #ef4444;
+            color: #1e293b;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 8px;
+            text-align: center;
+            width: 100px;
+            line-height: 1.3;
+        }
+        .branch-label {
+            font-size: 8px;
+            font-weight: 700;
+            color: #ef4444;
+        }
+        /* Row for decision with branches */
+        .decision-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .phase-label {
+            font-size: 8px;
+            font-weight: 700;
+            color: #6366f1;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-title">SkillSwap — Program Workflow</div>
+
+    <div class="workflow">
+        <!-- COLUMN 1: Admin Setup + Tutor Application -->
+        <div class="column">
+            <div class="phase-label">Setup & Verification</div>
+            <div class="terminal">Start</div>
+            <div class="arrow-down"></div>
+            <div class="process">Admin creates student accounts and inputs class schedules</div>
+            <div class="arrow-down"></div>
+            <div class="process">Admin adds IT department courses (code, name, units, year)</div>
+            <div class="arrow-down"></div>
+            <div class="process">Student logs in with Student ID and default password</div>
+            <div class="arrow-down"></div>
+            <div class="process">System forces password change on first login</div>
+            <div class="arrow-down"></div>
+            <div class="process">Student applies as tutor: selects course, uploads grade slip</div>
+            <div class="arrow-down"></div>
+            <div class="process">System performs OCR on grade slip, extracts grade & student ID</div>
+            <div class="arrow-down"></div>
+            <div class="process">Admin reviews application with OCR results & confidence level</div>
+            <div class="arrow-down"></div>
+            <div class="decision-row">
+                <div class="branch-box">Rejected; student notified</div>
+                <div style="display:flex;align-items:center;gap:2px"><div class="branch-label">no</div><div class="h-line"></div></div>
+                <div class="diamond-wrap"><div class="diamond"></div><div class="diamond-text">Approve?</div></div>
+            </div>
+            <div class="label-yes">yes ↓</div>
+            <div class="arrow-down"></div>
+            <div class="process">Tutor profile approved; student marked as verified tutor</div>
+        </div>
+
+        <!-- Connector Column 1 → 2 -->
+        <div style="display:flex;align-items:center;margin-top:auto;margin-bottom:auto;padding-top:60px;">
+            <div class="h-line arrow-right"></div>
+        </div>
+
+        <!-- COLUMN 2: Tutor Discovery + Booking -->
+        <div class="column">
+            <div class="phase-label">Discovery & Booking</div>
+            <div class="process">Tutee searches for tutor by course</div>
+            <div class="arrow-down"></div>
+            <div class="process">System computes competency scores, returns ranked tutor list</div>
+            <div class="arrow-down"></div>
+            <div class="process">Tutee selects tutor, initiates session booking</div>
+            <div class="arrow-down"></div>
+            <div class="process">Constraint engine cross-references both schedules & sessions</div>
+            <div class="arrow-down"></div>
+            <div class="process">System displays mutual free slots with timetable comparison</div>
+            <div class="arrow-down"></div>
+            <div class="process">Tutee selects time slot, enters venue & notes, submits request</div>
+            <div class="arrow-down"></div>
+            <div class="process">Session created (pending); notification sent to tutor</div>
+            <div class="arrow-down"></div>
+            <div class="process">Tutor reviews session request</div>
+            <div class="arrow-down"></div>
+            <div class="decision-row">
+                <div class="branch-box">Session rejected; tutee notified</div>
+                <div style="display:flex;align-items:center;gap:2px"><div class="branch-label">no</div><div class="h-line"></div></div>
+                <div class="diamond-wrap"><div class="diamond"></div><div class="diamond-text">Accepts?</div></div>
+            </div>
+            <div class="label-yes">yes ↓</div>
+            <div class="arrow-down"></div>
+            <div class="process">Session scheduled; both parties notified</div>
+        </div>
+
+        <!-- Connector Column 2 → 3 -->
+        <div style="display:flex;align-items:center;margin-top:auto;margin-bottom:auto;padding-top:60px;">
+            <div class="h-line arrow-right"></div>
+        </div>
+
+        <!-- COLUMN 3: Session + Rating + Loop -->
+        <div class="column">
+            <div class="phase-label">Session & Feedback</div>
+            <div class="process">Tutor and tutee attend session at agreed time and venue</div>
+            <div class="arrow-down"></div>
+            <div class="process">Tutor marks session as completed</div>
+            <div class="arrow-down"></div>
+            <div class="process">Tutee submits rating (1–5 stars) and optional comment</div>
+            <div class="arrow-down"></div>
+            <div class="process">System updates tutor's competency score with new rating data</div>
+            <div class="arrow-down"></div>
+            <div class="decision-row">
+                <div class="branch-box">Return to dashboard or search for tutor</div>
+                <div style="display:flex;align-items:center;gap:2px"><div class="branch-label">no</div><div class="h-line"></div></div>
+                <div class="diamond-wrap"><div class="diamond"></div><div class="diamond-text">Exit?</div></div>
+            </div>
+            <div class="label-yes">yes ↓</div>
+            <div class="arrow-down"></div>
+            <div class="terminal">End</div>
+        </div>
+    </div>
+</body>
+</html>

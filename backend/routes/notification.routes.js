@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   getNotifications,
   getUnreadCount,
+  getUnreadByType,
   markAsRead,
   markAllAsRead,
   deleteNotification,
@@ -13,6 +14,7 @@ router.use(protect);
 
 router.get('/', getNotifications);
 router.get('/unread-count', getUnreadCount);
+router.get('/unread-by-type', getUnreadByType);
 router.put('/mark-all-read', markAllAsRead);
 router.put('/:id/read', markAsRead);
 router.delete('/:id', deleteNotification);

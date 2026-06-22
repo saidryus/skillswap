@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillSwap - Sequence Diagram (Constraint-Based Scheduling)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8fafc;
+            padding: 40px;
+        }
+        .title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #1e293b;
+        }
+        .subtitle {
+            text-align: center;
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 40px;
+        }
+        .diagram-container {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            max-width: 1050px;
+            margin: 0 auto;
+            position: relative;
+            overflow-x: auto;
+        }
+        .participants {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 0 20px;
+        }
+        .participant {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 140px;
+        }
+        .participant-box {
+            border: 2px solid #1e293b;
+            padding: 8px 14px;
+            font-size: 11px;
+            font-weight: 600;
+            text-align: center;
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        .lifeline-container {
+            position: relative;
+            min-height: 650px;
+            padding: 0 20px;
+        }
+        .lifeline {
+            position: absolute;
+            width: 2px;
+            background: #cbd5e1;
+            top: 0;
+            bottom: 0;
+            border-left: 1px dashed #94a3b8;
+        }
+        .ll-1 { left: 90px; }
+        .ll-2 { left: 295px; }
+        .ll-3 { left: 500px; }
+        .ll-4 { left: 705px; }
+        .ll-5 { left: 910px; }
+
+        .message {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            font-size: 10px;
+            color: #334155;
+        }
+        .message-line {
+            height: 2px;
+            background: #475569;
+            position: absolute;
+        }
+        .message-line.dashed {
+            background: none;
+            border-top: 2px dashed #94a3b8;
+        }
+        .msg-label {
+            background: white;
+            padding: 2px 6px;
+            white-space: nowrap;
+            position: absolute;
+            font-size: 10px;
+            color: #1e293b;
+        }
+        .arrow-right::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: -4px;
+            border-left: 7px solid #475569;
+            border-top: 4px solid transparent;
+            border-bottom: 4px solid transparent;
+        }
+        .arrow-left::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: -4px;
+            border-right: 7px solid #94a3b8;
+            border-top: 4px solid transparent;
+            border-bottom: 4px solid transparent;
+        }
+
+        /* Simplified sequence using a table-based layout */
+        .seq-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .seq-table td {
+            padding: 0;
+            vertical-align: middle;
+            position: relative;
+            height: 38px;
+        }
+        .seq-col {
+            width: 20%;
+            text-align: center;
+            position: relative;
+        }
+        .seq-col::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            border-left: 1.5px dashed #cbd5e1;
+        }
+        .seq-arrow {
+            display: flex;
+            align-items: center;
+            position: relative;
+            margin: 0 auto;
+        }
+        .seq-arrow-line {
+            height: 2px;
+            background: #475569;
+            flex: 1;
+        }
+        .seq-arrow-line.return {
+            background: none;
+            border-top: 2px dashed #94a3b8;
+        }
+        .seq-arrow-head-right {
+            width: 0;
+            height: 0;
+            border-left: 7px solid #475569;
+            border-top: 4px solid transparent;
+            border-bottom: 4px solid transparent;
+        }
+        .seq-arrow-head-left {
+            width: 0;
+            height: 0;
+            border-right: 7px solid #94a3b8;
+            border-top: 4px solid transparent;
+            border-bottom: 4px solid transparent;
+        }
+        .seq-msg {
+            position: absolute;
+            top: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 1px 6px;
+            font-size: 10px;
+            color: #334155;
+            white-space: nowrap;
+            z-index: 1;
+        }
+        .seq-num {
+            position: absolute;
+            left: 4px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #3b82f6;
+            color: white;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: 700;
+        }
+        .step-row {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .step-num {
+            background: #3b82f6;
+            color: white;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .step-from {
+            width: 120px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #475569;
+            text-align: center;
+        }
+        .step-arrow-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+        }
+        .step-arrow-line {
+            flex: 1;
+            height: 2px;
+            background: #475569;
+        }
+        .step-arrow-line.return {
+            background: none;
+            border-top: 2px dashed #94a3b8;
+        }
+        .step-arrow-head {
+            width: 0;
+            height: 0;
+            border-left: 8px solid #475569;
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+        }
+        .step-arrow-head.left {
+            border-left: none;
+            border-right: 8px solid #94a3b8;
+        }
+        .step-to {
+            width: 120px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #475569;
+            text-align: center;
+        }
+        .step-label {
+            font-size: 11px;
+            color: #1e293b;
+            margin-left: 12px;
+            flex: 1;
+        }
+
+        .steps-container {
+            margin-top: 20px;
+        }
+        .step-group-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #1e293b;
+            margin: 16px 0 8px;
+            padding: 6px 12px;
+            background: #f1f5f9;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="title">Sequence Diagram — Constraint-Based Session Scheduling</div>
+    <div class="subtitle">SkillSwap: Interaction between components during the session booking process</div>
+
+    <div class="diagram-container">
+        <!-- Participants Header -->
+        <div class="participants">
+            <div class="participant"><div class="participant-box">Tutee<br>(Browser)</div></div>
+            <div class="participant"><div class="participant-box">Frontend<br>(React)</div></div>
+            <div class="participant"><div class="participant-box">Backend API<br>(Express)</div></div>
+            <div class="participant"><div class="participant-box">Scheduling<br>Engine</div></div>
+            <div class="participant"><div class="participant-box">Database<br>(MongoDB)</div></div>
+        </div>
+
+        <!-- Steps as structured list -->
+        <div class="steps-container">
+            <div class="step-group-label">1. Tutor Search Phase</div>
+
+            <div class="step-row">
+                <div class="step-num">1</div>
+                <div class="step-from">Tutee</div>
+                <div class="step-arrow-container">
+                    <div class="step-arrow-line"></div>
+                    <div class="step-arrow-head"></div>
+                </div>
+                <div class="step-to">Frontend</div>
+                <div class="step-label">Selects course filter, clicks "Find Tutors"</div>
+            </div>
+
+            <div class="step-row">
+                <div class="step-num">2</div>
+                <div class="step-from">Frontend</div>
+                <div class="step-arrow-container">
+                    <div class="step-arrow-line"></div>
+                    <div class="step-arrow-head"></div>
+                </div>
+                <div class="step-to">Backend API</div>
+                <div class="step-label">GET /api/tutor-profiles?course={id}&status=approved</div>
+            </div>
+
+            <div class="step-row">
+                <div class="step-num">3</div>
+                <div class="step-from">Backend API</div>
+                <div class="step-arrow-container">
+                    <div class="step-arrow-line"></div>
+                    <div class="step-arrow-head"></div>
+                </div>
+                <div class="step-to">Database</div>
+                <div class="step-label">Query TutorProfiles + Ratings + Sessions for scoring</div>
+            </div>
+
+            <div class="step-row">
+                <div class="step-num">4</div>
+                <div class="step-from">Database</div>
+                <div class="step-arrow-container">
+                    <div class="step-arrow-line return"></div>
+                    <div class="step-arrow-head left"></div>
+                </div>
+                <div class="step-to">Backend API</div>
+                <div class="step-label">Return tutor profiles with grades, ratings, session counts</div>
+            </div>
+
+            <div class="step-row">
+                <div class="step-num">5</div>
+                <div class="step-from">Backend API</div>
+                <div class="step-arrow-container">
+                    <div class="step-arrow-line return"></div>
+                    <div class="step-arrow-head left"></div>
+                </div>
+                <div class="step-to">Frontend</div>
+                <div class="step-label">Return ranked tutor list (competency score computed)</div>
+            </div>
+
+            <div class="step-group-label">2. Schedule Matching Phase (Constraint Engine)</div>
+
+            <div class="step-row">
+                <div class="step-num">6</div>
+                <div class="step-from">Tutee</div>
+                <div class="step-arrow-container">
+                    <div class="step-arrow-line"></div>
+                    <div class="step-arrow-head"></div>
+                </div>
+                <div class="step-to">Frontend</div>
+                <div class="step-label">Clicks "Book Session" on selected tutor</div>
+            </div>
+
+            <div class="step-row">
+                <div class="step-num">7</div>
+                <div class="step-from">Frontend</div>
+                <div class="step-arrow-container">
+                    <div class="step-arrow-line"></div>
+                    <div class="step-arrow-head"></div>
+                </div>
+                <div class="step-to">Backend API</div>
+                <div class="step-label">GET /api/student-schedules?students={tuteeId,tutorId}</div>
+            </div>
+
+            <div class="step-row">
+                <div class="step-num">8</div>
+                <div class="step-from">Backend API</div>
+                <div class="step-arrow-container">
+                    <div class="step-arrow-line"></div>
+                    <div class="step-arrow-head"></div>
+                </div>
+                <div class="step-to">Database</div>
+                <div class="step-label">Fetch schedules for both students + existing sessions</div>
+            </div>
+
+            <div class="step-row">
+                <div class="step-num">9</div>
+                <div class="step-from">Database</div>
+                <div class="step-arrow-container">
+                    <div class="step-arrow-line return"></div>
+                    <div class="step-arrow-head left"></div>
+                </div>
+                <div class="step-to">Backend API</div>
+                <div class="step-label">Return schedule entries + booked session times</div>
+            </div>
+
+            <div class="step-row">
+                <div class="step-num">10</div>
+                <div class="step-from">Backend API</div>
+                <div class="step-arrow-container">
+                    <div class="step-arrow-line"></div>
+                    <div class="step-arrow-head"></div>
+                </div>
+                <div class="step-to">Sched. Engine</div>
+                <div class="step-label">Pass schedules to constraint solver</div>
+            </div>
+
+            <div class="step-row" style="background: #eff6ff; border-radius: 6px; margin: 4px 0;">
+                <div class="step-num" style="background: #8b5cf6;">11</div>
+                <div class="step-from">Sched. Engine</div>
+                <div class="step-arrow-container">
+                    <div class="step-arrow-line" style="background: #8b5cf6;"></div>
+                    <div class="step-arrow-head" style="border-left-color: #8b5cf6;"></div>
+                </div>
+                <div class="step-to">Sched. Engine</div>
+                <div class="step-label"><strong>CSP Execution:</strong> Generate all time slots → Eliminate class conflicts → Eliminate existing session conflicts → Apply availability cap → Return valid mutual slots</div>
+            </div>
+
+            <div class="step-row">
+                <div class="step-num">12</div>
+                <div class="step-from">Sched. Engine</div>
+                <div class="step-arrow-container">
+                    <div class="step-arrow-line return"></div>
+                    <div class="step-arrow-head left"></div>
+                </div>
+                <div class="step-to">Frontend</div>
+                <div class="step-label">Return available mutual free time slots for display</div>
+            </div>
+
+            <div class="step-group-label">3. Session Creation Phase</div>
+
+            <div class="step-row">
+                <div class="step-num">13</div>
+                <div class="step-from">Tutee</div>
+                <div class="step-arrow-container">
+                    <div class="step-arrow-line"></div>
+                    <div class="step-arrow-head"></div>
+                </div>
+                <div class="step-to">Frontend</div>
+                <div class="step-label">Selects time slot, enters venue, submits booking request</div>
+            </div>
+
+            <div class="step-row">
+                <div class="step-num">14</div>
+                <div class="step-from">Frontend</div>
+                <div class="step-arrow-container">
+                    <div class="step-arrow-line"></div>
+                    <div class="step-arrow-head"></div>
+                </div>
+                <div class="step-to">Backend API</div>
+                <div class="step-label">POST /api/sessions {tutor, tutee, course, date, time, venue}</div>
+            </div>
+
+            <div class="step-row">
+                <div class="step-num">15</div>
+                <div class="step-from">Backend API</div>
+                <div class="step-arrow-container">
+                    <div class="step-arrow-line"></div>
+                    <div class="step-arrow-head"></div>
+                </div>
+                <div class="step-to">Database</div>
+                <div class="step-label">Insert Session (status: "pending") + Create Notification for tutor</div>
+            </div>
+
+            <div class="step-row">
+                <div class="step-num">16</div>
+                <div class="step-from">Database</div>
+                <div class="step-arrow-container">
+                    <div class="step-arrow-line return"></div>
+                    <div class="step-arrow-head left"></div>
+                </div>
+                <div class="step-to">Frontend</div>
+                <div class="step-label">Confirm session created → Display success message to tutee</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

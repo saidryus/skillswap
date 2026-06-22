@@ -18,12 +18,18 @@ fetch('https://api.semaphore.co/api/v4/messages', {
     sendername: senderName,
   }),
 })
-  .then(r => r.json())
-  .then(data => {
-    if (data[0]?.message_id) {
-      console.log('✅ Success! message_id:', data[0].message_id, '| status:', data[0].status);
-    } else {
-      console.error('❌ Error:', JSON.stringify(data));
+  .then(r => r.text())
+  .then(text => {
+    console.log('Raw response:', text);
+    try {
+      const data = JSON.parse(text);
+      if (data[0]?.message_id) {
+        console.log('✅ Success! message_id:', data[0].message_id, '| status:', data[0].status);
+      } else {
+        console.error('❌ Error:', JSON.stringify(data));
+      }
+    } catch {
+      console.error('❌ Non-JSON response:', text);
     }
   })
   .catch(err => console.error('❌ Fetch error:', err.message));

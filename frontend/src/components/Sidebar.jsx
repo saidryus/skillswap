@@ -1,73 +1,144 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { playSound } from '../utils/sounds';
 import Logo from './Logo';
+import { useState, useEffect } from 'react';
+import api from '../utils/api';
 import {
-  HiHome, HiUsers, HiAcademicCap, HiCalendar,
-  HiClipboardList, HiBell, HiLogout, HiChevronLeft, HiChevronRight,
-  HiBeaker
+  HiHome, HiUsers, HiAcademicCap, HiBell, HiLogout,
+  HiChevronLeft, HiChevronRight, HiClipboardList,
+  HiCalendar, HiSearch, HiBookOpen, HiStar, HiOfficeBuilding,
 } from 'react-icons/hi';
 
 const navItems = {
   admin: [
-    { to: '/admin', label: 'Dashboard', icon: HiHome, end: true, permission: null }, // always visible
-    { to: '/admin/users', label: 'Users', icon: HiUsers, permission: 'users' },
+    { section: 'Overview' },
+    { to: '/admin', label: 'Dashboard', icon: HiHome, end: true, permission: null },
+    { section: 'Management' },
+    { to: '/admin/users', label: 'Students', icon: HiUsers, permission: 'users' },
     { to: '/admin/courses', label: 'Courses', icon: HiAcademicCap, permission: 'courses' },
-    { to: '/admin/schedules', label: 'Schedules', icon: HiCalendar, permission: 'schedules' },
-    { to: '/admin/lab-schedules', label: 'Lab Schedules', icon: HiBeaker, permission: 'lab-schedules' },
-    { to: '/admin/attendance', label: 'Attendance', icon: HiClipboardList, permission: 'attendance' },
+    { to: '/admin/departments', label: 'Departments', icon: HiOfficeBuilding, permission: 'courses' },
+    { to: '/admin/tutor-applications', label: 'Tutor Applications', icon: HiStar, permission: 'tutor-applications' },
+    { section: 'Monitoring' },
+    { to: '/admin/sessions', label: 'Sessions', icon: HiCalendar, permission: 'sessions' },
+    { to: '/admin/student-schedules', label: 'Student Schedules', icon: HiClipboardList, permission: 'student-schedules' },
+    { section: 'Other' },
     { to: '/admin/announcements', label: 'Announcements', icon: HiBell, permission: 'announcements' },
   ],
-  faculty: [
-    { to: '/faculty', label: 'Dashboard', icon: HiHome, end: true },
-    { to: '/faculty/courses', label: 'My Courses', icon: HiAcademicCap },
-    { to: '/faculty/attendance', label: 'Attendance', icon: HiClipboardList },
-    { to: '/faculty/announcements', label: 'Announcements', icon: HiBell },
-  ],
   student: [
+    { section: 'Main' },
     { to: '/student', label: 'Dashboard', icon: HiHome, end: true },
-    { to: '/student/courses', label: 'My Courses', icon: HiAcademicCap },
-    { to: '/student/schedule', label: 'My Schedule', icon: HiCalendar },
-    { to: '/student/attendance', label: 'Attendance', icon: HiClipboardList },
+    { to: '/student/find-tutor', label: 'Find a Tutor', icon: HiSearch },
+    { to: '/student/book-session', label: 'Book a Session', icon: HiCalendar },
+    { to: '/student/my-sessions', label: 'My Sessions', icon: HiBookOpen },
+    { to: '/student/become-tutor', label: 'Become a Tutor', icon: HiStar },
+    { section: 'Schedule' },
+    { to: '/student/my-schedule', label: 'My Schedule', icon: HiClipboardList },
+    { section: 'Other' },
     { to: '/student/announcements', label: 'Announcements', icon: HiBell },
   ],
 };
 
-export default function Sidebar({ open, setOpen }) {
+export default function Sidebar({ open, setOpen, isMobile }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [badges, setBadges] = useState({});
+
+  // Map notification types to sidebar routes
+  const TYPE_TO_ROUTE = {
+    admin: {
+      tutor_application: '/admin/tutor-applications',
+      session_request: '/admin/sessions',
+      session_accepted: '/admin/sessions',
+      session_rejected: '/admin/sessions',
+      session_cancelled: '/admin/sessions',
+      session_completed: '/admin/sessions',
+      announcement: '/admin/announcements',
+    },
+    student: {
+      tutor_approved: '/student/become-tutor',
+      tutor_rejected: '/student/become-tutor',
+      session_request: '/student/my-sessions',
+      session_accepted: '/student/my-sessions',
+      session_rejected: '/student/my-sessions',
+      session_cancelled: '/student/my-sessions',
+      session_completed: '/student/my-sessions',
+      announcement: '/student/announcements',
+    },
+  };
+
+  // Fetch unread notifications grouped by type → map to sidebar routes
+  useEffect(() => {
+    const fetchBadges = async () => {
+      try {
+        const { data } = await api.get('/notifications/unread-by-type');
+        const routeMap = TYPE_TO_ROUTE[user?.role] || {};
+        const routeCounts = {};
+
+        Object.entries(data).forEach(([type, count]) => {
+          const route = routeMap[type];
+          if (route) {
+            routeCounts[route] = (routeCounts[route] || 0) + count;
+          }
+        });
+
+        setBadges(routeCounts);
+      } catch (_) {}
+    };
+
+    if (user) {
+      fetchBadges();
+      const interval = setInterval(fetchBadges, 15000);
+      return () => clearInterval(interval);
+    }
+  }, [user]);
 
   let items = navItems[user?.role] || [];
 
-  // Filter admin nav items based on permissions (sub-admin)
   if (user?.role === 'admin' && !user?.isSuperAdmin) {
     const userPermissions = user?.permissions || [];
-    items = items.filter(item => !item.permission || userPermissions.includes(item.permission));
+    items = items.filter(item => item.section || !item.permission || userPermissions.includes(item.permission));
   }
 
   const handleLogout = () => {
+    playSound('swoosh');
     logout();
     navigate('/login');
   };
 
+  const sidebarWidth = open ? 260 : 76;
+
   return (
     <motion.aside
-      animate={{ width: open ? 240 : 72 }}
-      transition={{ duration: 0.3, ease: 'easeInOut' }}
-      className="bg-slate-900 border-r border-slate-700/50 flex flex-col overflow-hidden relative z-10"
+      animate={{ width: isMobile ? 260 : sidebarWidth }}
+      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+      className="h-full flex flex-col relative
+                 bg-white dark:bg-surface-900
+                 border-r border-surface-200/50 dark:border-surface-800/50
+                 transition-colors duration-300"
     >
-      {/* Logo */}
-      <div className="flex items-center h-16 px-3 border-b border-slate-700/50 shrink-0 overflow-hidden">
+      {/* Logo area */}
+      <div className="flex items-center h-16 px-4 border-b border-surface-200/50 dark:border-surface-800/50 shrink-0">
         <AnimatePresence mode="wait">
-          {open ? (
+          {open || isMobile ? (
             <motion.div
               key="full"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
+              className="flex items-center gap-3"
             >
-              <Logo size={36} showText textSize="text-base" />
+              <Logo size={34} />
+              <div>
+                <h1 className="text-base font-bold text-surface-900 dark:text-white tracking-tight">
+                  SkillSwap
+                </h1>
+                <p className="text-[10px] font-medium text-primary-500 tracking-widest uppercase">
+                  IT Department
+                </p>
+              </div>
             </motion.div>
           ) : (
             <motion.div
@@ -76,96 +147,161 @@ export default function Sidebar({ open, setOpen }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
+              className="mx-auto"
             >
-              <Logo size={36} />
+              <Logo size={34} />
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* Nav items */}
-      <nav className="flex-1 py-4 space-y-1 px-2 overflow-y-auto">
-        {items.map(({ to, label, icon: Icon, end }) => (
+      {/* Navigation */}
+      <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
+        {items.map((item, idx) => {
+          // Section label
+          if (item.section) {
+            return (
+              <AnimatePresence key={`section-${idx}`}>
+                {(open || isMobile) && (
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="text-[10px] font-bold text-surface-400 dark:text-surface-500 uppercase tracking-[1.5px] 
+                               px-3 pt-4 pb-1"
+                  >
+                    {item.section}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            );
+          }
+
+          const { to, label, icon: Icon, end } = item;
+          const badgeCount = badges[to] || 0;
+          return (
           <NavLink
             key={to}
             to={to}
             end={end}
+            onClick={() => {
+              playSound('click');
+              if (isMobile) setOpen(false);
+            }}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group ${
+              `group flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 relative ${
                 isActive
-                  ? 'bg-blue-600 text-white'
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+                  ? 'bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400 font-semibold shadow-sm'
+                  : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-100'
               }`
             }
           >
-            <Icon className="w-5 h-5 shrink-0" />
-            <AnimatePresence>
-              {open && (
-                <motion.span
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="text-sm font-medium whitespace-nowrap"
-                >
-                  {label}
-                </motion.span>
-              )}
-            </AnimatePresence>
+            {({ isActive }) => (
+              <>
+                <div className="relative shrink-0">
+                  <Icon className="w-5 h-5" />
+                  {badgeCount > 0 && (
+                    <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-[16px] 
+                                     bg-red-500 text-white text-[9px] font-bold rounded-full 
+                                     flex items-center justify-center px-0.5 shadow-sm">
+                      {badgeCount > 99 ? '99+' : badgeCount}
+                    </span>
+                  )}
+                </div>
+                <AnimatePresence>
+                  {(open || isMobile) && (
+                    <motion.span
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -10 }}
+                      className="text-sm whitespace-nowrap flex-1"
+                    >
+                      {label}
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+                {(open || isMobile) && badgeCount > 0 && (
+                  <span className="ml-auto bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 
+                                   text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                    {badgeCount}
+                  </span>
+                )}
+              </>
+            )}
           </NavLink>
-        ))}
+          );
+        })}
       </nav>
 
       {/* User info + logout */}
-      <div className="border-t border-slate-700/50 p-3 shrink-0">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shrink-0">
-            <span className="text-white text-sm font-semibold">
+      <div className="border-t border-surface-200/50 dark:border-surface-800/50 p-3 shrink-0">
+        <div className="flex items-center gap-3 mb-3 px-2">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-purple-600 
+                          flex items-center justify-center shrink-0 shadow-glow-sm">
+            <span className="text-white text-sm font-bold">
               {user?.firstName?.[0]}{user?.lastName?.[0]}
             </span>
           </div>
           <AnimatePresence>
-            {open && (
+            {(open || isMobile) && (
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="overflow-hidden"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                className="overflow-hidden min-w-0"
               >
-                <p className="text-sm font-medium text-slate-100 truncate">
+                <p className="text-sm font-semibold text-surface-800 dark:text-surface-100 truncate">
                   {user?.firstName} {user?.lastName}
                 </p>
-                <p className="text-xs text-slate-400 capitalize">{user?.role}</p>
+                <p className="text-xs text-surface-500 dark:text-surface-400 capitalize">
+                  {user?.isTutor ? 'Student · Tutor' : user?.role}
+                </p>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
-        <button
+
+        <motion.button
+          whileTap={{ scale: 0.95 }}
           onClick={handleLogout}
-          className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all duration-200"
+          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl 
+                     text-surface-500 dark:text-surface-400 
+                     hover:bg-red-50 dark:hover:bg-red-950/30 
+                     hover:text-red-600 dark:hover:text-red-400 
+                     transition-all duration-200"
         >
           <HiLogout className="w-5 h-5 shrink-0" />
           <AnimatePresence>
-            {open && (
+            {(open || isMobile) && (
               <motion.span
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
                 className="text-sm font-medium whitespace-nowrap"
               >
-                Logout
+                Sign Out
               </motion.span>
             )}
           </AnimatePresence>
-        </button>
+        </motion.button>
       </div>
 
-      {/* Toggle button */}
-      <button
-        onClick={() => setOpen(!open)}
-        className="absolute -right-3 top-20 w-6 h-6 bg-slate-700 border border-slate-600 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-100 transition-colors z-20"
-      >
-        {open ? <HiChevronLeft className="w-3 h-3" /> : <HiChevronRight className="w-3 h-3" />}
-      </button>
+      {/* Collapse toggle (desktop only) */}
+      {!isMobile && (
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={() => { playSound('toggle'); setOpen(!open); }}
+          className="absolute -right-3 top-20 w-6 h-6 
+                     bg-white dark:bg-surface-800 
+                     border border-surface-200 dark:border-surface-700 
+                     rounded-full flex items-center justify-center 
+                     text-surface-400 hover:text-primary-500
+                     shadow-md transition-colors z-50"
+        >
+          {open ? <HiChevronLeft className="w-3 h-3" /> : <HiChevronRight className="w-3 h-3" />}
+        </motion.button>
+      )}
     </motion.aside>
   );
 }

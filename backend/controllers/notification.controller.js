@@ -29,6 +29,23 @@ const getUnreadCount = async (req, res) => {
   }
 };
 
+// @desc    Get unread counts grouped by type
+// @route   GET /api/notifications/unread-by-type
+// @access  Private
+const getUnreadByType = async (req, res) => {
+  try {
+    const result = await Notification.aggregate([
+      { $match: { recipient: req.user._id, isRead: false } },
+      { $group: { _id: '$type', count: { $sum: 1 } } },
+    ]);
+    const byType = {};
+    result.forEach(r => { byType[r._id] = r.count; });
+    res.json(byType);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 // @desc    Mark a single notification as read
 // @route   PUT /api/notifications/:id/read
 // @access  Private
@@ -74,6 +91,7 @@ const deleteNotification = async (req, res) => {
 module.exports = {
   getNotifications,
   getUnreadCount,
+  getUnreadByType,
   markAsRead,
   markAllAsRead,
   deleteNotification,

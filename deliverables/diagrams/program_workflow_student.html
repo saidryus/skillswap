@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillSwap - Program Workflow (Student Perspective)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: white;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+        }
+        .page-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+        #canvas {
+            flex: 1;
+            width: 100%;
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div class="page-title">SkillSwap — Program Workflow (Student Perspective)</div>
+    <div id="canvas"></div>
+
+    <script>
+    function render() {
+        const canvas = document.getElementById('canvas');
+        canvas.innerHTML = '';
+        const W = canvas.offsetWidth;
+        const H = canvas.offsetHeight;
+
+        const COL_COUNT = 3;
+        const COL_W = Math.min(W / COL_COUNT, 300);
+        const totalFlowW = COL_W * COL_COUNT;
+        const offsetX = (W - totalFlowW) / 2;
+        const BOX_W = Math.min(190, COL_W * 0.8);
+        const FONT = Math.max(9, Math.min(12, H / 60));
+        const DIAMOND_SIZE = Math.max(34, Math.min(44, H / 16));
+        const GREEN = '#1e3a5f';
+        const DARK = '#1e293b';
+        const RED = '#ef4444';
+        const PURPLE = '#6366f1';
+
+        const columns = [
+            {
+                label: 'Login & Discovery',
+                items: [
+                    { type: 'terminal', text: 'Start' },
+                    { type: 'process', text: 'Student logs in with Student ID and password' },
+                    { type: 'process', text: 'Student views dashboard and personal class schedule' },
+                    { type: 'process', text: 'Student searches for a tutor by selecting a course' },
+                    { type: 'process', text: 'System displays ranked tutor list based on competency score' },
+                    { type: 'process', text: 'Student selects a tutor' },
+                    { type: 'process', text: 'System cross-references both schedules and sessions' },
+                    { type: 'process', text: 'System displays mutual free slots with timetable comparison' },
+                    { type: 'process', text: 'Student selects time slot, chooses venue, enters details' },
+                    { type: 'process', text: 'Student submits session request' },
+                ]
+            },
+            {
+                label: 'Booking & Session',
+                items: [
+                    { type: 'process', text: 'System creates session (pending) and notifies tutor' },
+                    { type: 'process', text: 'Tutor receives notification and reviews request' },
+                    { type: 'decision', text: 'Tutor\naccepts?', no: 'Session rejected;\nstudent notified' },
+                    { type: 'process', text: 'Session scheduled; student receives confirmation' },
+                    { type: 'process', text: 'Both parties attend session at agreed time and venue' },
+                    { type: 'process', text: 'Tutor marks session as completed' },
+                ]
+            },
+            {
+                label: 'Feedback & Loop',
+                items: [
+                    { type: 'process', text: 'Student receives prompt to rate the tutor' },
+                    { type: 'process', text: 'Student submits rating (1–5 stars) and optional comment' },
+                    { type: 'process', text: "System updates tutor's competency score" },
+                    { type: 'decision', text: 'Exit?', no: 'Return to dashboard\nor search for tutor' },
+                    { type: 'terminal', text: 'End' },
+                ]
+            }
+        ];
+
+        // SVG
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('width', W);
+        svg.setAttribute('height', H);
+        svg.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;';
+        canvas.appendChild(svg);
+
+        const positions = [];
+        const LABEL_H = 14;
+        const START_Y = LABEL_H + 2;
+
+        // Calculate heights to determine gap per column
+        columns.forEach((col, ci) => {
+            const colX = offsetX + ci * COL_W + COL_W / 2;
+            positions[ci] = [];
+
+            // Measure total content height for this column
+            let contentH = 0;
+            col.items.forEach(item => {
+                if (item.type === 'terminal') contentH += 20;
+                else if (item.type === 'decision') contentH += DIAMOND_SIZE + 8;
+                else contentH += 24;
+            });
+            const availH = H - START_Y - 8;
+            const gap = Math.max(8, (availH - contentH) / col.items.length);
+
+            // Phase label
+            const label = document.createElement('div');
+            label.style.cssText = `position:absolute;left:${colX}px;top:0;transform:translateX(-50%);font-size:${FONT - 1}px;font-weight:800;color:${PURPLE};text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;`;
+            label.textContent = col.label;
+            canvas.appendChild(label);
+
+            let y = START_Y;
+
+            col.items.forEach((item, ri) => {
+                if (item.type === 'terminal') {
+                    const h = 20;
+                    const el = document.createElement('div');
+                    el.style.cssText = `position:absolute;left:${colX - BOX_W/2}px;top:${y}px;width:${BOX_W}px;height:${h}px;background:${GREEN};color:white;border-radius:50px;display:flex;align-items:center;justify-content:center;font-size:${FONT + 2}px;font-weight:800;`;
+                    el.textContent = item.text;
+                    canvas.appendChild(el);
+                    positions[ci][ri] = { cx: colX, top: y, bottom: y + h };
+                    y += h + gap;
+                }
+                else if (item.type === 'process') {
+                    const h = 24;
+                    const el = document.createElement('div');
+                    el.style.cssText = `position:absolute;left:${colX - BOX_W/2}px;top:${y}px;width:${BOX_W}px;min-height:${h}px;background:${GREEN};color:white;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:${FONT}px;font-weight:600;text-align:center;padding:3px 5px;line-height:1.2;`;
+                    el.textContent = item.text;
+                    canvas.appendChild(el);
+                    positions[ci][ri] = { cx: colX, top: y, bottom: y + h };
+                    y += h + gap;
+                }
+                else if (item.type === 'decision') {
+                    const s = DIAMOND_SIZE;
+                    const cx = colX, cy = y + s/2;
+
+                    const el = document.createElement('div');
+                    el.style.cssText = `position:absolute;left:${cx - s/2}px;top:${y}px;width:${s}px;height:${s}px;background:${GREEN};transform:rotate(45deg);`;
+                    canvas.appendChild(el);
+
+                    const txt = document.createElement('div');
+                    txt.style.cssText = `position:absolute;left:${cx - 30}px;top:${cy - 8}px;width:60px;font-size:${FONT - 1}px;font-weight:800;color:white;text-align:center;line-height:1.2;pointer-events:none;`;
+                    txt.innerHTML = item.text.replace('\n', '<br>');
+                    canvas.appendChild(txt);
+
+                    // "no" line going left — longer to avoid overlap
+                    const noLineEnd = cx - s/2 - 24;
+                    const noLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    noLine.setAttribute('x1', cx - s/2); noLine.setAttribute('y1', cy);
+                    noLine.setAttribute('x2', noLineEnd); noLine.setAttribute('y2', cy);
+                    noLine.setAttribute('stroke', DARK); noLine.setAttribute('stroke-width', '1');
+                    svg.appendChild(noLine);
+
+                    // "no" label — positioned above the line
+                    const noLbl = document.createElement('div');
+                    noLbl.style.cssText = `position:absolute;left:${noLineEnd - 4}px;top:${cy - 12}px;font-size:${FONT - 1}px;font-weight:800;color:${RED};`;
+                    noLbl.textContent = 'no';
+                    canvas.appendChild(noLbl);
+
+                    // Branch box — spaced further left
+                    const noBox = document.createElement('div');
+                    noBox.style.cssText = `position:absolute;left:${noLineEnd - 72}px;top:${cy - 12}px;width:66px;background:white;border:1.5px solid ${RED};color:${DARK};padding:2px 3px;border-radius:3px;font-size:${FONT - 2}px;font-weight:600;text-align:center;line-height:1.2;`;
+                    noBox.innerHTML = item.no.replace('\n', '<br>');
+                    canvas.appendChild(noBox);
+
+                    // "yes" label — centered below diamond
+                    const yesLbl = document.createElement('div');
+                    yesLbl.style.cssText = `position:absolute;left:${cx - 6}px;top:${y + s + 2}px;font-size:${FONT - 1}px;font-weight:800;color:${DARK};`;
+                    yesLbl.textContent = 'yes';
+                    canvas.appendChild(yesLbl);
+
+                    positions[ci][ri] = { cx, top: y, bottom: y + s + 14 };
+                    y += s + 14 + gap;
+                }
+            });
+        });
+
+        // Vertical arrows
+        columns.forEach((col, ci) => {
+            for (let ri = 0; ri < col.items.length - 1; ri++) {
+                const from = positions[ci][ri];
+                const to = positions[ci][ri + 1];
+                drawArrow(svg, from.cx, from.bottom, to.cx, to.top, DARK);
+            }
+        });
+
+        // Col 1 → Col 2 connector
+        const c1Last = positions[0][positions[0].length - 1];
+        const c2First = positions[1][0];
+        drawPolyArrow(svg, [
+            [c1Last.cx + BOX_W/2 + 1, (c1Last.top + c1Last.bottom)/2],
+            [c1Last.cx + BOX_W/2 + 14, (c1Last.top + c1Last.bottom)/2],
+            [c1Last.cx + BOX_W/2 + 14, c2First.top - 5],
+            [c2First.cx, c2First.top - 5],
+            [c2First.cx, c2First.top]
+        ], DARK);
+
+        // Col 2 → Col 3 connector
+        const c2Last = positions[1][positions[1].length - 1];
+        const c3First = positions[2][0];
+        drawPolyArrow(svg, [
+            [c2Last.cx + BOX_W/2 + 1, (c2Last.top + c2Last.bottom)/2],
+            [c2Last.cx + BOX_W/2 + 14, (c2Last.top + c2Last.bottom)/2],
+            [c2Last.cx + BOX_W/2 + 14, c3First.top - 5],
+            [c3First.cx, c3First.top - 5],
+            [c3First.cx, c3First.top]
+        ], DARK);
+    }
+
+    function drawArrow(svg, x1, y1, x2, y2, color) {
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+        line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+        line.setAttribute('stroke', color); line.setAttribute('stroke-width', '1.2');
+        svg.appendChild(line);
+        const dx = x2-x1, dy = y2-y1, len = Math.sqrt(dx*dx+dy*dy);
+        if (len < 3) return;
+        const ux=dx/len, uy=dy/len, ax=x2-ux*4, ay=y2-uy*4, px=-uy*2.5, py=ux*2.5;
+        const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+        poly.setAttribute('points', `${x2},${y2} ${ax+px},${ay+py} ${ax-px},${ay-py}`);
+        poly.setAttribute('fill', color);
+        svg.appendChild(poly);
+    }
+
+    function drawPolyArrow(svg, pts, color) {
+        for (let i = 0; i < pts.length - 1; i++) {
+            if (i === pts.length - 2) {
+                drawArrow(svg, pts[i][0], pts[i][1], pts[i+1][0], pts[i+1][1], color);
+            } else {
+                const l = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                l.setAttribute('x1', pts[i][0]); l.setAttribute('y1', pts[i][1]);
+                l.setAttribute('x2', pts[i+1][0]); l.setAttribute('y2', pts[i+1][1]);
+                l.setAttribute('stroke', color); l.setAttribute('stroke-width', '1.2');
+                svg.appendChild(l);
+            }
+        }
+    }
+
+    // Initial render
+    render();
+
+    // Re-render on resize (handles zoom)
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(render, 100);
+    });
+    </script>
+</body>
+</html>

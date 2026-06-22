@@ -1,6 +1,5 @@
 const User = require('../models/User');
 const { ADMIN_PERMISSIONS } = require('../models/User');
-const { getSettings } = require('./settings.controller');
 
 // @desc    Get all users
 // @route   GET /api/users
@@ -29,14 +28,13 @@ const getUserById = async (req, res) => {
   }
 };
 
-// @desc    Create user (admin)
+// @desc    Create user (admin only — no self-registration)
 // @route   POST /api/users
 // @access  Admin
 const createUser = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, role, department, yearLevel, phone, permissions } = req.body;
+    const { firstName, lastName, email, password, role, yearLevel, phone, studentIdNumber, permissions } = req.body;
 
-    // Only super admin can create other admins
     if (role === 'admin' && !req.user.isSuperAdmin) {
       return res.status(403).json({ message: 'Only the super admin can create admin accounts' });
     }
@@ -44,21 +42,26 @@ const createUser = async (req, res) => {
     const userExists = await User.findOne({ email });
     if (userExists) return res.status(400).json({ message: 'Email already in use' });
 
-    const userData = { firstName, lastName, email, password, role, department };
+    const userData = {
+      firstName,
+      lastName,
+      email,
+      password,
+      role: role || 'student',
+      department: 'Information Technology',
+    };
 
     if (phone && phone.trim() !== '') userData.phone = phone.trim();
+    if (studentIdNumber) userData.studentIdNumber = studentIdNumber.trim();
+    if (yearLevel) userData.yearLevel = Number(yearLevel);
 
-    if (role === 'student') {
-      // Auto-generate student ID using prefix + zero-padded counter
-      const settings = await getSettings();
-      settings.studentIdCounter += 1;
-      await settings.save();
-      const padded = String(settings.studentIdCounter).padStart(4, '0');
-      userData.studentId = `${settings.studentIdPrefix}-${padded}`;
-      if (yearLevel) userData.yearLevel = Number(yearLevel);
+    // For students — default password is last 3 digits of student ID, force change on first login
+    if ((role || 'student') === 'student' && studentIdNumber) {
+      const last3 = studentIdNumber.trim().slice(-3);
+      userData.password = password || last3;
+      userData.mustChangePassword = true;
     }
 
-    // If creating a sub-admin, attach permissions
     if (role === 'admin') {
       userData.isSuperAdmin = false;
       userData.permissions = Array.isArray(permissions) ? permissions : [];
@@ -79,32 +82,25 @@ const updateUser = async (req, res) => {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // Protect the super admin account from being modified by sub-admins
     if (user.isSuperAdmin && !req.user.isSuperAdmin) {
       return res.status(403).json({ message: 'Cannot modify the super admin account' });
     }
 
-    // Only super admin can change permissions or role of another admin
     if (user.role === 'admin' && !req.user.isSuperAdmin) {
       return res.status(403).json({ message: 'Only the super admin can modify admin accounts' });
     }
 
-    const { firstName, lastName, email, role, department, yearLevel, phone, isActive, password, permissions } = req.body;
+    const { firstName, lastName, email, yearLevel, phone, isActive, password, permissions, studentIdNumber } = req.body;
 
-    user.firstName = firstName || user.firstName;
-    user.lastName = lastName || user.lastName;
-    user.email = email || user.email;
-    user.role = role || user.role;
-    user.department = department !== undefined ? department : user.department;
+    if (firstName) user.firstName = firstName;
+    if (lastName) user.lastName = lastName;
+    if (email) user.email = email;
     if (phone !== undefined) user.phone = phone && phone.trim() !== '' ? phone.trim() : undefined;
     if (yearLevel !== undefined) user.yearLevel = yearLevel ? Number(yearLevel) : null;
     if (isActive !== undefined) user.isActive = isActive;
     if (password) user.password = password;
-
-    // Super admin can update sub-admin permissions
-    if (req.user.isSuperAdmin && Array.isArray(permissions)) {
-      user.permissions = permissions;
-    }
+    if (studentIdNumber !== undefined) user.studentIdNumber = studentIdNumber;
+    if (req.user.isSuperAdmin && Array.isArray(permissions)) user.permissions = permissions;
 
     const updated = await user.save();
     res.json({ ...updated.toJSON(), password: undefined });
@@ -121,12 +117,10 @@ const deleteUser = async (req, res) => {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // Cannot delete super admin
     if (user.isSuperAdmin) {
       return res.status(403).json({ message: 'Cannot delete the super admin account' });
     }
 
-    // Sub-admins cannot delete other admins
     if (user.role === 'admin' && !req.user.isSuperAdmin) {
       return res.status(403).json({ message: 'Only the super admin can delete admin accounts' });
     }
@@ -148,4 +142,56 @@ const getAdminPermissions = async (req, res) => {
   res.json({ permissions: ADMIN_PERMISSIONS });
 };
 
-module.exports = { getUsers, getUserById, createUser, updateUser, deleteUser, getAdminPermissions };
+// @desc    Bulk import students from CSV (parsed JSON array)
+// @route   POST /api/users/import
+// @access  Admin
+const importStudents = async (req, res) => {
+  try {
+    const rows = req.body;
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return res.status(400).json({ message: 'No data provided' });
+    }
+
+    const results = { created: 0, skipped: 0, errors: [] };
+
+    for (const row of rows) {
+      const email = row.email?.toString().trim().toLowerCase();
+      const firstName = row.firstName?.toString().trim();
+      const lastName = row.lastName?.toString().trim();
+
+      if (!email || !firstName || !lastName) {
+        results.errors.push({ row: email || '?', reason: 'Missing required fields' });
+        continue;
+      }
+
+      const exists = await User.findOne({ email });
+      if (exists) { results.skipped++; continue; }
+
+      try {
+        const sid = row.studentIdNumber?.toString().trim() || '';
+        const last3 = sid.slice(-3);
+        await User.create({
+          firstName,
+          lastName,
+          email,
+          password: row.password?.toString().trim() || last3 || 'skillswap123',
+          mustChangePassword: true,
+          role: 'student',
+          department: 'Information Technology',
+          studentIdNumber: sid,
+          yearLevel: [1,2,3,4].includes(Number(row.yearLevel)) ? Number(row.yearLevel) : null,
+          phone: row.phone?.toString().trim() || '',
+        });
+        results.created++;
+      } catch (err) {
+        results.errors.push({ row: email, reason: err.message });
+      }
+    }
+
+    res.status(201).json(results);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+module.exports = { getUsers, getUserById, createUser, updateUser, deleteUser, getAdminPermissions, importStudents };
