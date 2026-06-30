@@ -25,8 +25,53 @@ const login = async (req, res) => {
       user = await User.findOne({ studentIdNumber: identifier.trim() });
     }
 
-    if (!user || !(await user.matchPassword(password))) {
+    if (!user) {
       return res.status(401).json({ message: 'Invalid ID number or password' });
+    }
+
+    // Check if account is locked
+    if (user.lockUntil && user.lockUntil > new Date()) {
+      const secondsLeft = Math.ceil((user.lockUntil - new Date()) / 1000);
+      return res.status(429).json({
+        message: `Account temporarily locked due to too many failed attempts. Try again in ${secondsLeft} seconds.`,
+        lockUntil: user.lockUntil,
+        secondsLeft,
+      });
+    }
+
+    // Verify password
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) {
+      // Increment failed attempts
+      const attempts = (user.loginAttempts || 0) + 1;
+      const update = { loginAttempts: attempts };
+
+      // Lock after 3 failed attempts (progressive: 30s → 60s → 180s max)
+      if (attempts >= 3) {
+        const lockCount = (user.lockCount || 0) + 1;
+        const lockDurations = [30, 60, 180]; // seconds
+        const lockSeconds = lockDurations[Math.min(lockCount - 1, lockDurations.length - 1)];
+        update.lockUntil = new Date(Date.now() + lockSeconds * 1000);
+        update.loginAttempts = 0;
+        update.lockCount = lockCount;
+        await User.findByIdAndUpdate(user._id, update);
+        return res.status(429).json({
+          message: `Too many failed login attempts. Account locked for ${lockSeconds} seconds.`,
+          lockUntil: update.lockUntil,
+          secondsLeft: lockSeconds,
+        });
+      }
+
+      await User.findByIdAndUpdate(user._id, update);
+      return res.status(401).json({
+        message: `Invalid ID number or password. ${3 - attempts} attempt(s) remaining.`,
+        attemptsRemaining: 3 - attempts,
+      });
+    }
+
+    // Successful login — reset attempts
+    if (user.loginAttempts > 0 || user.lockUntil || user.lockCount > 0) {
+      await User.findByIdAndUpdate(user._id, { loginAttempts: 0, lockUntil: null, lockCount: 0 });
     }
 
     if (!user.isActive) {

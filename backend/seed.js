@@ -198,8 +198,22 @@ async function seed() {
   }
   console.log(`✓ ${students.length} students created (password = last 3 digits of ID)`);
 
-  // Schedules (link to courses where possible)
+  // Simone Makinano — special demo account (no schedule, must change password)
+  const simone = await User.create({
+    studentIdNumber: '23063670',
+    firstName: 'Simone Dominique', lastName: 'Makinano',
+    email: 'simone.makinano@student.uc.edu',
+    password: '670',
+    role: 'student', yearLevel: 3, currentSemester: 2,
+    department: 'Information Technology',
+    isActive: true, mustChangePassword: true,
+  });
+  students.push(simone);
+  console.log('✓ Simone Makinano created (23063670 / 670, must change password, no schedule)');
+
+  // Schedules (link to courses where possible) — skip Simone (no schedule)
   for (const student of students) {
+    if (student.studentIdNumber === '23063670') continue; // Simone uploads manually
     const entries = YEAR_SCHEDULES[student.yearLevel] || [];
     for (const entry of entries) {
       // Try to match course code from label

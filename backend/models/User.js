@@ -27,6 +27,9 @@ const userSchema = new mongoose.Schema(
     mustChangePassword: { type: Boolean, default: false }, // force password change on first login
     currentSemester: { type: Number, enum: [1, 2], default: null }, // detected from study load
     isSuperAdmin: { type: Boolean, default: false },
+    loginAttempts: { type: Number, default: 0 },
+    lockUntil: { type: Date, default: null },
+    lockCount: { type: Number, default: 0 },
     permissions: {
       type: [{ type: String, enum: ADMIN_PERMISSIONS }],
       default: undefined,

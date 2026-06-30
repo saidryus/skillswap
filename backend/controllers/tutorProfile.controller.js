@@ -47,6 +47,13 @@ const applyAsTutor = async (req, res) => {
     const { extractGradeFromDocument } = require('../utils/gradeExtractor');
     const ocrResult = await extractGradeFromDocument(req.file.path, course.courseCode, req.user.studentIdNumber);
 
+    // Reject if student ID doesn't match the uploaded document
+    if (!ocrResult.idVerified && ocrResult.confidence !== 'none') {
+      return res.status(400).json({
+        message: `Student ID mismatch. Your ID (${req.user.studentIdNumber}) was not found in the uploaded document. Please upload your own grade slip.`,
+      });
+    }
+
     const profile = await TutorProfile.create({
       tutor: req.user._id,
       course: courseId,

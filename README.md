@@ -109,12 +109,13 @@ App starts at `http://localhost:5173`
 | Role | Login ID | Password | Notes |
 |------|----------|----------|-------|
 | Admin | admin@skillswap.edu | admin123 | Full access |
+| Student (Year 3) | 23063670 | 670 | Simone Makinano — must change password, no schedule (upload study load manually) |
 | Student (Year 1) | 202401001 | 001 | Juan Dela Cruz |
 | Student (Year 2) | 202302001 | 001 | Miguel Dela Cruz |
 | Student (Year 3) | 202203001 | 001 | Rafael Dela Cruz |
 | Student (Year 4) | 202104001 | 001 | Antonio Dela Cruz |
 
-> All student passwords = last 3 digits of their Student ID. Seeded students will be prompted to change password on first login.
+> All student passwords = last 3 digits of their Student ID. All seeded students (including Simone) will be prompted to change password on first login.
 
 ---
 

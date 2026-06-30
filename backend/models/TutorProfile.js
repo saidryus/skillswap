@@ -11,7 +11,7 @@ const tutorProfileSchema = new mongoose.Schema(
     },
     grade: { type: Number, default: null, min: 1.0, max: 5.0 }, // PH college grading: 1.0 (highest) to 5.0 (failing), 3.0 is min passing
     detectedGrade: { type: Number, default: null }, // auto-detected by OCR
-    gradeDetectionConfidence: { type: String, enum: ['none', 'low', 'high', 'error'], default: 'none' },
+    gradeDetectionConfidence: { type: String, enum: ['none', 'low', 'medium', 'high', 'error'], default: 'none' },
     gradeDetectionMessage: { type: String, default: '' },
     gradeDocument: { type: String, default: '' },     // file path
     gradeDocumentName: { type: String, default: '' }, // original filename

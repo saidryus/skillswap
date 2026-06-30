@@ -28,6 +28,7 @@ export default function BecomeTutorPage() {
   const [selectedCourse, setSelectedCourse] = useState('');
   const [file, setFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [hasSchedule, setHasSchedule] = useState(true);
   const fileRef = useRef();
 
@@ -104,6 +105,7 @@ export default function BecomeTutorPage() {
     if (!file) { toast.error('Upload your grade slip or class card'); return; }
 
     setSubmitting(true);
+    setSubmitError('');
     playSound('click');
     try {
       const formData = new FormData();
@@ -122,7 +124,9 @@ export default function BecomeTutorPage() {
       fetchData();
     } catch (err) {
       playSound('error');
-      toast.error(err.response?.data?.message || 'Failed to submit application');
+      const msg = err.response?.data?.message || 'Failed to submit application';
+      setSubmitError(msg);
+      toast.error(msg);
     } finally {
       setSubmitting(false);
     }
@@ -246,6 +250,13 @@ export default function BecomeTutorPage() {
                 className="hidden"
               />
             </div>
+
+            {submitError && (
+              <div className="p-3 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/50 flex items-start gap-2">
+                <span className="text-red-500 shrink-0 mt-0.5">⚠</span>
+                <p className="text-sm text-red-700 dark:text-red-300">{submitError}</p>
+              </div>
+            )}
 
             <motion.button
               whileTap={{ scale: 0.97 }}

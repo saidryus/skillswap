@@ -51,6 +51,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [lockSeconds, setLockSeconds] = useState(0);
   const [taglineIndex, setTaglineIndex] = useState(0);
   const { login } = useAuth();
   const { isDark } = useTheme();
@@ -64,8 +65,21 @@ export default function LoginPage() {
     return () => clearInterval(interval);
   }, []);
 
+  // Lockout countdown timer
+  useEffect(() => {
+    if (lockSeconds <= 0) return;
+    const timer = setInterval(() => {
+      setLockSeconds(prev => {
+        if (prev <= 1) { setError(''); return 0; }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [lockSeconds]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (lockSeconds > 0) return;
     setLoading(true);
     setError('');
     playSound('click');
@@ -78,9 +92,14 @@ export default function LoginPage() {
       if (data.role === 'admin') navigate('/admin');
       else navigate('/student');
     } catch (err) {
-      const msg = err.response?.data?.message || 'Invalid ID number or password';
+      const resp = err.response?.data;
+      const msg = resp?.message || 'Invalid ID number or password';
       setError(msg);
       playSound('error');
+      // If locked, start countdown
+      if (resp?.secondsLeft) {
+        setLockSeconds(resp.secondsLeft);
+      }
     } finally {
       setLoading(false);
     }
@@ -330,7 +349,7 @@ export default function LoginPage() {
                     >
                       ⚠️
                     </motion.span>
-                    <span>{error}</span>
+                    <span>{error}{lockSeconds > 0 ? ` (${lockSeconds}s)` : ''}</span>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -342,7 +361,7 @@ export default function LoginPage() {
                 whileHover={{ scale: 1.02, boxShadow: '0 0 40px -5px rgba(99, 102, 241, 0.6)' }}
                 whileTap={{ scale: 0.97 }}
                 type="submit"
-                disabled={loading}
+                disabled={loading || lockSeconds > 0}
                 className="w-full py-3.5 text-base font-semibold rounded-xl relative overflow-hidden
                            bg-gradient-to-r from-primary-500 to-purple-600
                            text-white shadow-glow
