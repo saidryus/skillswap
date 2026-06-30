@@ -45,7 +45,7 @@ Login as: `admin@skillswap.edu` / `admin123`
 
 ## STUDENT SCREENS (TUTEE FLOW)
 
-Login as: `23063670` / `670` (Simone — has schedule uploaded)
+Login as: `23063670` / `670` (Simone — will prompt password change first, then upload study load)
 
 | # | Screen | What to show | Notes |
 |---|--------|-------------|-------|
@@ -101,6 +101,9 @@ Login as: an approved tutor account
 | 41 | **Empty State — No Free Slots** | "No mutual free slots found" message | Two students with fully conflicting schedules |
 | 42 | **Error State — Schedule Required (Book Session)** | Amber warning on Book Session page | Login as student without schedule |
 | 43 | **Dark/Light Mode Toggle** | Same page in both themes (side by side) | Toggle theme |
+| 44 | **Login Lockout** | Error message with countdown timer (e.g., "Account locked for 30 seconds (28s)") | Enter wrong password 3 times |
+| 45 | **Grade Slip ID Mismatch** | Red inline banner on Become a Tutor page | Upload someone else's grade slip |
+| 46 | **Login Attempts Warning** | "Invalid ID or password. 2 attempt(s) remaining" | Enter wrong password once or twice |
 
 ---
 
