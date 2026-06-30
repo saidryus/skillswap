@@ -1,12 +1,90 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HiSearch, HiStar, HiCalendar } from 'react-icons/hi';
+import { HiSearch, HiStar, HiCalendar, HiChevronDown } from 'react-icons/hi';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '../../components/PageHeader';
 import CompetencyTooltip from '../../components/CompetencyTooltip';
 import { useAuth } from '../../context/AuthContext';
 import { playSound } from '../../utils/sounds';
 import api from '../../utils/api';
+
+/* ── Collapsible course section ── */
+function CourseSection({ label, courses, selectedCourse, onSelect, defaultOpen = false }) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const hasSelection = courses.some(c => c._id === selectedCourse);
+
+  return (
+    <div className="rounded-xl border border-surface-200 dark:border-surface-700 overflow-hidden">
+      {/* Header */}
+      <button
+        onClick={() => { setIsOpen(!isOpen); playSound('click'); }}
+        className={`w-full flex items-center justify-between px-4 py-3 transition-all ${
+          isOpen
+            ? 'bg-primary-50 dark:bg-primary-950/30'
+            : hasSelection
+              ? 'bg-emerald-50 dark:bg-emerald-950/20'
+              : 'bg-surface-50 dark:bg-surface-800/50 hover:bg-surface-100 dark:hover:bg-surface-800'
+        }`}
+      >
+        <div className="flex items-center gap-2">
+          <span className={`text-xs font-bold uppercase tracking-wider ${
+            isOpen ? 'text-primary-600 dark:text-primary-400' :
+            hasSelection ? 'text-emerald-600 dark:text-emerald-400' :
+            'text-surface-500 dark:text-surface-400'
+          }`}>{label}</span>
+          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-200 dark:bg-surface-700 text-surface-500 dark:text-surface-400 font-medium">
+            {courses.length}
+          </span>
+          {hasSelection && !isOpen && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 font-medium">
+              Selected
+            </span>
+          )}
+        </div>
+        <motion.div animate={{ rotate: isOpen ? 180 : 0 }} transition={{ duration: 0.2 }}>
+          <HiChevronDown className="w-4 h-4 text-surface-400" />
+        </motion.div>
+      </button>
+
+      {/* Collapsible content */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+            className="overflow-hidden"
+          >
+            <div className="p-3 border-t border-surface-200/50 dark:border-surface-700/50 bg-white dark:bg-surface-900">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+                {courses.map(c => (
+                  <motion.button
+                    key={c._id}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => onSelect(c._id)}
+                    className={`p-3 rounded-xl border text-left transition-all duration-200 ${
+                      selectedCourse === c._id
+                        ? 'bg-primary-50 dark:bg-primary-950/50 border-primary-300 dark:border-primary-700 shadow-glow-sm'
+                        : 'bg-surface-50 dark:bg-surface-800/50 border-surface-200/50 dark:border-surface-700/50 hover:border-primary-200 dark:hover:border-primary-800 hover:bg-surface-100 dark:hover:bg-surface-800'
+                    }`}
+                  >
+                    <p className={`text-xs font-bold font-mono ${
+                      selectedCourse === c._id ? 'text-primary-600 dark:text-primary-400' : 'text-surface-700 dark:text-surface-300'
+                    }`}>{c.courseCode}</p>
+                    <p className={`text-[11px] truncate mt-0.5 ${
+                      selectedCourse === c._id ? 'text-primary-500 dark:text-primary-300' : 'text-surface-500 dark:text-surface-400'
+                    }`}>{c.courseName}{c.semester ? ` (${c.semester === 1 ? '1st' : '2nd'} Sem)` : ''}</p>
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
 
 export default function FindTutorPage() {
   const navigate = useNavigate();
@@ -27,26 +105,28 @@ export default function FindTutorPage() {
     if (mySchedule.length === 0) { setCourses([]); return; }
 
     api.get('/courses').then(({ data }) => {
-      // Extract course codes from schedule
-      const codes = new Set();
+      // Get enrolled course IDs from schedule entries (linked via course field)
+      const enrolledIds = new Set();
       mySchedule.forEach(entry => {
-        // Match 5-digit EDP codes (e.g. "32094 - IT-SYSADMN32 (LAB)")
-        const edpMatch = entry.label?.match(/^(\d{5})/);
-        if (edpMatch) { codes.add(edpMatch[1]); return; }
-        // Match alphanumeric course codes (e.g. "IT101 - Introduction to Computing")
-        const alphaMatch = entry.label?.match(/^([A-Z]{2,}\d{3,})/i);
-        if (alphaMatch) codes.add(alphaMatch[1].toUpperCase());
+        if (entry.course) {
+          const courseId = typeof entry.course === 'object' ? entry.course._id : entry.course;
+          if (courseId) enrolledIds.add(courseId);
+        }
       });
-      setEnrolledCodes(codes);
+      setEnrolledCodes(enrolledIds);
 
-      // Enrolled: in their schedule
-      const enrolled = data.filter(c => codes.has(c.courseCode));
-      // Upcoming: year level above theirs, not enrolled
-      const upcoming = data.filter(c =>
-        c.yearLevel && user.yearLevel && c.yearLevel > user.yearLevel && !codes.has(c.courseCode)
-      );
+      // Enrolled: courses linked from schedule
+      const enrolled = data.filter(c => enrolledIds.has(c._id));
+      // Previous: same year lower semester + lower year levels
+      const previous = data.filter(c => {
+        if (enrolledIds.has(c._id)) return false;
+        if (!c.yearLevel || !user.yearLevel) return false;
+        if (c.yearLevel < user.yearLevel) return true;
+        if (c.yearLevel === user.yearLevel && user.currentSemester === 2 && c.semester === 1) return true;
+        return false;
+      });
 
-      setCourses([...enrolled, ...upcoming]);
+      setCourses([...enrolled, ...previous]);
     });
   }, [mySchedule, user.yearLevel]);
 
@@ -67,79 +147,40 @@ export default function FindTutorPage() {
 
   return (
     <div>
-      <PageHeader title="Find a Tutor" subtitle="Browse verified peer tutors for IT courses" />
+      <PageHeader title="Find a Tutor" subtitle="Browse verified peer tutors for your courses" />
 
-      {/* Course selector — grouped */}
+      {/* Course selector — collapsible dropdown sections */}
       {(() => {
-        const enrolled = courses.filter(c => enrolledCodes.has(c.courseCode));
-        const upcoming = courses.filter(c => !enrolledCodes.has(c.courseCode));
-        // Group upcoming by year level
-        const upcomingByYear = {};
-        upcoming.forEach(c => {
+        const enrolled = courses.filter(c => enrolledCodes.has(c._id));
+        const previous = courses.filter(c => !enrolledCodes.has(c._id));
+        // Group previous by year level
+        const previousByYear = {};
+        previous.forEach(c => {
           const yr = c.yearLevel || 0;
-          if (!upcomingByYear[yr]) upcomingByYear[yr] = [];
-          upcomingByYear[yr].push(c);
+          if (!previousByYear[yr]) previousByYear[yr] = [];
+          previousByYear[yr].push(c);
         });
         const YEAR_LABELS = { 1: '1st Year', 2: '2nd Year', 3: '3rd Year', 4: '4th Year' };
 
-        return (
-          <div className="mb-8 space-y-5">
-            {enrolled.length > 0 && (
-              <div>
-                <p className="text-xs font-bold text-surface-500 dark:text-surface-400 uppercase tracking-wider mb-2">
-                  Currently Enrolled — Year {user.yearLevel}
-                </p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-                  {enrolled.map(c => (
-                    <motion.button
-                      key={c._id}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => { playSound('click'); setSelectedCourse(c._id); }}
-                      className={`p-3.5 rounded-xl border text-left transition-all duration-200 ${
-                        selectedCourse === c._id
-                          ? 'bg-primary-50 dark:bg-primary-950/50 border-primary-300 dark:border-primary-700 shadow-glow-sm'
-                          : 'bg-white dark:bg-surface-900 border-surface-200 dark:border-surface-800 hover:border-primary-200 dark:hover:border-primary-800 hover:shadow-sm'
-                      }`}
-                    >
-                      <p className={`text-xs font-bold font-mono ${
-                        selectedCourse === c._id ? 'text-primary-600 dark:text-primary-400' : 'text-surface-700 dark:text-surface-300'
-                      }`}>{c.courseCode}</p>
-                      <p className={`text-xs truncate mt-0.5 ${
-                        selectedCourse === c._id ? 'text-primary-500 dark:text-primary-300' : 'text-surface-500 dark:text-surface-400'
-                      }`}>{c.courseName}</p>
-                    </motion.button>
-                  ))}
-                </div>
-              </div>
-            )}
+        const sections = [];
+        if (enrolled.length > 0) {
+          sections.push({ id: 'enrolled', label: `Currently Enrolled — Year ${user.yearLevel}`, courses: enrolled, defaultOpen: true });
+        }
+        Object.keys(previousByYear).sort((a, b) => b - a).forEach(yr => {
+          sections.push({ id: `previous-${yr}`, label: `Year ${yr} Subjects`, courses: previousByYear[yr], defaultOpen: false });
+        });
 
-            {Object.keys(upcomingByYear).sort((a, b) => a - b).map(yr => (
-              <div key={yr}>
-                <p className="text-xs font-bold text-surface-500 dark:text-surface-400 uppercase tracking-wider mb-2">
-                  Upcoming — {YEAR_LABELS[yr] || `Year ${yr}`}
-                </p>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-                  {upcomingByYear[yr].map(c => (
-                    <motion.button
-                      key={c._id}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => { playSound('click'); setSelectedCourse(c._id); }}
-                      className={`p-3.5 rounded-xl border text-left transition-all duration-200 ${
-                        selectedCourse === c._id
-                          ? 'bg-primary-50 dark:bg-primary-950/50 border-primary-300 dark:border-primary-700 shadow-glow-sm'
-                          : 'bg-white dark:bg-surface-900 border-surface-200/60 dark:border-surface-800/60 hover:border-primary-200 dark:hover:border-primary-800 hover:shadow-sm opacity-80'
-                      }`}
-                    >
-                      <p className={`text-xs font-bold font-mono ${
-                        selectedCourse === c._id ? 'text-primary-600 dark:text-primary-400' : 'text-surface-700 dark:text-surface-300'
-                      }`}>{c.courseCode}</p>
-                      <p className={`text-xs truncate mt-0.5 ${
-                        selectedCourse === c._id ? 'text-primary-500 dark:text-primary-300' : 'text-surface-500 dark:text-surface-400'
-                      }`}>{c.courseName}</p>
-                    </motion.button>
-                  ))}
-                </div>
-              </div>
+        return (
+          <div className="mb-8 space-y-2">
+            {sections.map(section => (
+              <CourseSection
+                key={section.id}
+                label={section.label}
+                courses={section.courses}
+                selectedCourse={selectedCourse}
+                onSelect={(id) => { playSound('click'); setSelectedCourse(id); }}
+                defaultOpen={section.defaultOpen}
+              />
             ))}
           </div>
         );

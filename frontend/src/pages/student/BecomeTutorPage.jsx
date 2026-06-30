@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { HiUpload, HiCheck, HiX, HiClock, HiDocumentText } from 'react-icons/hi';
+import { HiUpload, HiCheck, HiX, HiClock, HiDocumentText, HiCalendar } from 'react-icons/hi';
 import PageHeader from '../../components/PageHeader';
 import PipelineTracker from '../../components/PipelineTracker';
 import ConfidenceBadge from '../../components/ConfidenceBadge';
@@ -28,17 +28,26 @@ export default function BecomeTutorPage() {
   const [selectedCourse, setSelectedCourse] = useState('');
   const [file, setFile] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [hasSchedule, setHasSchedule] = useState(true);
   const fileRef = useRef();
 
   const fetchData = async () => {
-    const [coursesRes, appsRes] = await Promise.all([
-      api.get('/courses'),
+    const [coursesRes, appsRes, schedRes] = await Promise.all([
+      api.get('/student-schedules/my-courses'),
       api.get('/tutor-profiles/my-applications'),
+      api.get('/student-schedules/has-schedule'),
     ]);
-    // Only show courses at or below the student's year level (current + previous)
-    const studentYear = user?.yearLevel || 1;
-    const filtered = coursesRes.data.filter(c => !c.yearLevel || c.yearLevel <= studentYear);
-    setCourses(filtered);
+    setHasSchedule(schedRes.data.hasSchedule);
+    // Keep enrolled and previous separate
+    const { enrolledCourses, previousCourses } = coursesRes.data;
+    // Tag them so we can group properly
+    const tagged = [
+      ...enrolledCourses.map(c => ({ ...c, _group: 'enrolled' })),
+      ...previousCourses.map(c => ({ ...c, _group: 'previous' })),
+    ];
+    // Deduplicate by _id
+    const uniqueCourses = [...new Map(tagged.map(c => [c._id, c])).values()];
+    setCourses(uniqueCourses);
     setMyApplications(appsRes.data);
   };
 
@@ -50,6 +59,34 @@ export default function BecomeTutorPage() {
       .map(a => a.course?._id)
   );
   const availableCourses = courses.filter(c => !blockedCourseIds.has(c._id));
+
+  // Group available courses by year level and semester for organized dropdown
+  const studentYear = user?.yearLevel || 1;
+
+  const groupedCourses = {};
+  // Currently enrolled (from schedule)
+  const enrolled = availableCourses.filter(c => c._group === 'enrolled');
+  if (enrolled.length > 0) groupedCourses['current'] = enrolled;
+  // Previous courses — group by year level
+  const previous = availableCourses.filter(c => c._group === 'previous');
+  if (previous.length > 0) {
+    // Get unique year levels, sorted descending
+    const years = [...new Set(previous.map(c => c.yearLevel))].sort((a, b) => b - a);
+    for (const y of years) {
+      const yearCourses = previous.filter(c => c.yearLevel === y);
+      if (yearCourses.length > 0) groupedCourses[`year-${y}`] = yearCourses;
+    }
+  }
+  // Courses without a year level
+  const ungrouped = availableCourses.filter(c => !c.yearLevel && !c._group);
+  if (ungrouped.length > 0) groupedCourses['general'] = ungrouped;
+
+  const getGroupLabel = (key) => {
+    if (key === 'current') return `Currently Enrolled (Year ${studentYear})`;
+    if (key === 'general') return 'General Subjects';
+    if (key.startsWith('year-')) return `Year ${key.split('-')[1]} Subjects`;
+    return key;
+  };
 
   const handleFileChange = (e) => {
     const f = e.target.files[0];
@@ -93,8 +130,32 @@ export default function BecomeTutorPage() {
 
   return (
     <div>
-      <PageHeader title="Become a Tutor" subtitle="Apply to tutor IT courses you've completed successfully" />
+      <PageHeader title="Become a Tutor" subtitle="Apply to tutor courses you've completed successfully" />
 
+      {!hasSchedule && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="card mb-5 border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-950/20"
+        >
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center shrink-0">
+              <HiCalendar className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-amber-800 dark:text-amber-200">Schedule Required</h3>
+              <p className="text-sm text-amber-700 dark:text-amber-300 mt-0.5">
+                You need to upload your class schedule before applying as a tutor. The system uses your schedule to match you with tutees.
+              </p>
+              <a href="/student/my-schedule" className="inline-block mt-2 text-sm font-medium text-amber-700 dark:text-amber-300 underline hover:text-amber-900 dark:hover:text-amber-100">
+                Upload your schedule →
+              </a>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {hasSchedule && (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Application form */}
         <motion.div
@@ -119,9 +180,19 @@ export default function BecomeTutorPage() {
                 required
               >
                 <option value="">Select a course to tutor</option>
-                {availableCourses.map(c => (
-                  <option key={c._id} value={c._id}>{c.courseCode} — {c.courseName}</option>
-                ))}
+                {Object.keys(groupedCourses).map(groupKey => {
+                  const groupCourses = groupedCourses[groupKey];
+                  if (!groupCourses || groupCourses.length === 0) return null;
+                  return (
+                    <optgroup key={groupKey} label={getGroupLabel(groupKey)}>
+                      {groupCourses.map(c => (
+                        <option key={c._id} value={c._id}>
+                          {c.courseCode} — {c.courseName}{c.semester ? ` (${c.semester === 1 ? '1st' : '2nd'} Sem)` : ''}
+                        </option>
+                      ))}
+                    </optgroup>
+                  );
+                })}
               </select>
               {availableCourses.length === 0 && (
                 <p className="text-xs text-surface-400 mt-1.5">You have applied for all available courses.</p>
@@ -278,6 +349,7 @@ export default function BecomeTutorPage() {
           )}
         </motion.div>
       </div>
+      )}
     </div>
   );
 }

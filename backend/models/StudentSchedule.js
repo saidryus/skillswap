@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const studentScheduleSchema = new mongoose.Schema(
   {
     student: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    course: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', default: null },
     day: {
       type: String,
       required: true,

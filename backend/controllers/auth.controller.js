@@ -41,10 +41,12 @@ const login = async (req, res) => {
       role: user.role,
       studentIdNumber: user.studentIdNumber,
       yearLevel: user.yearLevel,
+      currentSemester: user.currentSemester || null,
       isTutor: user.isTutor,
       mustChangePassword: user.mustChangePassword || false,
       isSuperAdmin: user.isSuperAdmin || false,
       permissions: user.permissions || [],
+      assignedDepartments: user.assignedDepartments || [],
       token: generateToken(user._id),
     });
   } catch (error) {

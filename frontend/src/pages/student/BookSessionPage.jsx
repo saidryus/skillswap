@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { HiCalendar, HiClock, HiCheck } from 'react-icons/hi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { HiCalendar, HiClock, HiCheck, HiChevronDown } from 'react-icons/hi';
 import PageHeader from '../../components/PageHeader';
 import WizardSteps from '../../components/WizardSteps';
 import { playSound } from '../../utils/sounds';
@@ -152,6 +152,110 @@ function MiniTimetable({ title, schedule, color, freeSlots = [], selectedSlot, o
   );
 }
 
+/* ── Day-based accordion for available slots ──────────────── */
+function DayAccordionSlots({ suggestions, freeSlots, selectedSlot, onSelectSlot }) {
+  const [expandedDay, setExpandedDay] = useState(null);
+
+  // Group slots by day
+  const slotsByDay = {};
+  const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  freeSlots.forEach(slot => {
+    if (!slotsByDay[slot.day]) slotsByDay[slot.day] = [];
+    slotsByDay[slot.day].push(slot);
+  });
+
+  // Sort days by weekday order
+  const days = Object.keys(slotsByDay).sort((a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b));
+
+  // Auto-expand the first day
+  useEffect(() => {
+    if (days.length > 0 && !expandedDay) {
+      setExpandedDay(days[0]);
+    }
+  }, [days.length]);
+
+  return (
+    <div className="overflow-y-auto flex-1 min-h-0 space-y-2">
+      {days.map(day => {
+        const slots = slotsByDay[day];
+        const isExpanded = expandedDay === day;
+        const hasSelection = slots.some(s => selectedSlot?.key === s.key);
+
+        return (
+          <div key={day} className="rounded-xl border border-surface-200 dark:border-surface-700 overflow-hidden">
+            {/* Day header — click to expand/collapse */}
+            <button
+              onClick={() => { setExpandedDay(isExpanded ? null : day); playSound('click'); }}
+              className={`w-full flex items-center justify-between px-3 py-2.5 transition-all ${
+                isExpanded
+                  ? 'bg-primary-50 dark:bg-primary-950/30'
+                  : hasSelection
+                    ? 'bg-emerald-50 dark:bg-emerald-950/20'
+                    : 'bg-surface-50 dark:bg-surface-800 hover:bg-surface-100 dark:hover:bg-surface-700'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <span className={`text-xs font-bold ${
+                  isExpanded ? 'text-primary-600 dark:text-primary-400' :
+                  hasSelection ? 'text-emerald-600 dark:text-emerald-400' :
+                  'text-surface-700 dark:text-surface-200'
+                }`}>{day}</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-200 dark:bg-surface-700 text-surface-500 dark:text-surface-400 font-medium">
+                  {slots.length} slot{slots.length !== 1 ? 's' : ''}
+                </span>
+                {hasSelection && <HiCheck className="w-3.5 h-3.5 text-emerald-500" />}
+              </div>
+              <motion.div
+                animate={{ rotate: isExpanded ? 180 : 0 }}
+                transition={{ duration: 0.2 }}
+              >
+                <HiChevronDown className="w-4 h-4 text-surface-400" />
+              </motion.div>
+            </button>
+
+            {/* Expanded time slots */}
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                  className="overflow-hidden"
+                >
+                  <div className="p-2 space-y-1 border-t border-surface-200/50 dark:border-surface-700/50 bg-white dark:bg-surface-900">
+                    {slots.map(slot => (
+                      <button
+                        key={slot.key}
+                        onClick={() => onSelectSlot(slot)}
+                        className={`w-full text-left px-3 py-2 rounded-lg border transition-all flex items-center justify-between ${
+                          selectedSlot?.key === slot.key
+                            ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-400 dark:border-emerald-700 shadow-sm'
+                            : 'bg-surface-50 dark:bg-surface-800/50 border-surface-200/50 dark:border-surface-700/50 hover:border-emerald-300 dark:hover:border-emerald-600 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10'
+                        }`}
+                      >
+                        <span className="text-sm font-semibold text-surface-900 dark:text-white">
+                          {formatTime12(slot.startTime)} – {formatTime12(slot.endTime)}
+                        </span>
+                        {selectedSlot?.key === slot.key && (
+                          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300 }}>
+                            <HiCheck className="w-4 h-4 text-emerald-500" />
+                          </motion.div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 /* ── Main page ────────────────────────────────────────────── */
 export default function BookSessionPage() {
   const [params] = useSearchParams();
@@ -196,27 +300,29 @@ export default function BookSessionPage() {
     if (mySchedule.length === 0) { setCourses([]); setAllCourses([]); return; }
 
     api.get('/courses').then(({ data }) => {
-      // Extract course codes from schedule labels
-      const codes = new Set();
+      // Get enrolled course IDs from schedule entries (linked via course field)
+      const enrolledIds = new Set();
       mySchedule.forEach(entry => {
-        // Match 5-digit EDP codes (e.g. "32094 - IT-SYSADMN32 (LAB)")
-        const edpMatch = entry.label?.match(/^(\d{5})/);
-        if (edpMatch) { codes.add(edpMatch[1]); return; }
-        // Match alphanumeric course codes (e.g. "IT101 - Introduction to Computing")
-        const alphaMatch = entry.label?.match(/^([A-Z]{2,}\d{3,})/i);
-        if (alphaMatch) codes.add(alphaMatch[1].toUpperCase());
+        if (entry.course) {
+          const courseId = typeof entry.course === 'object' ? entry.course._id : entry.course;
+          if (courseId) enrolledIds.add(courseId);
+        }
       });
-      setEnrolledCodes(codes);
+      setEnrolledCodes(enrolledIds);
 
-      // Enrolled courses: in their schedule
-      const enrolled = data.filter(c => codes.has(c.courseCode));
+      // Enrolled courses: linked from schedule
+      const enrolled = data.filter(c => enrolledIds.has(c._id));
 
-      // Upcoming courses: year level above theirs, not already enrolled
-      const upcoming = data.filter(c =>
-        c.yearLevel && user.yearLevel && c.yearLevel > user.yearLevel && !codes.has(c.courseCode)
-      );
+      // Previous: same year lower semester + lower year levels
+      const previous = data.filter(c => {
+        if (enrolledIds.has(c._id)) return false;
+        if (!c.yearLevel || !user.yearLevel) return false;
+        if (c.yearLevel < user.yearLevel) return true;
+        if (c.yearLevel === user.yearLevel && user.currentSemester === 2 && c.semester === 1) return true;
+        return false;
+      });
 
-      setCourses([...enrolled, ...upcoming]);
+      setCourses([...enrolled, ...previous]);
       setAllCourses(data);
     });
   }, [mySchedule]);
@@ -302,6 +408,31 @@ export default function BookSessionPage() {
     <div>
       <PageHeader title="Book a Session" subtitle="Find mutual free time and schedule a study session" />
 
+      {/* No schedule warning */}
+      {mySchedule.length === 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="card mb-5 border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-950/20"
+        >
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center shrink-0">
+              <HiCalendar className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-amber-800 dark:text-amber-200">Schedule Required</h3>
+              <p className="text-sm text-amber-700 dark:text-amber-300 mt-0.5">
+                You need to upload your class schedule before booking a session. The system needs your timetable to find mutual free time with a tutor.
+              </p>
+              <a href="/student/my-schedule" className="inline-block mt-2 text-sm font-medium text-amber-700 dark:text-amber-300 underline hover:text-amber-900 dark:hover:text-amber-100">
+                Upload your schedule →
+              </a>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {mySchedule.length > 0 && (<>
       {/* Wizard step indicator */}
       <WizardSteps
         steps={[
@@ -324,20 +455,27 @@ export default function BookSessionPage() {
             <select value={selectedCourse} onChange={e => { setSelectedCourse(e.target.value); setSelectedTutor(''); setSuggestions([]); setSelectedSlot(null); }} className="input-field">
               <option value="">Select a course</option>
               {(() => {
-                const enrolled = courses.filter(c => enrolledCodes.has(c.courseCode));
-                const upcoming = courses.filter(c => !enrolledCodes.has(c.courseCode));
+                const enrolled = courses.filter(c => enrolledCodes.has(c._id));
+                const previous = courses.filter(c => !enrolledCodes.has(c._id));
+                // Group previous by year level
+                const previousByYear = {};
+                previous.forEach(c => {
+                  const yr = c.yearLevel || 0;
+                  if (!previousByYear[yr]) previousByYear[yr] = [];
+                  previousByYear[yr].push(c);
+                });
                 return (
                   <>
                     {enrolled.length > 0 && (
                       <optgroup label={`Currently Enrolled (Year ${user.yearLevel})`}>
-                        {enrolled.map(c => <option key={c._id} value={c._id}>{c.courseCode} — {c.courseName}</option>)}
+                        {enrolled.map(c => <option key={c._id} value={c._id}>{c.courseCode} — {c.courseName}{c.semester ? ` (${c.semester === 1 ? '1st' : '2nd'} Sem)` : ''}</option>)}
                       </optgroup>
                     )}
-                    {upcoming.length > 0 && (
-                      <optgroup label="Upcoming Courses">
-                        {upcoming.map(c => <option key={c._id} value={c._id}>{c.courseCode} — {c.courseName} (Year {c.yearLevel})</option>)}
+                    {Object.keys(previousByYear).sort((a, b) => b - a).map(yr => (
+                      <optgroup key={yr} label={`Year ${yr} Subjects`}>
+                        {previousByYear[yr].map(c => <option key={c._id} value={c._id}>{c.courseCode} — {c.courseName}{c.semester ? ` (${c.semester === 1 ? '1st' : '2nd'} Sem)` : ''}</option>)}
                       </optgroup>
-                    )}
+                    ))}
                   </>
                 );
               })()}
@@ -400,22 +538,12 @@ export default function BookSessionPage() {
                       ) : freeSlots.length === 0 ? (
                         <p className="text-xs text-surface-400 flex-1 flex items-center justify-center">No mutual free slots found</p>
                       ) : (
-                        <div className="space-y-1.5 overflow-y-auto flex-1 min-h-0">
-                          {freeSlots.map(slot => (
-                            <button key={slot.key} onClick={() => { playSound('pop'); setSelectedSlot(slot); }}
-                              className={`w-full text-left p-3 rounded-xl border transition-all ${
-                                selectedSlot?.key === slot.key
-                                  ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-400 dark:border-emerald-700 shadow-sm'
-                                  : 'bg-surface-50 dark:bg-surface-800 border-surface-200 dark:border-surface-700 hover:border-emerald-300 dark:hover:border-emerald-700'
-                              }`}>
-                              <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold text-surface-700 dark:text-surface-200">{slot.day}</span>
-                                {selectedSlot?.key === slot.key && <HiCheck className="w-4 h-4 text-emerald-500" />}
-                              </div>
-                              <p className="text-sm font-bold text-surface-900 dark:text-white mt-0.5">{formatTime12(slot.startTime)} – {formatTime12(slot.endTime)}</p>
-                            </button>
-                          ))}
-                        </div>
+                        <DayAccordionSlots
+                          suggestions={suggestions}
+                          freeSlots={freeSlots}
+                          selectedSlot={selectedSlot}
+                          onSelectSlot={(slot) => { playSound('pop'); setSelectedSlot(slot); }}
+                        />
                       )}
                     </div>
                   </div>
@@ -484,6 +612,7 @@ export default function BookSessionPage() {
           </div>
         </motion.div>
       )}
+      </>)}
     </div>
   );
 }

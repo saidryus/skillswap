@@ -71,7 +71,7 @@ export default function AdminDashboard() {
       {/* Stats grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8" ref={cardsRef}>
         <StatCard title="Total Students" value={stats.students} icon={HiUsers} color="blue" />
-        <StatCard title="IT Courses" value={stats.courses} icon={HiAcademicCap} color="green" />
+        <StatCard title="Active Courses" value={stats.courses} icon={HiAcademicCap} color="green" />
         <StatCard title="Pending Applications" value={stats.pendingApplications} icon={HiStar} color="orange" />
         <StatCard title="Sessions This Week" value={stats.sessionsThisWeek} icon={HiCalendar} color="purple" />
       </div>

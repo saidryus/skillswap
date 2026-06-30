@@ -8,6 +8,12 @@ const getUsers = async (req, res) => {
   try {
     const { role } = req.query;
     const filter = role ? { role } : {};
+
+    // Apply department scope for sub-admins
+    const { getDepartmentScope } = require('../middleware/departmentScope');
+    const scope = getDepartmentScope(req);
+    if (scope) Object.assign(filter, scope);
+
     const users = await User.find(filter).select('-password').sort({ createdAt: -1 });
     res.json(users);
   } catch (error) {
@@ -65,6 +71,9 @@ const createUser = async (req, res) => {
     if (role === 'admin') {
       userData.isSuperAdmin = false;
       userData.permissions = Array.isArray(permissions) ? permissions : [];
+      if (Array.isArray(req.body.assignedDepartments)) {
+        userData.assignedDepartments = req.body.assignedDepartments;
+      }
     }
 
     const user = await User.create(userData);
@@ -96,11 +105,22 @@ const updateUser = async (req, res) => {
     if (lastName) user.lastName = lastName;
     if (email) user.email = email;
     if (phone !== undefined) user.phone = phone && phone.trim() !== '' ? phone.trim() : undefined;
-    if (yearLevel !== undefined) user.yearLevel = yearLevel ? Number(yearLevel) : null;
+    if (yearLevel !== undefined) {
+      const newYear = yearLevel ? Number(yearLevel) : null;
+      // If year level changed, delete the old schedule (it's no longer valid)
+      if (newYear !== user.yearLevel) {
+        const StudentSchedule = require('../models/StudentSchedule');
+        await StudentSchedule.deleteMany({ student: user._id });
+      }
+      user.yearLevel = newYear;
+    }
     if (isActive !== undefined) user.isActive = isActive;
     if (password) user.password = password;
     if (studentIdNumber !== undefined) user.studentIdNumber = studentIdNumber;
     if (req.user.isSuperAdmin && Array.isArray(permissions)) user.permissions = permissions;
+    if (req.user.isSuperAdmin && req.body.assignedDepartments !== undefined) {
+      user.assignedDepartments = Array.isArray(req.body.assignedDepartments) ? req.body.assignedDepartments : undefined;
+    }
 
     const updated = await user.save();
     res.json({ ...updated.toJSON(), password: undefined });

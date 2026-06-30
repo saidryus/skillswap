@@ -8,6 +8,12 @@ const getCourses = async (req, res) => {
     const { yearLevel } = req.query;
     const filter = {};
     if (yearLevel) filter.yearLevel = Number(yearLevel);
+
+    // Apply department scope for sub-admins
+    if (req.user && req.user.role === 'admin' && !req.user.isSuperAdmin && req.user.assignedDepartments && req.user.assignedDepartments.length > 0) {
+      filter.department = { $in: req.user.assignedDepartments };
+    }
+
     const courses = await Course.find(filter).sort({ yearLevel: 1, courseCode: 1 });
     res.json(courses);
   } catch (error) {
@@ -33,7 +39,7 @@ const getCourseById = async (req, res) => {
 // @access  Admin
 const createCourse = async (req, res) => {
   try {
-    const { courseCode, courseName, description, units, yearLevel, department } = req.body;
+    const { courseCode, courseName, description, units, yearLevel, semester, department } = req.body;
 
     const exists = await Course.findOne({ courseCode: courseCode?.toUpperCase() });
     if (exists) return res.status(400).json({ message: 'Course code already exists' });
@@ -44,6 +50,7 @@ const createCourse = async (req, res) => {
       description,
       units,
       yearLevel,
+      semester: [1, 2].includes(Number(semester)) ? Number(semester) : null,
       department: department || 'Information Technology',
     });
     res.status(201).json(course);
@@ -111,6 +118,7 @@ const importCourses = async (req, res) => {
           description: row.description?.toString().trim() || '',
           units: Number(row.units) || 3,
           yearLevel: [1, 2, 3, 4].includes(Number(row.yearLevel)) ? Number(row.yearLevel) : null,
+          semester: [1, 2].includes(Number(row.semester)) ? Number(row.semester) : null,
           department: row.department?.toString().trim() || 'Information Technology',
         });
         results.created++;

@@ -13,6 +13,15 @@ const applyAsTutor = async (req, res) => {
     const { courseId } = req.body;
     if (!courseId) return res.status(400).json({ message: 'courseId is required' });
 
+    // Require schedule before applying as tutor
+    const StudentSchedule = require('../models/StudentSchedule');
+    const scheduleCount = await StudentSchedule.countDocuments({ student: req.user._id });
+    if (scheduleCount === 0) {
+      return res.status(400).json({
+        message: 'You must upload your class schedule before applying as a tutor. Go to your schedule page to upload your study load.',
+      });
+    }
+
     const course = await Course.findById(courseId);
     if (!course) return res.status(404).json({ message: 'Course not found' });
 
@@ -74,11 +83,22 @@ const getApplications = async (req, res) => {
   try {
     const { status } = req.query;
     const filter = status ? { status } : {};
-    const profiles = await TutorProfile.find(filter)
-      .populate('tutor', 'firstName lastName email studentIdNumber yearLevel')
-      .populate('course', 'courseCode courseName yearLevel')
+    let profiles = await TutorProfile.find(filter)
+      .populate('tutor', 'firstName lastName email studentIdNumber yearLevel currentSemester department')
+      .populate('course', 'courseCode courseName yearLevel department')
       .populate('reviewedBy', 'firstName lastName')
       .sort({ createdAt: -1 });
+
+    // Apply department scope for sub-admins
+    const { getDepartmentScope } = require('../middleware/departmentScope');
+    const scope = getDepartmentScope(req);
+    if (scope) {
+      const depts = scope.department.$in;
+      profiles = profiles.filter(p =>
+        p.tutor && depts.includes(p.tutor.department)
+      );
+    }
+
     res.json(profiles);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -108,7 +128,7 @@ const getTutorsForCourse = async (req, res) => {
     if (!courseId) return res.status(400).json({ message: 'courseId is required' });
 
     const profiles = await TutorProfile.find({ course: courseId, status: 'approved' })
-      .populate('tutor', 'firstName lastName email studentIdNumber yearLevel maxSessionsPerWeek')
+      .populate('tutor', 'firstName lastName email studentIdNumber yearLevel currentSemester maxSessionsPerWeek')
       .populate('course', 'courseCode courseName');
 
     // Compute competency score for each tutor

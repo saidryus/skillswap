@@ -7,7 +7,7 @@ import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
 const YEAR_LABELS = { 1: '1st Year', 2: '2nd Year', 3: '3rd Year', 4: '4th Year' };
-const emptyForm = { courseCode: '', courseName: '', description: '', units: 3, yearLevel: '', department: 'Information Technology', isActive: true };
+const emptyForm = { courseCode: '', courseName: '', description: '', units: 3, yearLevel: '', semester: '', department: 'Information Technology', isActive: true };
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState([]);
@@ -19,6 +19,7 @@ export default function CoursesPage() {
   const [form, setForm] = useState(emptyForm);
   const [search, setSearch] = useState('');
   const [yearFilter, setYearFilter] = useState('');
+  const [semFilter, setSemFilter] = useState('');
   const [deptFilter, setDeptFilter] = useState('');
   const [importText, setImportText] = useState('');
   const [importLoading, setImportLoading] = useState(false);
@@ -44,15 +45,16 @@ export default function CoursesPage() {
   useEffect(() => {
     let result = courses;
     if (yearFilter) result = result.filter(c => c.yearLevel === Number(yearFilter));
+    if (semFilter) result = result.filter(c => c.semester === Number(semFilter));
     if (deptFilter) result = result.filter(c => c.department === deptFilter);
     if (search) result = result.filter(c =>
       `${c.courseCode} ${c.courseName}`.toLowerCase().includes(search.toLowerCase())
     );
     setFiltered(result);
-  }, [courses, yearFilter, deptFilter, search]);
+  }, [courses, yearFilter, semFilter, deptFilter, search]);
 
   const openCreate = () => { setEditCourse(null); setForm(emptyForm); setModalOpen(true); };
-  const openEdit = (c) => { setEditCourse(c); setForm({ ...c, yearLevel: c.yearLevel ?? '' }); setModalOpen(true); };
+  const openEdit = (c) => { setEditCourse(c); setForm({ ...c, yearLevel: c.yearLevel ?? '', semester: c.semester ?? '' }); setModalOpen(true); };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -96,6 +98,7 @@ export default function CoursesPage() {
         description: r.description || '',
         units: r.units || '3',
         yearLevel: r.yearlevel || r.yearLevel || '',
+        semester: r.semester || '',
         department: r.department || 'Information Technology',
       }));
 
@@ -115,7 +118,7 @@ export default function CoursesPage() {
   return (
     <div>
       <PageHeader
-        title="IT Courses"
+        title="Courses"
         subtitle="Manage courses available for peer tutoring"
         action={
           <div className="flex gap-2">
@@ -148,6 +151,11 @@ export default function CoursesPage() {
             <option key={d._id} value={d.name}>{d.name}</option>
           ))}
         </select>
+        <select value={semFilter} onChange={e => setSemFilter(e.target.value)} className="input-field py-2 w-36">
+          <option value="">All Semesters</option>
+          <option value="1">1st Semester</option>
+          <option value="2">2nd Semester</option>
+        </select>
       </div>
 
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="card p-0 overflow-hidden">
@@ -159,6 +167,7 @@ export default function CoursesPage() {
                 <th className="table-header">Course Name</th>
                 <th className="table-header">Units</th>
                 <th className="table-header">Year Level</th>
+                <th className="table-header">Semester</th>
                 <th className="table-header">Department</th>
                 <th className="table-header">Status</th>
                 <th className="table-header">Actions</th>
@@ -176,6 +185,7 @@ export default function CoursesPage() {
                   </td>
                   <td className="table-cell">{c.units}</td>
                   <td className="table-cell">{c.yearLevel ? <span className="badge bg-indigo-500/20 text-indigo-300 border-indigo-500/30">{YEAR_LABELS[c.yearLevel]}</span> : '—'}</td>
+                  <td className="table-cell">{c.semester ? <span className="badge bg-purple-500/20 text-purple-300 border-purple-500/30">Sem {c.semester}</span> : '—'}</td>
                   <td className="table-cell text-sm text-surface-500 dark:text-surface-400">{c.department || '—'}</td>
                   <td className="table-cell"><span className={`badge ${c.isActive ? 'bg-green-500/20 text-green-300 border-green-500/30' : 'bg-red-500/20 text-red-300 border-red-500/30'}`}>{c.isActive ? 'Active' : 'Inactive'}</span></td>
                   <td className="table-cell">
@@ -204,6 +214,12 @@ export default function CoursesPage() {
               <option value="">Not specified</option>
               <option value="1">1st Year</option><option value="2">2nd Year</option>
               <option value="3">3rd Year</option><option value="4">4th Year</option>
+            </select>
+          </div>
+          <div><label className="label">Semester</label>
+            <select value={form.semester} onChange={e => setForm({...form, semester: e.target.value})} className="input-field">
+              <option value="">Not specified</option>
+              <option value="1">1st Semester</option><option value="2">2nd Semester</option>
             </select>
           </div>
           <div><label className="label">Department</label>
@@ -235,8 +251,8 @@ export default function CoursesPage() {
               <p className="font-semibold text-surface-700 dark:text-surface-300">Expected CSV format:</p>
               <button
                 onClick={() => {
-                  const header = 'courseCode,courseName,description,units,yearLevel,department';
-                  const sample = 'IT101,Introduction to Computing,Fundamentals of computing,3,1,Information Technology\nIT201,Data Structures,Core data structures and algorithms,3,2,Information Technology';
+                  const header = 'courseCode,courseName,description,units,yearLevel,semester,department';
+                  const sample = 'IT101,Introduction to Computing,Fundamentals of computing,3,1,1,Information Technology\nIT201,Data Structures,Core data structures and algorithms,3,2,1,Information Technology';
                   const blob = new Blob([`${header}\n${sample}`], { type: 'text/csv' });
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement('a');
@@ -250,9 +266,9 @@ export default function CoursesPage() {
                 <HiUpload className="w-3 h-3 rotate-180" /> Download Template
               </button>
             </div>
-            <p className="font-mono">courseCode,courseName,description,units,yearLevel,department</p>
-            <p className="font-mono text-surface-400 dark:text-surface-500">IT101,Introduction to Computing,Fundamentals,3,1,Information Technology</p>
-            <p className="mt-1 text-surface-400 dark:text-surface-500">yearLevel: 1-4 · units: 1-6 · description & department are optional</p>
+            <p className="font-mono">courseCode,courseName,description,units,yearLevel,semester,department</p>
+            <p className="font-mono text-surface-400 dark:text-surface-500">IT101,Introduction to Computing,Fundamentals,3,1,1,Information Technology</p>
+            <p className="mt-1 text-surface-400 dark:text-surface-500">yearLevel: 1-4 · semester: 1-2 · units: 1-6 · description & department are optional</p>
           </div>
           <div>
             <label className="label">Paste CSV data</label>
@@ -261,7 +277,7 @@ export default function CoursesPage() {
               onChange={e => setImportText(e.target.value)}
               className="input-field font-mono text-xs"
               rows={8}
-              placeholder="courseCode,courseName,description,units,yearLevel&#10;IT101,Introduction to Computing,,3,1"
+              placeholder="courseCode,courseName,description,units,yearLevel,semester&#10;IT101,Introduction to Computing,,3,1,1"
             />
           </div>
           <div className="flex gap-3">

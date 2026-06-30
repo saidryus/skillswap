@@ -10,6 +10,7 @@ const path = require('path');
 const getStudentSchedule = async (req, res) => {
   try {
     const schedules = await StudentSchedule.find({ student: req.params.studentId })
+      .populate('course', 'courseCode courseName yearLevel')
       .sort({ day: 1, startTime: 1 });
     res.json(schedules);
   } catch (error) {
@@ -46,6 +47,7 @@ const setStudentSchedule = async (req, res) => {
         startTime: entry.startTime,
         endTime: entry.endTime,
         label: entry.label || '',
+        course: entry.course || null,
       });
       created.push(s);
     }
@@ -61,7 +63,7 @@ const setStudentSchedule = async (req, res) => {
 // @access  Admin
 const addScheduleEntry = async (req, res) => {
   try {
-    const { day, startTime, endTime, label } = req.body;
+    const { day, startTime, endTime, label, course } = req.body;
     if (!day || !startTime || !endTime) {
       return res.status(400).json({ message: 'day, startTime, and endTime are required' });
     }
@@ -69,6 +71,7 @@ const addScheduleEntry = async (req, res) => {
       student: req.params.studentId,
       day, startTime, endTime,
       label: label || '',
+      course: course || null,
     });
     res.status(201).json(entry);
   } catch (error) {
@@ -135,6 +138,7 @@ const bulkEnroll = async (req, res) => {
           startTime: entry.startTime,
           endTime: entry.endTime,
           label: entry.label || '',
+          course: entry.course || null,
         });
         totalCreated++;
       }
@@ -194,14 +198,32 @@ const uploadStudyLoad = async (req, res) => {
     // Clear existing schedule and replace with extracted data
     await StudentSchedule.deleteMany({ student: student._id });
 
+    // Try to match labels/EDP codes to existing courses for linking
+    const allCourses = await Course.find({ isActive: true });
+    const courseCodeMap = {};
+    allCourses.forEach(c => { courseCodeMap[c.courseCode.toUpperCase()] = c._id; });
+
     const created = [];
     for (const entry of result.entries) {
+      // Try to match by EDP code or by extracting course code from label
+      let courseId = null;
+      if (entry.edpCode && courseCodeMap[entry.edpCode.toUpperCase()]) {
+        courseId = courseCodeMap[entry.edpCode.toUpperCase()];
+      } else if (entry.label) {
+        // Try matching the label's course code portion against known courses
+        const labelCode = entry.label.split(' - ')[1]?.split(' ')[0]?.toUpperCase();
+        if (labelCode && courseCodeMap[labelCode]) {
+          courseId = courseCodeMap[labelCode];
+        }
+      }
+
       const s = await StudentSchedule.create({
         student: student._id,
         day: entry.day,
         startTime: entry.startTime,
         endTime: entry.endTime,
         label: entry.label,
+        course: courseId,
       });
       created.push(s);
     }
@@ -209,6 +231,11 @@ const uploadStudyLoad = async (req, res) => {
     // Update year level if extracted and different
     if (result.yearLevel && result.yearLevel !== student.yearLevel) {
       await User.findByIdAndUpdate(student._id, { yearLevel: result.yearLevel });
+    }
+
+    // Update semester if extracted
+    if (result.semester) {
+      await User.findByIdAndUpdate(student._id, { currentSemester: result.semester });
     }
 
     // Try to match EDP codes to existing courses

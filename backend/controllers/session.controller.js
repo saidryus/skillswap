@@ -167,6 +167,14 @@ const createSession = async (req, res) => {
       return res.status(400).json({ message: 'tutorId, courseId, date, startTime, endTime are required' });
     }
 
+    // Require schedule before booking a session
+    const tuteeScheduleCount = await StudentSchedule.countDocuments({ student: req.user._id });
+    if (tuteeScheduleCount === 0) {
+      return res.status(400).json({
+        message: 'You must upload your class schedule before booking a session. Go to your schedule page to upload your study load.',
+      });
+    }
+
     // Prevent booking a session with yourself
     if (tutorId === req.user._id.toString()) {
       return res.status(400).json({ message: 'You cannot book a session with yourself' });
@@ -283,11 +291,22 @@ const getAllSessions = async (req, res) => {
     if (status) filter.status = status;
     if (courseId) filter.course = courseId;
 
-    const sessions = await Session.find(filter)
-      .populate('tutor', 'firstName lastName studentIdNumber')
-      .populate('tutees', 'firstName lastName studentIdNumber')
-      .populate('course', 'courseCode courseName')
+    let sessions = await Session.find(filter)
+      .populate('tutor', 'firstName lastName studentIdNumber department')
+      .populate('tutees', 'firstName lastName studentIdNumber department')
+      .populate('course', 'courseCode courseName department')
       .sort({ date: -1 });
+
+    // Apply department scope for sub-admins
+    const { getDepartmentScope } = require('../middleware/departmentScope');
+    const scope = getDepartmentScope(req);
+    if (scope) {
+      const depts = scope.department.$in;
+      sessions = sessions.filter(s =>
+        s.course && depts.includes(s.course.department)
+      );
+    }
+
     res.json(sessions);
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { HiPlus, HiPencil, HiTrash, HiSearch, HiShieldCheck, HiLockClosed, HiUpload } from 'react-icons/hi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { HiPlus, HiPencil, HiTrash, HiSearch, HiShieldCheck, HiLockClosed, HiUpload, HiUserAdd, HiAcademicCap, HiOfficeBuilding } from 'react-icons/hi';
 import PageHeader from '../../components/PageHeader';
 import Modal from '../../components/Modal';
 import api from '../../utils/api';
@@ -22,6 +22,7 @@ const emptyForm = {
   firstName: '', lastName: '', email: '', password: '',
   role: 'student', yearLevel: '', phone: '', studentIdNumber: '',
   department: 'Information Technology', isActive: true, permissions: [],
+  assignedDepartments: [],
 };
 
 export default function UsersPage() {
@@ -89,7 +90,7 @@ export default function UsersPage() {
   const openCreate = () => { setEditUser(null); setForm(emptyForm); setModalOpen(true); };
   const openEdit = (u) => {
     setEditUser(u);
-    setForm({ ...u, password: '', yearLevel: u.yearLevel ?? '', permissions: u.permissions || [] });
+    setForm({ ...u, password: '', yearLevel: u.yearLevel ?? '', permissions: u.permissions || [], assignedDepartments: u.assignedDepartments || [] });
     setModalOpen(true);
   };
 
@@ -160,15 +161,15 @@ export default function UsersPage() {
   return (
     <div>
       <PageHeader
-        title="Student Management"
-        subtitle="Manage all registered IT department students"
+        title="User Management"
+        subtitle="Manage students and administrators"
         action={
           <div className="flex gap-2">
             <button onClick={() => setImportOpen(true)} className="btn-secondary flex items-center gap-2">
               <HiUpload className="w-4 h-4" /> Bulk Import
             </button>
             <button onClick={openCreate} className="btn-primary flex items-center gap-2">
-              <HiPlus className="w-4 h-4" /> Add Student
+              <HiPlus className="w-4 h-4" /> Add User
             </button>
           </div>
         }
@@ -293,70 +294,264 @@ export default function UsersPage() {
         </div>
       </motion.div>
 
-      {/* Create / Edit Modal */}
-      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editUser ? 'Edit User' : 'Add Student'}>
+      {/* Create / Edit User Modal — adapts based on role */}
+      <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)} title={editUser ? 'Edit User' : 'Add User'}>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div><label className="label">First Name</label><input value={form.firstName} onChange={e => setForm({...form, firstName: e.target.value})} className="input-field" required /></div>
-            <div><label className="label">Last Name</label><input value={form.lastName} onChange={e => setForm({...form, lastName: e.target.value})} className="input-field" required /></div>
-          </div>
-          <div><label className="label">Email</label><input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="input-field" required /></div>
-          <div>
-            <label className="label">{editUser ? 'New Password (leave blank to keep)' : 'Password'}</label>
-            <input type="password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} className="input-field" required={!editUser} minLength={6} />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div><label className="label">Student ID</label><input value={form.studentIdNumber} onChange={e => setForm({...form, studentIdNumber: e.target.value})} className="input-field" placeholder="202400001" /></div>
-            <div><label className="label">Year Level</label>
-              <select value={form.yearLevel} onChange={e => setForm({...form, yearLevel: e.target.value})} className="input-field">
-                <option value="">Select year</option>
-                <option value="1">1st Year</option><option value="2">2nd Year</option>
-                <option value="3">3rd Year</option><option value="4">4th Year</option>
-              </select>
-            </div>
-          </div>
-          <div><label className="label">Phone (optional)</label><input value={form.phone || ''} onChange={e => setForm({...form, phone: e.target.value})} className="input-field" placeholder="+63 9XX XXX XXXX" /></div>
-          <div><label className="label">Department</label>
-            <select value={form.department || 'Information Technology'} onChange={e => setForm({...form, department: e.target.value})} className="input-field">
-              <option value="Information Technology">Information Technology</option>
-              {departments.filter(d => d.isActive && d.name !== 'Information Technology').map(d => (
-                <option key={d._id} value={d.name}>{d.name}</option>
-              ))}
-            </select>
-          </div>
-          {isSuperAdmin && !editUser && (
-            <div><label className="label">Role</label>
-              <select value={form.role} onChange={e => setForm({...form, role: e.target.value, permissions: []})} className="input-field">
-                <option value="student">Student</option>
-                <option value="admin">Admin (Sub-Admin)</option>
-              </select>
-            </div>
-          )}
-          {form.role === 'admin' && isSuperAdmin && (
-            <div className="bg-surface-50 dark:bg-surface-800 border border-surface-200 dark:border-surface-700 rounded-xl p-4">
-              <p className="text-sm font-semibold text-surface-800 dark:text-surface-200 mb-3 flex items-center gap-2">
-                <HiShieldCheck className="w-4 h-4 text-blue-400" /> Sub-Admin Permissions
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                {ALL_PERMISSIONS.map(({ key, label }) => (
-                  <label key={key} className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-colors
-                    ${form.permissions.includes(key) ? 'bg-blue-500/20 border-blue-500/40 text-blue-300' : 'bg-surface-50 dark:bg-surface-800 border-surface-200 dark:border-surface-700 text-surface-500 dark:text-surface-400 hover:border-slate-500'}`}>
-                    <input type="checkbox" checked={form.permissions.includes(key)} onChange={() => togglePermission(key)} className="w-3.5 h-3.5 accent-blue-500" />
-                    <span className="text-xs font-medium">{label}</span>
-                  </label>
+          {/* Role selector — only on create, only super admin */}
+          {!editUser && isSuperAdmin && (
+            <div>
+              <label className="label">Account Type</label>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { value: 'student', label: 'Student', icon: HiAcademicCap, desc: 'Standard student account' },
+                  { value: 'admin', label: 'Sub-Admin', icon: HiShieldCheck, desc: 'Administrative access' },
+                ].map(opt => (
+                  <motion.button
+                    key={opt.value}
+                    type="button"
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setForm({ ...form, role: opt.value, permissions: [] })}
+                    className={`flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all ${
+                      form.role === opt.value
+                        ? 'bg-primary-50 dark:bg-primary-950/30 border-primary-400 dark:border-primary-700 shadow-sm'
+                        : 'bg-surface-50 dark:bg-surface-800 border-surface-200 dark:border-surface-700 hover:border-surface-300 dark:hover:border-surface-600'
+                    }`}
+                  >
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${
+                      form.role === opt.value
+                        ? 'bg-primary-500 text-white'
+                        : 'bg-surface-200 dark:bg-surface-700 text-surface-500 dark:text-surface-400'
+                    }`}>
+                      <opt.icon className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <p className={`text-sm font-semibold ${form.role === opt.value ? 'text-primary-700 dark:text-primary-300' : 'text-surface-700 dark:text-surface-300'}`}>{opt.label}</p>
+                      <p className="text-[11px] text-surface-400">{opt.desc}</p>
+                    </div>
+                  </motion.button>
                 ))}
               </div>
             </div>
           )}
+
+          {/* Admin badge when editing admin */}
+          {editUser && editUser.role === 'admin' && (
+            <div className="flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20">
+              <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                <HiShieldCheck className="w-4 h-4 text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-surface-900 dark:text-white">Administrator Account</p>
+                <p className="text-xs text-surface-500 dark:text-surface-400">Editing admin permissions and details</p>
+              </div>
+            </div>
+          )}
+
+          {/* Common fields: name */}
+          <div className="grid grid-cols-2 gap-4">
+            <div><label className="label">First Name</label><input value={form.firstName} onChange={e => setForm({...form, firstName: e.target.value})} className="input-field" required /></div>
+            <div><label className="label">Last Name</label><input value={form.lastName} onChange={e => setForm({...form, lastName: e.target.value})} className="input-field" required /></div>
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="label">Email</label>
+            <input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="input-field" required />
+            {form.role === 'admin' && (
+              <p className="text-xs text-surface-400 mt-1">Admins log in with this email address</p>
+            )}
+          </div>
+
+          {/* Password */}
+          <div>
+            <label className="label">{editUser ? 'New Password (leave blank to keep)' : 'Password'}</label>
+            <input type="password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} className="input-field" required={!editUser} minLength={6} placeholder={form.role === 'student' && !editUser ? 'Defaults to last 3 digits of ID' : 'Minimum 6 characters'} />
+            {form.role === 'student' && !editUser && (
+              <p className="text-xs text-surface-400 mt-1">Leave blank to auto-set as last 3 digits of Student ID</p>
+            )}
+          </div>
+
+          {/* Student-specific fields */}
+          <AnimatePresence mode="wait">
+            {form.role === 'student' && (
+              <motion.div
+                key="student-fields"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25 }}
+                className="space-y-4 overflow-hidden"
+              >
+                <div className="grid grid-cols-2 gap-4">
+                  <div><label className="label">Student ID</label><input value={form.studentIdNumber} onChange={e => setForm({...form, studentIdNumber: e.target.value})} className="input-field" placeholder="202400001" /></div>
+                  <div><label className="label">Year Level</label>
+                    <select value={form.yearLevel} onChange={e => setForm({...form, yearLevel: e.target.value})} className="input-field">
+                      <option value="">Select year</option>
+                      <option value="1">1st Year</option><option value="2">2nd Year</option>
+                      <option value="3">3rd Year</option><option value="4">4th Year</option>
+                    </select>
+                  </div>
+                </div>
+                <div><label className="label">Phone (optional)</label><input value={form.phone || ''} onChange={e => setForm({...form, phone: e.target.value})} className="input-field" placeholder="+63 9XX XXX XXXX" /></div>
+                <div><label className="label">Department</label>
+                  <select value={form.department || 'Information Technology'} onChange={e => setForm({...form, department: e.target.value})} className="input-field">
+                    <option value="Information Technology">Information Technology</option>
+                    {departments.filter(d => d.isActive && d.name !== 'Information Technology').map(d => (
+                      <option key={d._id} value={d.name}>{d.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Admin-specific fields: permissions + department scope */}
+          <AnimatePresence mode="wait">
+            {form.role === 'admin' && isSuperAdmin && (
+              <motion.div
+                key="admin-fields"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.25 }}
+                className="space-y-4 overflow-hidden"
+              >
+                {/* Permissions */}
+                <div className="border border-surface-200 dark:border-surface-700 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm font-semibold text-surface-800 dark:text-surface-200 flex items-center gap-2">
+                      <HiShieldCheck className="w-4 h-4 text-primary-500" /> Module Permissions
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setForm(prev => ({
+                        ...prev,
+                        permissions: prev.permissions.length === ALL_PERMISSIONS.length ? [] : ALL_PERMISSIONS.map(p => p.key),
+                      }))}
+                      className="text-xs text-primary-500 hover:text-primary-400 font-medium transition-colors"
+                    >
+                      {form.permissions.length === ALL_PERMISSIONS.length ? 'Deselect All' : 'Select All'}
+                    </button>
+                  </div>
+                  <p className="text-xs text-surface-400 dark:text-surface-500 mb-3">Choose which sections this admin can access.</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {ALL_PERMISSIONS.map(({ key, label }) => {
+                      const isChecked = form.permissions.includes(key);
+                      return (
+                        <label
+                          key={key}
+                          className={`flex items-center gap-3 p-2.5 rounded-xl border-2 cursor-pointer transition-all ${
+                            isChecked
+                              ? 'bg-primary-50 dark:bg-primary-950/30 border-primary-400 dark:border-primary-700'
+                              : 'bg-surface-50 dark:bg-surface-800 border-surface-200 dark:border-surface-700 hover:border-surface-300 dark:hover:border-surface-600'
+                          }`}
+                        >
+                          <div className={`w-4.5 h-4.5 rounded border-2 flex items-center justify-center transition-all ${
+                            isChecked ? 'bg-primary-500 border-primary-500' : 'border-surface-300 dark:border-surface-600'
+                          }`}>
+                            {isChecked && (
+                              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                          <span className={`text-xs font-medium ${isChecked ? 'text-primary-700 dark:text-primary-300' : 'text-surface-600 dark:text-surface-400'}`}>{label}</span>
+                          <input type="checkbox" checked={isChecked} onChange={() => togglePermission(key)} className="sr-only" />
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {form.permissions.length === 0 && (
+                    <p className="text-xs text-amber-500 mt-2">⚠️ No permissions selected — this admin won't see any modules.</p>
+                  )}
+                </div>
+
+                {/* Department Scope */}
+                <div className="border border-surface-200 dark:border-surface-700 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm font-semibold text-surface-800 dark:text-surface-200 flex items-center gap-2">
+                      <HiOfficeBuilding className="w-4 h-4 text-emerald-500" /> Department Scope
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setForm(prev => ({
+                        ...prev,
+                        assignedDepartments: prev.assignedDepartments.length === departments.filter(d => d.isActive).length
+                          ? []
+                          : departments.filter(d => d.isActive).map(d => d.name),
+                      }))}
+                      className="text-xs text-emerald-500 hover:text-emerald-400 font-medium transition-colors"
+                    >
+                      {form.assignedDepartments.length === departments.filter(d => d.isActive).length ? 'Deselect All' : 'Select All'}
+                    </button>
+                  </div>
+                  <p className="text-xs text-surface-400 dark:text-surface-500 mb-3">
+                    Choose which departments this admin can manage. Leave empty to allow access to all departments.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {departments.filter(d => d.isActive).map(dept => {
+                      const isChecked = form.assignedDepartments.includes(dept.name);
+                      return (
+                        <label
+                          key={dept._id}
+                          className={`flex items-center gap-3 p-2.5 rounded-xl border-2 cursor-pointer transition-all ${
+                            isChecked
+                              ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-400 dark:border-emerald-700'
+                              : 'bg-surface-50 dark:bg-surface-800 border-surface-200 dark:border-surface-700 hover:border-surface-300 dark:hover:border-surface-600'
+                          }`}
+                        >
+                          <div className={`w-4.5 h-4.5 rounded border-2 flex items-center justify-center transition-all ${
+                            isChecked ? 'bg-emerald-500 border-emerald-500' : 'border-surface-300 dark:border-surface-600'
+                          }`}>
+                            {isChecked && (
+                              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                          <div>
+                            <span className={`text-xs font-medium ${isChecked ? 'text-emerald-700 dark:text-emerald-300' : 'text-surface-600 dark:text-surface-400'}`}>{dept.name}</span>
+                            <span className="text-[10px] text-surface-400 ml-1.5">({dept.code})</span>
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => setForm(prev => ({
+                              ...prev,
+                              assignedDepartments: isChecked
+                                ? prev.assignedDepartments.filter(d => d !== dept.name)
+                                : [...prev.assignedDepartments, dept.name],
+                            }))}
+                            className="sr-only"
+                          />
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {form.assignedDepartments.length === 0 && (
+                    <p className="text-xs text-surface-400 mt-2 flex items-center gap-1">
+                      ℹ️ No departments selected — this admin will see all departments.
+                    </p>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Active status (edit only) */}
           {editUser && (
             <div className="flex items-center gap-2">
               <input type="checkbox" id="isActive" checked={form.isActive} onChange={e => setForm({...form, isActive: e.target.checked})} className="w-4 h-4 rounded" />
               <label htmlFor="isActive" className="text-sm text-surface-700 dark:text-surface-300">Active Account</label>
             </div>
           )}
+
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={() => setModalOpen(false)} className="btn-secondary flex-1">Cancel</button>
-            <button type="submit" className="btn-primary flex-1">{editUser ? 'Update' : 'Create'}</button>
+            <button type="submit" className="btn-primary flex-1">
+              {editUser ? 'Update' : form.role === 'admin' ? 'Create Sub-Admin' : 'Create Student'}
+            </button>
           </div>
         </form>
       </Modal>

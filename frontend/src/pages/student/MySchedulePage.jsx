@@ -41,7 +41,7 @@ const BLOCK_COLORS = [
 ];
 
 export default function MySchedulePage() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [schedule, setSchedule] = useState([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -94,6 +94,7 @@ export default function MySchedulePage() {
         unmatchedCodes: data.unmatchedCodes,
       });
       fetchSchedule();
+      refreshUser();
     } catch (err) {
       const msg = err.response?.data?.message || 'Upload failed';
       toast.error(msg);

@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { HiIdentification, HiLockClosed, HiEye, HiEyeOff, HiAcademicCap, HiUserGroup, HiClock, HiLightningBolt } from 'react-icons/hi';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -8,6 +8,7 @@ import { playSound } from '../utils/sounds';
 import Logo from '../components/Logo';
 import api from '../utils/api';
 import toast from 'react-hot-toast';
+import CinematicBackground from '../components/CinematicBackground';
 
 const FEATURES = [
   { icon: HiUserGroup, title: 'Peer Matching', desc: 'Find verified tutors ranked by expertise' },
@@ -16,15 +17,52 @@ const FEATURES = [
   { icon: HiLightningBolt, title: 'Instant Booking', desc: 'Book sessions in seconds, not hours' },
 ];
 
+const TAGLINES = [
+  'Verified Tutors, Automated Scheduling',
+  'Swap Knowledge, Excel Together',
+  'Smart Matching, Smarter Learning',
+];
+
+/* ── Animated counter ─────────────────── */
+function AnimatedCounter({ target, duration = 2000 }) {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const increment = target / (duration / 16);
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= target) {
+        setCount(target);
+        clearInterval(timer);
+      } else {
+        setCount(Math.floor(start));
+      }
+    }, 16);
+    return () => clearInterval(timer);
+  }, [target, duration]);
+
+  return <span>{count}+</span>;
+}
+
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [taglineIndex, setTaglineIndex] = useState(0);
   const { login } = useAuth();
   const { isDark } = useTheme();
   const navigate = useNavigate();
+
+  // Rotating tagline
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTaglineIndex((prev) => (prev + 1) % TAGLINES.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -49,145 +87,213 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex relative overflow-hidden bg-surface-50 dark:bg-surface-950 transition-colors duration-500">
-      {/* Animated background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-primary-500/8 dark:bg-primary-500/5 rounded-full blur-3xl animate-float" />
-        <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] bg-emerald-500/8 dark:bg-emerald-500/4 rounded-full blur-3xl animate-float-delayed" />
-        <div className="absolute top-1/3 right-1/4 w-[300px] h-[300px] bg-amber-500/5 rounded-full blur-3xl animate-pulse-slow" />
-
-        {/* Subtle grid */}
-        <div className="absolute inset-0 opacity-[0.015] dark:opacity-[0.025]"
-          style={{
-            backgroundImage: 'linear-gradient(rgba(99,102,241,0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(99,102,241,0.4) 1px, transparent 1px)',
-            backgroundSize: '80px 80px',
-          }}
-        />
-      </div>
+    <div className="min-h-screen flex relative overflow-hidden bg-surface-950 dark:bg-surface-950 transition-colors duration-500">
+      {/* 3D Cinematic Background */}
+      <Suspense fallback={
+        <div className="absolute inset-0 bg-surface-950" />
+      }>
+        <CinematicBackground isDark={isDark} />
+      </Suspense>
 
       {/* Left side - branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative items-center justify-center p-12">
+      <div className="hidden lg:flex lg:w-1/2 relative items-center justify-center p-12 z-10">
         <motion.div
-          initial={{ opacity: 0, x: -40 }}
+          initial={{ opacity: 0, x: -60 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
           className="max-w-md relative z-10"
         >
-          <Logo size={72} showText textSize="text-4xl" />
+          {/* Logo */}
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.3, ease: 'easeOut' }}
+          >
+            <Logo size={72} showText textSize="text-4xl" />
+          </motion.div>
 
-          <p className="text-lg text-surface-600 dark:text-surface-300 mt-6 leading-relaxed">
+          {/* Animated tagline */}
+          <div className="mt-6 h-8 relative overflow-hidden">
+            <AnimatePresence mode="wait">
+              <motion.p
+                key={taglineIndex}
+                initial={{ y: 20, opacity: 0, filter: 'blur(4px)' }}
+                animate={{ y: 0, opacity: 1, filter: 'blur(0px)' }}
+                exit={{ y: -20, opacity: 0, filter: 'blur(4px)' }}
+                transition={{ duration: 0.6, ease: 'easeOut' }}
+                className="text-lg text-white/80 leading-relaxed font-medium"
+              >
+                {TAGLINES[taglineIndex]}
+              </motion.p>
+            </AnimatePresence>
+          </div>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.8 }}
+            className="text-sm text-white/50 mt-3 leading-relaxed"
+          >
             Connect with peer tutors, swap knowledge, and excel together. Smart scheduling meets verified expertise.
-          </p>
+          </motion.p>
 
           {/* Feature grid */}
           <div className="grid grid-cols-2 gap-3 mt-8">
             {FEATURES.map((feat, i) => (
               <motion.div
                 key={feat.title}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 + i * 0.1 }}
-                className="flex items-start gap-3 p-3 rounded-xl bg-white/50 dark:bg-surface-900/50 
-                           border border-surface-200/50 dark:border-surface-800/50 backdrop-blur-sm"
+                initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ delay: 0.6 + i * 0.15, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                whileHover={{ y: -4, scale: 1.02, transition: { duration: 0.2 } }}
+                className="flex items-start gap-3 p-3 rounded-xl 
+                           bg-white/5 dark:bg-white/5 backdrop-blur-md
+                           border border-white/10 dark:border-white/10
+                           cursor-default group transition-shadow hover:shadow-glow-sm
+                           hover:bg-white/10 hover:border-white/20"
               >
-                <div className="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center shrink-0">
-                  <feat.icon className="w-4 h-4 text-primary-600 dark:text-primary-400" />
-                </div>
+                <motion.div
+                  className="w-8 h-8 rounded-lg bg-primary-500/20 flex items-center justify-center shrink-0"
+                  whileHover={{ rotate: [0, -10, 10, 0] }}
+                  transition={{ duration: 0.4 }}
+                >
+                  <feat.icon className="w-4 h-4 text-primary-300 group-hover:text-primary-200 transition-colors" />
+                </motion.div>
                 <div>
-                  <p className="text-xs font-bold text-surface-800 dark:text-surface-200">{feat.title}</p>
-                  <p className="text-[11px] text-surface-500 dark:text-surface-400 mt-0.5">{feat.desc}</p>
+                  <p className="text-xs font-bold text-white/90">{feat.title}</p>
+                  <p className="text-[11px] text-white/50 mt-0.5">{feat.desc}</p>
                 </div>
               </motion.div>
             ))}
           </div>
 
-          {/* Stats */}
+          {/* Animated stats */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.9 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.4, duration: 0.6 }}
             className="mt-8 flex items-center gap-6"
           >
-            <div className="text-center">
-              <p className="text-2xl font-bold text-surface-900 dark:text-white">200+</p>
-              <p className="text-[11px] text-surface-500 dark:text-surface-400">Students</p>
-            </div>
-            <div className="w-px h-8 bg-surface-200 dark:bg-surface-800" />
-            <div className="text-center">
-              <p className="text-2xl font-bold text-surface-900 dark:text-white">50+</p>
-              <p className="text-[11px] text-surface-500 dark:text-surface-400">Active Tutors</p>
-            </div>
-            <div className="w-px h-8 bg-surface-200 dark:bg-surface-800" />
-            <div className="text-center">
-              <p className="text-2xl font-bold text-surface-900 dark:text-white">500+</p>
-              <p className="text-[11px] text-surface-500 dark:text-surface-400">Sessions</p>
-            </div>
+            {[
+              { value: 200, label: 'Students' },
+              { value: 50, label: 'Active Tutors' },
+              { value: 500, label: 'Sessions' },
+            ].map((stat, i) => (
+              <motion.div
+                key={stat.label}
+                className="text-center"
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 1.6 + i * 0.15, type: 'spring', stiffness: 200 }}
+              >
+                <p className="text-2xl font-bold text-white">
+                  <AnimatedCounter target={stat.value} duration={2000 + i * 500} />
+                </p>
+                <p className="text-[11px] text-white/40">{stat.label}</p>
+              </motion.div>
+            ))}
           </motion.div>
         </motion.div>
       </div>
 
       {/* Right side - login form */}
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-8 relative z-10">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-8 relative z-10 overflow-y-auto">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          initial={{ opacity: 0, y: 40, scale: 0.95 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
           className="w-full max-w-md"
         >
           {/* Mobile logo */}
-          <div className="flex justify-center mb-8 lg:hidden">
+          <motion.div
+            className="flex justify-center mb-8 lg:hidden"
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+          >
             <Logo size={56} showText textSize="text-2xl" />
-          </div>
+          </motion.div>
 
           <div className="text-center lg:text-left mb-8">
-            <h1 className="text-3xl font-bold text-surface-900 dark:text-white">
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3, duration: 0.6 }}
+              className="text-3xl font-bold text-white"
+            >
               Welcome back
-            </h1>
-            <p className="text-surface-500 dark:text-surface-400 mt-2">
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.5 }}
+              className="text-white/50 mt-2"
+            >
               Sign in to start swapping skills
-            </p>
+            </motion.p>
           </div>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-800 
-                       rounded-2xl p-6 sm:p-8 shadow-elevated"
+            transition={{ delay: 0.4, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            className="bg-white/5 dark:bg-white/5 backdrop-blur-xl
+                       border border-white/10 dark:border-white/10
+                       rounded-2xl p-6 sm:p-8 shadow-elevated relative overflow-hidden"
           >
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label className="label">Student ID / Admin Email</label>
+            {/* Glassmorphic glow */}
+            <div className="absolute -top-20 -right-20 w-40 h-40 bg-primary-500/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+            <form onSubmit={handleSubmit} className="space-y-5 relative">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.6, duration: 0.4 }}
+              >
+                <label className="block text-sm font-semibold mb-2 text-white/70">Student ID / Admin Email</label>
                 <div className="relative group">
                   <HiIdentification className="absolute left-3.5 top-1/2 -translate-y-1/2 
-                                              text-surface-400 group-focus-within:text-primary-500 
+                                              text-white/30 group-focus-within:text-primary-400 
                                               w-5 h-5 transition-colors" />
                   <input
                     type="text"
                     value={identifier}
                     onChange={e => { setIdentifier(e.target.value); setError(''); }}
-                    className="input-field pl-11"
+                    className="w-full rounded-xl px-4 py-3 pl-11 transition-all duration-200
+                               bg-white/5 border-2 border-white/10
+                               text-white placeholder-white/30
+                               focus:outline-none focus:border-primary-500/50 focus:ring-4 focus:ring-primary-500/10
+                               hover:border-white/20"
                     placeholder="e.g. 202400001"
                     required
                     autoComplete="username"
                   />
                 </div>
-                <p className="text-xs text-surface-400 mt-1.5">
+                <p className="text-xs text-white/30 mt-1.5">
                   Students use ID number · Admins use email
                 </p>
-              </div>
+              </motion.div>
 
-              <div>
-                <label className="label">Password</label>
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.7, duration: 0.4 }}
+              >
+                <label className="block text-sm font-semibold mb-2 text-white/70">Password</label>
                 <div className="relative group">
                   <HiLockClosed className="absolute left-3.5 top-1/2 -translate-y-1/2 
-                                          text-surface-400 group-focus-within:text-primary-500 
+                                          text-white/30 group-focus-within:text-primary-400 
                                           w-5 h-5 transition-colors" />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={e => { setPassword(e.target.value); setError(''); }}
-                    className="input-field pl-11 pr-11"
+                    className="w-full rounded-xl px-4 py-3 pl-11 pr-11 transition-all duration-200
+                               bg-white/5 border-2 border-white/10
+                               text-white placeholder-white/30
+                               focus:outline-none focus:border-primary-500/50 focus:ring-4 focus:ring-primary-500/10
+                               hover:border-white/20"
                     placeholder="••••••••"
                     required
                     autoComplete="current-password"
@@ -195,49 +301,82 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-surface-400 
-                               hover:text-surface-600 dark:hover:text-surface-300 transition-colors"
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 
+                               hover:text-white/60 transition-colors"
                     tabIndex={-1}
                   >
                     {showPassword ? <HiEyeOff className="w-4 h-4" /> : <HiEye className="w-4 h-4" />}
                   </button>
                 </div>
-                <p className="text-xs text-surface-400 mt-1.5">
+                <p className="text-xs text-white/30 mt-1.5">
                   Default: last 3 digits of your Student ID
                 </p>
-              </div>
+              </motion.div>
 
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, y: -8, height: 0 }}
-                  animate={{ opacity: 1, y: 0, height: 'auto' }}
-                  className="flex items-center gap-2 bg-red-50 dark:bg-red-950/30 
-                             border border-red-200 dark:border-red-800/50 
-                             text-red-700 dark:text-red-300 text-sm rounded-xl px-4 py-3"
-                >
-                  <span className="shrink-0">⚠️</span>
-                  <span>{error}</span>
-                </motion.div>
-              )}
+              <AnimatePresence>
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8, height: 0 }}
+                    animate={{ opacity: 1, y: 0, height: 'auto' }}
+                    exit={{ opacity: 0, y: -8, height: 0 }}
+                    className="flex items-center gap-2 
+                               bg-red-500/10 border border-red-500/20
+                               text-red-300 text-sm rounded-xl px-4 py-3"
+                  >
+                    <motion.span
+                      className="shrink-0"
+                      animate={{ rotate: [0, -10, 10, -10, 0] }}
+                      transition={{ duration: 0.4 }}
+                    >
+                      ⚠️
+                    </motion.span>
+                    <span>{error}</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <motion.button
-                whileTap={{ scale: 0.98 }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8, duration: 0.4 }}
+                whileHover={{ scale: 1.02, boxShadow: '0 0 40px -5px rgba(99, 102, 241, 0.6)' }}
+                whileTap={{ scale: 0.97 }}
                 type="submit"
                 disabled={loading}
-                className="btn-primary w-full py-3.5 text-base"
+                className="w-full py-3.5 text-base font-semibold rounded-xl relative overflow-hidden
+                           bg-gradient-to-r from-primary-500 to-purple-600
+                           text-white shadow-glow
+                           hover:from-primary-400 hover:to-purple-500
+                           disabled:opacity-50 disabled:cursor-not-allowed
+                           transition-all duration-300"
               >
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
                     <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     Signing in...
                   </span>
-                ) : 'Sign In'}
+                ) : (
+                  <span className="relative z-10">Sign In</span>
+                )}
+                {/* Button shine sweep */}
+                {!loading && (
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12"
+                    animate={{ x: ['-200%', '200%'] }}
+                    transition={{ duration: 3, repeat: Infinity, repeatDelay: 2 }}
+                  />
+                )}
               </motion.button>
             </form>
 
-            {/* Demo credentials dropdown */}
-            <div className="mt-6 pt-6 border-t border-surface-200 dark:border-surface-800">
-              <p className="text-xs font-medium text-surface-500 dark:text-surface-400 text-center mb-3">
+            {/* Demo credentials */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1.2, duration: 0.5 }}
+              className="mt-6 pt-6 border-t border-white/10"
+            >
+              <p className="text-xs font-medium text-white/40 text-center mb-3">
                 Demo Credentials
               </p>
               <select
@@ -246,30 +385,62 @@ export default function LoginPage() {
                   const [id, pw] = e.target.value.split('|');
                   setIdentifier(id);
                   setPassword(pw);
+                  playSound('pop');
                   e.target.value = '';
                 }}
                 defaultValue=""
-                className="input-field text-sm"
+                className="w-full rounded-xl px-4 py-3 text-sm transition-all duration-200
+                           bg-surface-800 border-2 border-white/10
+                           text-white/70
+                           focus:outline-none focus:border-primary-500/50
+                           hover:border-white/20
+                           [&>option]:bg-surface-800 [&>option]:text-white
+                           [&>optgroup]:bg-surface-800 [&>optgroup]:text-white/50"
               >
                 <option value="">Select an account to auto-fill...</option>
                 <optgroup label="Admin">
                   <option value="admin@skillswap.edu|admin123">Admin — admin@skillswap.edu</option>
                 </optgroup>
                 <optgroup label="Students (with schedule)">
-                  <option value="23063670|670">Simone Makinano — 23063670</option>
-                  <option value="23063671|671">Marco Villanueva — 23063671</option>
-                  <option value="23063672|672">Angela Tan — 23063672</option>
-                  <option value="23063673|673">Kyle Reyes — 23063673</option>
+                  <option value="23063670|670">Simone Makinano — 23063670 (Year 3)</option>
                 </optgroup>
-                <optgroup label="Students (seeded)">
-                  <option value="202400001|001">Juan Dela Cruz — 202400001</option>
-                  <option value="202300001|001">Carlos Mendoza — 202300001</option>
-                  <option value="202200001|001">Luisa Torres — 202200001 (Tutor)</option>
-                  <option value="202100001|001">Diego Flores — 202100001 (Tutor)</option>
+                <optgroup label="1st Year Students">
+                  <option value="202401001|password123">Juan Dela Cruz — 202401001</option>
+                  <option value="202401002|password123">Maria Santos — 202401002</option>
+                  <option value="202401003|password123">Carlos Reyes — 202401003</option>
+                  <option value="202401004|password123">Andrea Garcia — 202401004</option>
+                </optgroup>
+                <optgroup label="2nd Year Students">
+                  <option value="202302001|password123">Miguel Mendoza — 202302001</option>
+                  <option value="202302002|password123">Sofia Torres — 202302002</option>
+                  <option value="202302003|password123">Diego Villanueva — 202302003</option>
+                  <option value="202302004|password123">Isabella Ramos — 202302004</option>
+                </optgroup>
+                <optgroup label="3rd Year Students">
+                  <option value="202203001|password123">Rafael Cruz — 202203001</option>
+                  <option value="202203002|password123">Camille Bautista — 202203002</option>
+                  <option value="202203003|password123">Gabriel Ocampo — 202203003</option>
+                  <option value="202203004|password123">Nicole Flores — 202203004</option>
+                </optgroup>
+                <optgroup label="4th Year Students">
+                  <option value="202104001|password123">Antonio Rivera — 202104001</option>
+                  <option value="202104002|password123">Patricia Gonzales — 202104002</option>
+                  <option value="202104003|password123">Marco Lopez — 202104003</option>
+                  <option value="202104004|password123">Jasmine Navarro — 202104004</option>
                 </optgroup>
               </select>
-            </div>
+            </motion.div>
           </motion.div>
+
+          {/* Bottom branding */}
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1.5 }}
+            className="text-center text-xs text-white/20 mt-6"
+          >
+            SkillSwap · College of Computer Studies · UC South Campus
+          </motion.p>
         </motion.div>
       </div>
     </div>

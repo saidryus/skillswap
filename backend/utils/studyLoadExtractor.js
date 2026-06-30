@@ -155,12 +155,17 @@ function parseStudyLoadText(text) {
     name: null,
     course: null,
     yearLevel: null,
+    semester: null,
     totalUnits: null,
     entries: [],
     rawText: text,
   };
 
   if (!text || text.trim().length < 20) return result;
+
+  // Extract semester
+  const semMatch = text.match(/(\d)\s*(?:st|nd|rd|th)?\s*Sem(?:ester)?/i);
+  if (semMatch) result.semester = parseInt(semMatch[1]);
 
   // Extract student ID
   const idMatch = text.match(/ID\s*No\.?\s*:?\s*(\d{5,})/i);
@@ -286,6 +291,7 @@ async function extractStudyLoad(filePath) {
       name: parsed.name,
       course: parsed.course,
       yearLevel: parsed.yearLevel,
+      semester: parsed.semester,
       totalUnits: parsed.totalUnits,
       entries: parsed.entries,
       message: `Successfully extracted ${parsed.entries.length} schedule entries for student ${parsed.studentId || 'unknown'}.`,

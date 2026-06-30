@@ -113,11 +113,27 @@ export default function Sidebar({ open, setOpen, isMobile }) {
     <motion.aside
       animate={{ width: isMobile ? 260 : sidebarWidth }}
       transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-      className="h-full flex flex-col relative
+      className="h-full flex flex-col relative overflow-hidden
                  bg-white dark:bg-surface-900
                  border-r border-surface-200/50 dark:border-surface-800/50
                  transition-colors duration-300"
     >
+      {/* Sidebar ambient glow */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-20 -left-20 w-[200px] h-[200px] 
+                        bg-primary-500/[0.04] dark:bg-primary-500/[0.06] 
+                        rounded-full blur-[60px]" />
+        <div className="absolute -bottom-20 -left-10 w-[150px] h-[150px] 
+                        bg-purple-500/[0.03] dark:bg-purple-500/[0.05] 
+                        rounded-full blur-[50px]" />
+        <div className="absolute top-[40%] -right-10 w-[100px] h-[100px] 
+                        bg-emerald-500/[0.02] dark:bg-emerald-500/[0.04] 
+                        rounded-full blur-[40px] animate-pulse-slow" />
+        {/* Subtle vertical line accent */}
+        <div className="absolute top-0 right-0 w-[1px] h-full 
+                        bg-gradient-to-b from-transparent via-primary-500/[0.08] to-transparent
+                        dark:via-primary-400/[0.1]" />
+      </div>
       {/* Logo area */}
       <div className="flex items-center h-16 px-4 border-b border-surface-200/50 dark:border-surface-800/50 shrink-0">
         <AnimatePresence mode="wait">
@@ -189,7 +205,7 @@ export default function Sidebar({ open, setOpen, isMobile }) {
               if (isMobile) setOpen(false);
             }}
             className={({ isActive }) =>
-              `group flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 relative ${
+              `group flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 relative ripple-container ${
                 isActive
                   ? 'bg-primary-50 dark:bg-primary-950/50 text-primary-600 dark:text-primary-400 font-semibold shadow-sm'
                   : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-100'

@@ -23,6 +23,18 @@ export const AuthProvider = ({ children }) => {
     api.defaults.headers.common['Authorization'] = `Bearer ${userData.token}`;
   };
 
+  const refreshUser = async () => {
+    try {
+      const { data } = await api.get('/auth/me');
+      const stored = JSON.parse(localStorage.getItem('skillswap_user') || '{}');
+      const updated = { ...stored, ...data };
+      setUser(updated);
+      localStorage.setItem('skillswap_user', JSON.stringify(updated));
+    } catch (err) {
+      // silent fail — user will see updated data on next login
+    }
+  };
+
   const logout = () => {
     setUser(null);
     localStorage.removeItem('skillswap_user');
@@ -30,7 +42,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, logout, refreshUser, loading }}>
       {children}
     </AuthContext.Provider>
   );

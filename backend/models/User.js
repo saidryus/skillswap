@@ -25,10 +25,15 @@ const userSchema = new mongoose.Schema(
     isTutor: { type: Boolean, default: false }, // true if approved for at least one course
     maxSessionsPerWeek: { type: Number, default: 5, min: 1, max: 20 }, // tutor availability cap
     mustChangePassword: { type: Boolean, default: false }, // force password change on first login
+    currentSemester: { type: Number, enum: [1, 2], default: null }, // detected from study load
     isSuperAdmin: { type: Boolean, default: false },
     permissions: {
       type: [{ type: String, enum: ADMIN_PERMISSIONS }],
       default: undefined,
+    },
+    assignedDepartments: {
+      type: [{ type: String, trim: true }],
+      default: undefined, // undefined = all departments (super admin), [] = none
     },
   },
   { timestamps: true }
