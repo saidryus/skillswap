@@ -68,13 +68,25 @@ mongod
 From the `backend/` directory:
 
 ```bash
-# Seed admin account + initial data
+# Full seed — creates admin, courses, 100 students, schedules, tutors, sessions
 node seed.js
 ```
 
 This creates:
 - Admin account: `admin@skillswap.edu` / `admin123`
-- Initial system settings
+- 100 students (25 per year level) with schedules
+- 30 courses (UC-CCS BSIT curriculum)
+- 5 approved tutors + 2 pending applications
+- 6 sample sessions + ratings
+- 2 announcements
+
+### Full database wipe (if needed)
+
+```bash
+node truncate.js
+```
+
+Clears ALL data from all collections. Run `node seed.js` after to repopulate.
 
 ### 6. Run the application
 
@@ -92,43 +104,17 @@ App starts at `http://localhost:5173`
 
 ---
 
-## Seeding Test Data
-
-### Seed test students (100 students, 25 per year level)
-
-```bash
-cd backend
-node seed-3-test-students.js
-```
-
-This creates students with:
-- **Password:** `password123` (all seeded students)
-- **mustChangePassword:** `true` (forced change on first login)
-- Year 1: IDs `202401001` – `202401025`
-- Year 2: IDs `202302001` – `202302025`
-- Year 3: IDs `202203001` – `202203025`
-- Year 4: IDs `202104001` – `202104025`
-
-### Seed courses (UC-CCS BSIT curriculum)
-
-```bash
-node seed-3rd-year-courses.js
-```
-
----
-
 ## Demo Accounts
 
 | Role | Login ID | Password | Notes |
 |------|----------|----------|-------|
 | Admin | admin@skillswap.edu | admin123 | Full access |
-| Student (Year 3, with schedule) | 23063670 | 670 | Simone Makinano |
-| Student (Year 1) | 202401001 | password123 | Juan Dela Cruz |
-| Student (Year 2) | 202302001 | password123 | Miguel Mendoza |
-| Student (Year 3) | 202203001 | password123 | Rafael Cruz |
-| Student (Year 4) | 202104001 | password123 | Antonio Rivera |
+| Student (Year 1) | 202401001 | 001 | Juan Dela Cruz |
+| Student (Year 2) | 202302001 | 001 | Miguel Dela Cruz |
+| Student (Year 3) | 202203001 | 001 | Rafael Dela Cruz |
+| Student (Year 4) | 202104001 | 001 | Antonio Dela Cruz |
 
-> Seeded students will be prompted to change password on first login.
+> All student passwords = last 3 digits of their Student ID. Seeded students will be prompted to change password on first login.
 
 ---
 

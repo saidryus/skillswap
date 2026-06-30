@@ -1,185 +1,235 @@
+/**
+ * SKILLSWAP DATABASE SEEDER
+ * Seeds the database with: admin, departments, courses (UC-CCS BSIT curriculum),
+ * students (25 per year level), schedules, tutor profiles, sessions, announcements.
+ *
+ * Usage: node seed.js
+ * Note: This WIPES all existing data first!
+ */
 require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('./models/User');
 const Course = require('./models/Course');
+const Department = require('./models/Department');
 const TutorProfile = require('./models/TutorProfile');
 const Session = require('./models/Session');
 const StudentSchedule = require('./models/StudentSchedule');
 const Announcement = require('./models/Announcement');
 const Notification = require('./models/Notification');
+const Rating = require('./models/Rating');
 const Settings = require('./models/Settings');
 
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-
+// ─── HELPERS ─────────────────────────────────────────────────────
 function addDays(date, days) {
   const d = new Date(date);
   d.setDate(d.getDate() + days);
   return d;
 }
-
 function nextWeekday(dayName) {
-  const map = { Monday:1, Tuesday:2, Wednesday:3, Thursday:4, Friday:5, Saturday:6 };
+  const map = { Monday: 1, Tuesday: 2, Wednesday: 3, Thursday: 4, Friday: 5, Saturday: 6 };
   const today = new Date();
   const target = map[dayName];
   const diff = (target - today.getDay() + 7) % 7 || 7;
   return addDays(today, diff);
 }
 
+// ─── COURSES (UC-CCS BSIT Curriculum) ───────────────────────────
 const COURSES = [
-  { courseCode: 'IT101', courseName: 'Introduction to Computing', units: 3, yearLevel: 1, description: 'Fundamentals of computing and IT concepts' },
-  { courseCode: 'IT102', courseName: 'Computer Programming 1', units: 3, yearLevel: 1, description: 'Programming fundamentals using Python' },
-  { courseCode: 'IT103', courseName: 'Mathematics in the Modern World', units: 3, yearLevel: 1, description: 'Applied mathematics for IT students' },
-  { courseCode: 'IT201', courseName: 'Data Structures and Algorithms', units: 3, yearLevel: 2, description: 'Core data structures and algorithm design' },
-  { courseCode: 'IT202', courseName: 'Database Management Systems', units: 3, yearLevel: 2, description: 'Relational databases and SQL' },
-  { courseCode: 'IT203', courseName: 'Object-Oriented Programming', units: 3, yearLevel: 2, description: 'OOP concepts using Java' },
-  { courseCode: 'IT301', courseName: 'Web Development', units: 3, yearLevel: 3, description: 'Full-stack web development' },
-  { courseCode: 'IT302', courseName: 'Networking Fundamentals', units: 3, yearLevel: 3, description: 'Computer networks and protocols' },
-  { courseCode: 'IT401', courseName: 'Software Engineering', units: 3, yearLevel: 4, description: 'Software development lifecycle and methodologies' },
-  { courseCode: 'IT402', courseName: 'Capstone Project', units: 6, yearLevel: 4, description: 'Final year project development' },
-  // 3rd Year - 2nd Semester courses
-  { courseCode: '32029', courseName: 'IT-INFOSEC32-R', units: 3, yearLevel: 3, description: 'INFORMATION ASSURANCE & SECURITY' },
-  { courseCode: '32037', courseName: 'IT-INFOSEC32-L', units: 1, yearLevel: 3, description: 'INFORMATION ASSURANCE & SECURITY' },
-  { courseCode: '32045', courseName: 'IT-IMDBSYS32-R', units: 3, yearLevel: 3, description: 'INFORMATION MANAGEMENT (DB SYS.2)' },
-  { courseCode: '32052', courseName: 'IT-IMDBSYS32-L', units: 1, yearLevel: 3, description: 'INFORMATION MANAGEMENT (DB SYS.2)' },
-  { courseCode: '32060', courseName: 'IT-SYSARCH32-R', units: 3, yearLevel: 3, description: 'SYSTEM INTEGRATION & ARCHITECTURE' },
-  { courseCode: '32078', courseName: 'IT-SYSARCH32-L', units: 1, yearLevel: 3, description: 'SYSTEM INTEGRATION & ARCHITECTURE' },
-  { courseCode: '32086', courseName: 'IT-SYSADMN32-R', units: 3, yearLevel: 3, description: 'SYSTEMS ADMINISTRATION & MAINTENANCE' },
-  { courseCode: '32094', courseName: 'IT-SYSADMN32-L', units: 1, yearLevel: 3, description: 'SYSTEMS ADMINISTRATION & MAINTENANCE' },
-  { courseCode: '32102', courseName: 'IT-INTPROG32-R', units: 3, yearLevel: 3, description: "INTEGRATIVE PROG'G & TECHNOLOGIES" },
-  { courseCode: '32110', courseName: 'IT-INTPROG32-L', units: 1, yearLevel: 3, description: "INTEGRATIVE PROG'G & TECHNOLOGIES" },
-  { courseCode: '32128', courseName: 'CC-TECHNO32-R', units: 3, yearLevel: 3, description: 'TECHNOPRENEURSHIP' },
+  // Year 1, Sem 1
+  { courseCode: 'CC-INTCOM11', courseName: 'Introduction to Computing', units: 3, yearLevel: 1, semester: 1 },
+  { courseCode: 'CC-COMPROG11', courseName: 'Computer Programming 1', units: 3, yearLevel: 1, semester: 1 },
+  { courseCode: 'IT-WEBDEV11', courseName: 'Web Design & Development', units: 2, yearLevel: 1, semester: 1 },
+  // Year 1, Sem 2
+  { courseCode: 'CC-COMPROG12', courseName: 'Computer Programming 2', units: 3, yearLevel: 1, semester: 2 },
+  { courseCode: 'CC-DISCRET12', courseName: 'Discrete Structures', units: 2, yearLevel: 1, semester: 2 },
+  // Year 2, Sem 1
+  { courseCode: 'CC-DIGILOG21', courseName: 'Digital Logic Design', units: 3, yearLevel: 2, semester: 1 },
+  { courseCode: 'CC-DASTRUC21', courseName: 'Data Structures & Algorithms', units: 3, yearLevel: 2, semester: 1 },
+  { courseCode: 'IT-OOPROG21', courseName: 'Object Oriented Programming', units: 3, yearLevel: 2, semester: 1 },
+  { courseCode: 'CC-ACCTG21', courseName: 'Accounting for IT', units: 3, yearLevel: 2, semester: 1 },
+  { courseCode: 'CC-TWRITE21', courseName: 'Tech. Writing & Presentation Skills in IT', units: 3, yearLevel: 2, semester: 1 },
+  // Year 2, Sem 2
+  { courseCode: 'CC-QUAMETH22', courseName: 'Quantitative Methods w/ Prob. Stat.', units: 3, yearLevel: 2, semester: 2 },
+  { courseCode: 'IT-PLATECH22', courseName: 'Platform Technologies w/ Op. Sys.', units: 3, yearLevel: 2, semester: 2 },
+  { courseCode: 'CC-APPSDEV22', courseName: "Applications Dev't & Emerging Tech.", units: 3, yearLevel: 2, semester: 2 },
+  { courseCode: 'CC-DATACOM22', courseName: 'Data Communications', units: 3, yearLevel: 2, semester: 2 },
+  { courseCode: 'IT-SAD22', courseName: 'System Analysis & Design', units: 3, yearLevel: 2, semester: 2 },
+  // Year 3, Sem 1
+  { courseCode: 'IT-IMDBSYS31', courseName: 'Information Management (DB Sys. 1)', units: 3, yearLevel: 3, semester: 1 },
+  { courseCode: 'IT-NETWORK31', courseName: 'Computer Networks', units: 3, yearLevel: 3, semester: 1 },
+  { courseCode: 'IT-TESTQUA31', courseName: 'Testing & Quality Assurance', units: 3, yearLevel: 3, semester: 1 },
+  { courseCode: 'CC-HCI31', courseName: 'Human Computer Interaction', units: 3, yearLevel: 3, semester: 1 },
+  { courseCode: 'CC-RESCOM31', courseName: 'Methods of Research in Computing', units: 3, yearLevel: 3, semester: 1 },
+  // Year 3, Sem 2
+  { courseCode: 'IT-IMDBSYS32', courseName: 'Information Management (DB Sys. 2)', units: 3, yearLevel: 3, semester: 2 },
+  { courseCode: 'IT-INFOSEC32', courseName: 'Information Assurance & Security', units: 3, yearLevel: 3, semester: 2 },
+  { courseCode: 'IT-SYSARCH32', courseName: 'System Integration & Architecture', units: 3, yearLevel: 3, semester: 2 },
+  { courseCode: 'CC-TECHNO32', courseName: 'Technopreneurship', units: 3, yearLevel: 3, semester: 2 },
+  { courseCode: 'IT-INTPROG32', courseName: 'Integrative Prog & Technologies', units: 3, yearLevel: 3, semester: 2 },
+  { courseCode: 'IT-SYSADMN32', courseName: 'Systems Administration & Maintenance', units: 3, yearLevel: 3, semester: 2 },
+  // Year 4, Sem 1
+  { courseCode: 'IT-CPSTONE30', courseName: 'Capstone Project 1', units: 3, yearLevel: 4, semester: 1 },
+  { courseCode: 'CC-PROFIS10', courseName: 'Professional Issues in Computing', units: 3, yearLevel: 4, semester: 1 },
+  { courseCode: 'IT-CPSTONE40', courseName: 'Capstone Project 2', units: 3, yearLevel: 4, semester: 1 },
+  // Year 4, Sem 2
+  { courseCode: 'CC-PRACT40', courseName: 'Practicum', units: 9, yearLevel: 4, semester: 2 },
 ];
 
-const STUDENTS = [
-  { firstName: 'Juan',      lastName: 'Dela Cruz',   email: 'juan.delacruz@student.skillswap.edu',   yearLevel: 1, studentIdNumber: '202400001' },
-  { firstName: 'Ana',       lastName: 'Gonzales',    email: 'ana.gonzales@student.skillswap.edu',    yearLevel: 1, studentIdNumber: '202400002' },
-  { firstName: 'Carlos',    lastName: 'Mendoza',     email: 'carlos.mendoza@student.skillswap.edu',  yearLevel: 2, studentIdNumber: '202300001' },
-  { firstName: 'Maria',     lastName: 'Reyes',       email: 'maria.reyes@student.skillswap.edu',     yearLevel: 2, studentIdNumber: '202300002' },
-  { firstName: 'Jose',      lastName: 'Santos',      email: 'jose.santos@student.skillswap.edu',     yearLevel: 2, studentIdNumber: '202300003' },
-  { firstName: 'Luisa',     lastName: 'Torres',      email: 'luisa.torres@student.skillswap.edu',    yearLevel: 3, studentIdNumber: '202200001' },
-  { firstName: 'Miguel',    lastName: 'Ramos',       email: 'miguel.ramos@student.skillswap.edu',    yearLevel: 3, studentIdNumber: '202200002' },
-  { firstName: 'Sofia',     lastName: 'Villanueva',  email: 'sofia.villanueva@student.skillswap.edu', yearLevel: 3, studentIdNumber: '202200003' },
-  { firstName: 'Diego',     lastName: 'Flores',      email: 'diego.flores@student.skillswap.edu',    yearLevel: 4, studentIdNumber: '202100001' },
-  { firstName: 'Isabella',  lastName: 'Cruz',        email: 'isabella.cruz@student.skillswap.edu',   yearLevel: 4, studentIdNumber: '202100002' },
-  { firstName: 'Andres',    lastName: 'Morales',     email: 'andres.morales@student.skillswap.edu',  yearLevel: 1, studentIdNumber: '202400003' },
-  { firstName: 'Valentina', lastName: 'Aquino',      email: 'valentina.aquino@student.skillswap.edu', yearLevel: 2, studentIdNumber: '202300004' },
-  { firstName: 'Sebastian', lastName: 'Bautista',    email: 'sebastian.bautista@student.skillswap.edu', yearLevel: 3, studentIdNumber: '202200004' },
-  { firstName: 'Camila',    lastName: 'Dela Rosa',   email: 'camila.delarosa@student.skillswap.edu', yearLevel: 4, studentIdNumber: '202100003' },
-  { firstName: 'Mateo',     lastName: 'Garcia',      email: 'mateo.garcia@student.skillswap.edu',    yearLevel: 1, studentIdNumber: '202400004' },
-  { firstName: 'Gabriela',  lastName: 'Lopez',       email: 'gabriela.lopez@student.skillswap.edu',  yearLevel: 2, studentIdNumber: '202300005' },
-  { firstName: 'Nicolas',   lastName: 'Hernandez',   email: 'nicolas.hernandez@student.skillswap.edu', yearLevel: 3, studentIdNumber: '202200005' },
-  { firstName: 'Valeria',   lastName: 'Martinez',    email: 'valeria.martinez@student.skillswap.edu', yearLevel: 4, studentIdNumber: '202100004' },
-  { firstName: 'Samuel',    lastName: 'Perez',       email: 'samuel.perez@student.skillswap.edu',    yearLevel: 1, studentIdNumber: '202400005' },
-  { firstName: 'Daniela',   lastName: 'Ramirez',     email: 'daniela.ramirez@student.skillswap.edu', yearLevel: 2, studentIdNumber: '202300006' },
+// ─── STUDENTS ────────────────────────────────────────────────────
+const FIRST_NAMES = [
+  'Juan', 'Maria', 'Carlos', 'Andrea', 'Miguel', 'Sofia', 'Diego', 'Isabella',
+  'Rafael', 'Camille', 'Gabriel', 'Nicole', 'Antonio', 'Patricia', 'Marco',
+  'Jasmine', 'Luis', 'Angela', 'Daniel', 'Karina', 'Jose', 'Christine',
+  'Paolo', 'Bianca', 'Alejandro', 'Trisha', 'Enrique', 'Danielle', 'Vincent',
+  'Samantha', 'Raphael', 'Angelica', 'Francis', 'Janine', 'Kevin',
+  'Mariel', 'Bryan', 'Kathleen', 'Jericho', 'Alyssa', 'Patrick', 'Erika',
+  'Christian', 'Hannah', 'Mark', 'Denise', 'James', 'Stephanie', 'Adrian',
+  'Michelle', 'Kenneth', 'Clarisse', 'Nathaniel', 'Franchesca', 'Joshua',
+  'Althea', 'Renz', 'Czarina', 'Darren', 'Michaela', 'Sean', 'Rhea',
+  'Elijah', 'Giselle', 'Nathan', 'Jillian', 'Carl', 'Vanessa', 'Ivan',
+  'Katrina', 'Timothy', 'Lorraine', 'Dominic', 'Ysabel', 'Lloyd',
+  'Charmaine', 'Romeo', 'Pia', 'Felix', 'Cassandra', 'Aaron', 'Leah',
+  'Cedric', 'Beatrice', 'Jerome', 'Audrey', 'Alvin', 'Dianne', 'Emilio',
+  'Grace', 'Raymond', 'Vivian', 'Harold', 'Megan', 'Benedict', 'Joanne',
+  'Roderick', 'Pauline', 'Gilbert', 'Marian',
+];
+const LAST_NAMES = [
+  'Dela Cruz', 'Santos', 'Reyes', 'Cruz', 'Bautista', 'Ocampo', 'Garcia',
+  'Mendoza', 'Torres', 'Villanueva', 'Ramos', 'Castro', 'Rivera', 'Flores',
+  'Gonzales', 'Lopez', 'Martinez', 'Rodriguez', 'Hernandez', 'Perez',
+  'Aquino', 'Navarro', 'Morales', 'Espinosa', 'Santiago',
 ];
 
-// Weekly class schedules per year level
+// ─── SCHEDULES (per year level, 2nd semester) ────────────────────
 const YEAR_SCHEDULES = {
   1: [
-    { day: 'Monday',    startTime: '07:30', endTime: '09:00', label: 'IT101 - Introduction to Computing' },
-    { day: 'Monday',    startTime: '09:00', endTime: '10:30', label: 'IT102 - Computer Programming 1' },
-    { day: 'Tuesday',   startTime: '07:30', endTime: '09:00', label: 'IT103 - Mathematics in the Modern World' },
-    { day: 'Wednesday', startTime: '07:30', endTime: '09:00', label: 'IT101 - Introduction to Computing' },
-    { day: 'Thursday',  startTime: '07:30', endTime: '09:00', label: 'IT103 - Mathematics in the Modern World' },
-    { day: 'Friday',    startTime: '09:00', endTime: '10:30', label: 'IT102 - Computer Programming 1' },
+    { day: 'Monday', startTime: '07:30', endTime: '09:00', label: 'CC-COMPROG12 - Computer Programming 2' },
+    { day: 'Monday', startTime: '09:30', endTime: '11:00', label: 'CC-DISCRET12 - Discrete Structures' },
+    { day: 'Wednesday', startTime: '07:30', endTime: '09:00', label: 'CC-COMPROG12 - Computer Programming 2' },
+    { day: 'Thursday', startTime: '09:30', endTime: '11:00', label: 'CC-DISCRET12 - Discrete Structures' },
+    { day: 'Friday', startTime: '07:30', endTime: '09:00', label: 'CC-COMPROG12 - Computer Programming 2' },
   ],
   2: [
-    { day: 'Monday',    startTime: '10:30', endTime: '12:00', label: 'IT201 - Data Structures' },
-    { day: 'Tuesday',   startTime: '10:30', endTime: '12:00', label: 'IT202 - Database Management' },
-    { day: 'Wednesday', startTime: '10:30', endTime: '12:00', label: 'IT203 - OOP' },
-    { day: 'Thursday',  startTime: '10:30', endTime: '12:00', label: 'IT201 - Data Structures' },
-    { day: 'Friday',    startTime: '10:30', endTime: '12:00', label: 'IT202 - Database Management' },
+    { day: 'Monday', startTime: '10:30', endTime: '12:00', label: 'CC-QUAMETH22 - Quantitative Methods' },
+    { day: 'Tuesday', startTime: '10:30', endTime: '12:00', label: 'IT-PLATECH22 - Platform Technologies' },
+    { day: 'Wednesday', startTime: '10:30', endTime: '12:00', label: 'CC-APPSDEV22 - Applications Dev' },
+    { day: 'Thursday', startTime: '10:30', endTime: '12:00', label: 'CC-DATACOM22 - Data Communications' },
+    { day: 'Friday', startTime: '10:30', endTime: '12:00', label: 'IT-SAD22 - System Analysis & Design' },
   ],
   3: [
-    { day: 'Monday',    startTime: '13:00', endTime: '14:30', label: 'IT301 - Web Development' },
-    { day: 'Tuesday',   startTime: '13:00', endTime: '14:30', label: 'IT302 - Networking' },
-    { day: 'Wednesday', startTime: '13:00', endTime: '14:30', label: 'IT301 - Web Development' },
-    { day: 'Thursday',  startTime: '13:00', endTime: '14:30', label: 'IT302 - Networking' },
+    { day: 'Monday', startTime: '13:00', endTime: '14:30', label: 'IT-IMDBSYS32 - Info Management DB2' },
+    { day: 'Tuesday', startTime: '13:00', endTime: '14:30', label: 'IT-INFOSEC32 - Information Security' },
+    { day: 'Wednesday', startTime: '13:00', endTime: '14:30', label: 'IT-SYSARCH32 - System Architecture' },
+    { day: 'Thursday', startTime: '13:00', endTime: '14:30', label: 'IT-INTPROG32 - Integrative Programming' },
+    { day: 'Friday', startTime: '13:00', endTime: '14:30', label: 'IT-SYSADMN32 - Systems Administration' },
   ],
   4: [
-    { day: 'Monday',    startTime: '15:00', endTime: '17:00', label: 'IT401 - Software Engineering' },
-    { day: 'Wednesday', startTime: '15:00', endTime: '17:00', label: 'IT402 - Capstone Project' },
-    { day: 'Friday',    startTime: '15:00', endTime: '17:00', label: 'IT401 - Software Engineering' },
+    { day: 'Monday', startTime: '15:00', endTime: '17:00', label: 'IT-CPSTONE40 - Capstone Project 2' },
+    { day: 'Wednesday', startTime: '15:00', endTime: '17:00', label: 'IT-CPSTONE40 - Capstone Project 2' },
+    { day: 'Friday', startTime: '15:00', endTime: '17:00', label: 'CC-PROFIS10 - Professional Issues' },
   ],
 };
 
-const seed = async () => {
+// ─── MAIN SEED ───────────────────────────────────────────────────
+async function seed() {
   await mongoose.connect(process.env.MONGO_URI);
-  console.log('Connected to MongoDB');
+  console.log('Connected to MongoDB\n');
 
+  // Wipe everything
   await Promise.all([
-    User.deleteMany(),
-    Course.deleteMany(),
-    TutorProfile.deleteMany(),
-    Session.deleteMany(),
-    StudentSchedule.deleteMany(),
-    Announcement.deleteMany(),
-    Notification.deleteMany(),
+    User.deleteMany(), Course.deleteMany(), Department.deleteMany(),
+    TutorProfile.deleteMany(), Session.deleteMany(), StudentSchedule.deleteMany(),
+    Announcement.deleteMany(), Notification.deleteMany(), Rating.deleteMany(),
     Settings.deleteMany(),
   ]);
-  console.log('Cleared existing data');
+  console.log('✗ Cleared all collections');
 
+  // Settings
   await Settings.create({ key: 'global', studentIdPrefix: 'SS', studentIdCounter: 0 });
 
-  /* ── Admin ── */
+  // Department
+  await Department.create({ name: 'Information Technology', code: 'IT', description: 'College of Computer Studies — BSIT Program' });
+  console.log('✓ Department created');
+
+  // Admin
   const admin = await User.create({
     firstName: 'Admin', lastName: 'SkillSwap',
     email: 'admin@skillswap.edu', password: 'admin123',
-    role: 'admin', isSuperAdmin: true,
+    role: 'admin', isSuperAdmin: true, department: 'Information Technology',
   });
-  console.log('Created admin');
+  console.log('✓ Admin created');
 
-  /* ── Courses ── */
+  // Courses
   const courses = [];
   for (const c of COURSES) {
     courses.push(await Course.create({ ...c, department: 'Information Technology' }));
   }
-  console.log(`Created ${courses.length} courses`);
+  console.log(`✓ ${courses.length} courses created`);
 
-  /* ── Students ── */
+  // Build course lookup for schedule linking
+  const courseMap = {};
+  courses.forEach(c => { courseMap[c.courseCode] = c._id; });
+
+  // Students (25 per year level = 100 total)
   const students = [];
-  for (const s of STUDENTS) {
-    const last3 = s.studentIdNumber.slice(-3);
-    students.push(await User.create({
-      ...s,
-      password: last3,
-      mustChangePassword: true,
-      role: 'student',
-      department: 'Information Technology',
-    }));
-  }
-  console.log(`Created ${students.length} students`);
+  for (let year = 1; year <= 4; year++) {
+    const yearPrefix = 2025 - year;
+    for (let i = 1; i <= 25; i++) {
+      const firstName = FIRST_NAMES[(year - 1) * 25 + i - 1] || FIRST_NAMES[i % FIRST_NAMES.length];
+      const lastName = LAST_NAMES[(i - 1) % LAST_NAMES.length];
+      const studentId = `${yearPrefix}${String(year).padStart(2, '0')}${String(i).padStart(3, '0')}`;
+      const last3 = studentId.slice(-3);
+      const email = `${firstName.toLowerCase().replace(/\s/g, '')}.${lastName.toLowerCase().replace(/\s/g, '')}${i}@student.uc.edu`;
 
-  /* ── Student schedules ── */
+      try {
+        const student = await User.create({
+          studentIdNumber: studentId,
+          firstName, lastName, email,
+          password: last3,
+          role: 'student', yearLevel: year, currentSemester: 2,
+          department: 'Information Technology',
+          isActive: true, mustChangePassword: true,
+        });
+        students.push(student);
+      } catch (err) {
+        // Skip duplicates silently
+      }
+    }
+  }
+  console.log(`✓ ${students.length} students created (password = last 3 digits of ID)`);
+
+  // Schedules (link to courses where possible)
   for (const student of students) {
     const entries = YEAR_SCHEDULES[student.yearLevel] || [];
     for (const entry of entries) {
-      await StudentSchedule.create({ student: student._id, ...entry });
+      // Try to match course code from label
+      const codeMatch = entry.label.match(/^([A-Z]{2,}-[A-Z0-9]+)/);
+      const courseId = codeMatch ? courseMap[codeMatch[1]] || null : null;
+      await StudentSchedule.create({ student: student._id, course: courseId, ...entry });
     }
   }
-  console.log('Created student schedules');
+  console.log('✓ Student schedules created');
 
-  /* ── Tutor profiles — 5 approved, 3 pending ── */
-  // Approved tutors: senior students tutoring courses from lower years
-  const approvedTutors = [
-    { tutor: students[5], course: courses[0] }, // Luisa → IT101
-    { tutor: students[6], course: courses[1] }, // Miguel → IT102
-    { tutor: students[8], course: courses[3] }, // Diego → IT201
-    { tutor: students[9], course: courses[4] }, // Isabella → IT202
-    { tutor: students[7], course: courses[2] }, // Sofia → IT103
+  // Tutor profiles (senior students tutor lower-year courses)
+  const year3Students = students.filter(s => s.yearLevel === 3);
+  const year4Students = students.filter(s => s.yearLevel === 4);
+  const approvedProfiles = [];
+
+  const tutorAssignments = [
+    { tutor: year3Students[0], course: courses[0] },  // Y3 student tutors CC-INTCOM11
+    { tutor: year3Students[1], course: courses[1] },  // CC-COMPROG11
+    { tutor: year3Students[2], course: courses[3] },  // CC-COMPROG12
+    { tutor: year4Students[0], course: courses[5] },  // CC-DIGILOG21
+    { tutor: year4Students[1], course: courses[6] },  // CC-DASTRUC21
   ];
 
-  const approvedProfiles = [];
-  for (const { tutor, course } of approvedTutors) {
+  for (const { tutor, course } of tutorAssignments) {
     const p = await TutorProfile.create({
-      tutor: tutor._id,
-      course: course._id,
-      status: 'approved',
-      grade: 1.0 + Math.random() * 0.75, // random grade between 1.0-1.75 (honor range)
+      tutor: tutor._id, course: course._id, status: 'approved',
+      grade: 1.0 + Math.random() * 0.75,
       gradeDocument: 'uploads/grade-documents/sample.pdf',
       gradeDocumentName: 'grade_slip.pdf',
-      reviewedBy: admin._id,
-      reviewedAt: new Date(),
+      reviewedBy: admin._id, reviewedAt: new Date(),
       adminNotes: 'Verified — grade above threshold',
     });
     approvedProfiles.push(p);
@@ -187,130 +237,65 @@ const seed = async () => {
   }
 
   // Pending applications
-  const pendingTutors = [
-    { tutor: students[2], course: courses[0] }, // Carlos → IT101
-    { tutor: students[3], course: courses[1] }, // Maria → IT102
-    { tutor: students[4], course: courses[2] }, // Jose → IT103
-  ];
-  for (const { tutor, course } of pendingTutors) {
-    await TutorProfile.create({
-      tutor: tutor._id,
-      course: course._id,
-      status: 'pending',
-      gradeDocument: 'uploads/grade-documents/sample.pdf',
-      gradeDocumentName: 'grade_slip.pdf',
-    });
-  }
-  console.log('Created tutor profiles');
+  await TutorProfile.create({ tutor: year3Students[3]._id, course: courses[4]._id, status: 'pending', gradeDocument: 'uploads/grade-documents/sample.pdf', gradeDocumentName: 'grade_slip.pdf' });
+  await TutorProfile.create({ tutor: year3Students[4]._id, course: courses[7]._id, status: 'pending', gradeDocument: 'uploads/grade-documents/sample.pdf', gradeDocumentName: 'grade_slip.pdf' });
+  console.log(`✓ ${approvedProfiles.length} approved tutors + 2 pending applications`);
 
-  /* ── Sessions ── */
-  const sessionData = [
-    // Scheduled sessions (upcoming)
-    {
-      tutor: students[5]._id, tutees: [students[0]._id, students[1]._id],
-      course: courses[0]._id, date: nextWeekday('Tuesday'),
-      startTime: '10:00', endTime: '11:00',
-      venue: 'Library Study Room 1', venueType: 'on-campus', status: 'scheduled',
-    },
-    {
-      tutor: students[6]._id, tutees: [students[1]._id],
-      course: courses[1]._id, date: nextWeekday('Wednesday'),
-      startTime: '11:00', endTime: '12:00',
-      venue: 'Online via Google Meet', venueType: 'online', status: 'scheduled',
-    },
-    {
-      tutor: students[8]._id, tutees: [students[2]._id, students[3]._id],
-      course: courses[3]._id, date: nextWeekday('Thursday'),
-      startTime: '14:00', endTime: '15:00',
-      venue: 'CS Lab 2', venueType: 'on-campus', status: 'scheduled',
-    },
-    {
-      tutor: students[9]._id, tutees: [students[4]._id],
-      course: courses[4]._id, date: nextWeekday('Friday'),
-      startTime: '15:00', endTime: '16:00',
-      venue: 'Online via Zoom', venueType: 'online', status: 'scheduled',
-    },
-    {
-      tutor: students[7]._id, tutees: [students[10]._id],
-      course: courses[2]._id, date: nextWeekday('Monday'),
-      startTime: '11:00', endTime: '12:00',
-      venue: 'Room 204', venueType: 'on-campus', status: 'scheduled',
-    },
-    // Completed sessions
-    {
-      tutor: students[5]._id, tutees: [students[0]._id],
-      course: courses[0]._id, date: addDays(new Date(), -7),
-      startTime: '10:00', endTime: '11:00',
-      venue: 'Library Study Room 2', venueType: 'on-campus', status: 'completed',
-    },
-    {
-      tutor: students[6]._id, tutees: [students[1]._id, students[10]._id],
-      course: courses[1]._id, date: addDays(new Date(), -5),
-      startTime: '13:00', endTime: '14:00',
-      venue: 'Online via Google Meet', venueType: 'online', status: 'completed',
-    },
-    {
-      tutor: students[8]._id, tutees: [students[3]._id],
-      course: courses[3]._id, date: addDays(new Date(), -3),
-      startTime: '15:00', endTime: '16:00',
-      venue: 'CS Lab 1', venueType: 'on-campus', status: 'completed',
-    },
-    // Cancelled
-    {
-      tutor: students[9]._id, tutees: [students[2]._id],
-      course: courses[4]._id, date: addDays(new Date(), -2),
-      startTime: '14:00', endTime: '15:00',
-      venue: 'Room 101', venueType: 'on-campus', status: 'cancelled',
-    },
-    {
-      tutor: students[7]._id, tutees: [students[4]._id],
-      course: courses[2]._id, date: addDays(new Date(), -1),
-      startTime: '09:00', endTime: '10:00',
-      venue: 'Online via Zoom', venueType: 'online', status: 'cancelled',
-    },
+  // Sessions
+  const year1Students = students.filter(s => s.yearLevel === 1);
+  const year2Students = students.filter(s => s.yearLevel === 2);
+
+  const sessions = [
+    { tutor: year3Students[0]._id, tutees: [year1Students[0]._id], course: courses[0]._id, date: nextWeekday('Tuesday'), startTime: '10:00', endTime: '11:00', venue: 'Library Room 1', venueType: 'on-campus', status: 'scheduled' },
+    { tutor: year3Students[1]._id, tutees: [year1Students[1]._id, year1Students[2]._id], course: courses[1]._id, date: nextWeekday('Wednesday'), startTime: '11:00', endTime: '12:00', venue: 'Online via Google Meet', venueType: 'online', status: 'scheduled' },
+    { tutor: year4Students[0]._id, tutees: [year2Students[0]._id], course: courses[5]._id, date: nextWeekday('Thursday'), startTime: '14:00', endTime: '15:00', venue: 'CS Lab 2', venueType: 'on-campus', status: 'scheduled' },
+    { tutor: year3Students[0]._id, tutees: [year1Students[3]._id], course: courses[0]._id, date: addDays(new Date(), -7), startTime: '10:00', endTime: '11:00', venue: 'Library Room 2', venueType: 'on-campus', status: 'completed' },
+    { tutor: year4Students[1]._id, tutees: [year2Students[1]._id], course: courses[6]._id, date: addDays(new Date(), -5), startTime: '15:00', endTime: '16:00', venue: 'Online via Zoom', venueType: 'online', status: 'completed' },
+    { tutor: year3Students[2]._id, tutees: [year1Students[4]._id], course: courses[3]._id, date: addDays(new Date(), -3), startTime: '09:00', endTime: '10:00', venue: 'Room 204', venueType: 'on-campus', status: 'cancelled' },
   ];
 
-  for (const s of sessionData) {
-    await Session.create(s);
-  }
-  console.log(`Created ${sessionData.length} sessions`);
+  for (const s of sessions) { await Session.create(s); }
+  console.log(`✓ ${sessions.length} sessions created`);
 
-  /* ── Announcements ── */
+  // Ratings for completed sessions
+  const completedSessions = await Session.find({ status: 'completed' });
+  for (const sess of completedSessions) {
+    for (const tuteeId of sess.tutees) {
+      await Rating.create({
+        session: sess._id, tutor: sess.tutor, ratedBy: tuteeId, course: sess.course,
+        score: 4 + Math.round(Math.random()), // 4 or 5
+        comment: 'Great session, very helpful!',
+      });
+    }
+  }
+  console.log('✓ Ratings created for completed sessions');
+
+  // Announcements
   await Announcement.create([
-    {
-      title: 'Welcome to SkillSwap',
-      content: 'SkillSwap is now live for the IT department. Browse available tutors, apply to become one, and book your first study session today.',
-      author: admin._id, targetRoles: ['admin', 'student'], isPinned: true,
-    },
-    {
-      title: 'Tutor Applications Now Open',
-      content: 'Students who have completed their 1st year courses with a passing grade may apply to become peer tutors. Upload your grade slip through the Become a Tutor section.',
-      author: admin._id, targetRoles: ['student'], isPinned: false,
-    },
-    {
-      title: 'System Maintenance Notice',
-      content: 'SkillSwap will undergo scheduled maintenance this Saturday from 10:00 PM to 12:00 AM. Please plan your sessions accordingly.',
-      author: admin._id, targetRoles: ['admin', 'student'], isPinned: false,
-    },
+    { title: 'Welcome to SkillSwap', content: 'SkillSwap is now live! Browse tutors, apply to become one, and book sessions.', author: admin._id, targetRoles: ['admin', 'student'], isPinned: true },
+    { title: 'Tutor Applications Open', content: 'Students who passed their courses may apply as peer tutors. Upload your grade slip to get started.', author: admin._id, targetRoles: ['student'], isPinned: false },
   ]);
+  console.log('✓ Announcements created');
 
-  console.log('\n✅ Seed complete!\n');
+  // Summary
+  console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('✅ SEED COMPLETE');
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('🔑 LOGIN CREDENTIALS');
-  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log('Admin:    admin@skillswap.edu / admin123');
   console.log('');
-  console.log('Students — login with Student ID + last 3 digits as password');
-  console.log('(mustChangePassword = true, will be prompted on first login)');
-  students.slice(0, 5).forEach((s) => {
-    const last3 = s.studentIdNumber.slice(-3);
-    console.log(`  ID: ${s.studentIdNumber}  Password: ${last3}  (${s.firstName} ${s.lastName})`);
-  });
-  console.log(`  ... and ${students.length - 5} more`);
+  console.log('🔑 LOGIN CREDENTIALS:');
+  console.log('   Admin:   admin@skillswap.edu / admin123');
+  console.log('   Students: login with Student ID, password = last 3 digits');
+  console.log('');
+  console.log('   Examples:');
+  console.log('   Year 1: 202401001 / 001');
+  console.log('   Year 2: 202302001 / 001');
+  console.log('   Year 3: 202203001 / 001');
+  console.log('   Year 4: 202104001 / 001');
+  console.log('');
+  console.log(`📊 ${students.length} students | ${courses.length} courses | ${approvedProfiles.length} tutors | ${sessions.length} sessions`);
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-  console.log(`📊 ${students.length} students | ${courses.length} courses | ${approvedProfiles.length} approved tutors | 3 pending | ${sessionData.length} sessions`);
 
   process.exit(0);
-};
+}
 
 seed().catch((err) => { console.error(err); process.exit(1); });

@@ -405,28 +405,28 @@ export default function LoginPage() {
                   <option value="23063670|670">Simone Makinano — 23063670 (Year 3)</option>
                 </optgroup>
                 <optgroup label="1st Year Students">
-                  <option value="202401001|password123">Juan Dela Cruz — 202401001</option>
-                  <option value="202401002|password123">Maria Santos — 202401002</option>
-                  <option value="202401003|password123">Carlos Reyes — 202401003</option>
-                  <option value="202401004|password123">Andrea Garcia — 202401004</option>
+                  <option value="202401001|001">Juan Dela Cruz — 202401001</option>
+                  <option value="202401002|002">Maria Santos — 202401002</option>
+                  <option value="202401003|003">Carlos Reyes — 202401003</option>
+                  <option value="202401004|004">Andrea Cruz — 202401004</option>
                 </optgroup>
                 <optgroup label="2nd Year Students">
-                  <option value="202302001|password123">Miguel Mendoza — 202302001</option>
-                  <option value="202302002|password123">Sofia Torres — 202302002</option>
-                  <option value="202302003|password123">Diego Villanueva — 202302003</option>
-                  <option value="202302004|password123">Isabella Ramos — 202302004</option>
+                  <option value="202302001|001">Miguel Dela Cruz — 202302001</option>
+                  <option value="202302002|002">Sofia Santos — 202302002</option>
+                  <option value="202302003|003">Diego Reyes — 202302003</option>
+                  <option value="202302004|004">Isabella Cruz — 202302004</option>
                 </optgroup>
                 <optgroup label="3rd Year Students">
-                  <option value="202203001|password123">Rafael Cruz — 202203001</option>
-                  <option value="202203002|password123">Camille Bautista — 202203002</option>
-                  <option value="202203003|password123">Gabriel Ocampo — 202203003</option>
-                  <option value="202203004|password123">Nicole Flores — 202203004</option>
+                  <option value="202203001|001">Rafael Dela Cruz — 202203001</option>
+                  <option value="202203002|002">Camille Santos — 202203002</option>
+                  <option value="202203003|003">Gabriel Reyes — 202203003</option>
+                  <option value="202203004|004">Nicole Cruz — 202203004</option>
                 </optgroup>
                 <optgroup label="4th Year Students">
-                  <option value="202104001|password123">Antonio Rivera — 202104001</option>
-                  <option value="202104002|password123">Patricia Gonzales — 202104002</option>
-                  <option value="202104003|password123">Marco Lopez — 202104003</option>
-                  <option value="202104004|password123">Jasmine Navarro — 202104004</option>
+                  <option value="202104001|001">Antonio Dela Cruz — 202104001</option>
+                  <option value="202104002|002">Patricia Santos — 202104002</option>
+                  <option value="202104003|003">Marco Reyes — 202104003</option>
+                  <option value="202104004|004">Jasmine Cruz — 202104004</option>
                 </optgroup>
               </select>
             </motion.div>
