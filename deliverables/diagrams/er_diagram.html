@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SkillSwap - Entity-Relationship Diagram</title>
+    <title>Acadia - Entity-Relationship Diagram</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -72,7 +72,7 @@
 </head>
 <body>
     <div class="page-title">Entity-Relationship Diagram</div>
-    <div class="subtitle">SkillSwap Database Design — MongoDB Collections (Mongoose ODM)</div>
+    <div class="subtitle">Acadia Database Design — MongoDB Collections (Mongoose ODM)</div>
 
     <!--
         LAYOUT PLAN (positions chosen to minimize arrow crossing):
@@ -101,6 +101,8 @@
 
             <!-- StudentSchedule.student → User -->
             <line class="rel-line" x1="340" y1="395" x2="230" y2="160"/>
+            <!-- StudentSchedule.course → Course -->
+            <path class="rel-line" d="M 380,415 L 500,415 L 500,175"/>
             <!-- Session.tutor → User -->
             <line class="rel-line" x1="560" y1="380" x2="230" y2="100"/>
             <!-- Session.course → Course -->
@@ -133,6 +135,7 @@
             <div class="ar"><span class="k"></span><span class="n">isTutor</span><span class="t">Boolean</span></div>
             <div class="ar"><span class="k"></span><span class="n">maxSessionsPerWeek</span><span class="t">Number</span></div>
             <div class="ar"><span class="k"></span><span class="n">mustChangePassword</span><span class="t">Boolean</span></div>
+            <div class="ar"><span class="k"></span><span class="n">currentSemester</span><span class="t">Number 1-2</span></div>
             <div class="ar"><span class="k"></span><span class="n">permissions</span><span class="t">Array</span></div>
         </div>
 
@@ -144,6 +147,8 @@
             <div class="ar"><span class="k"></span><span class="n">courseName</span><span class="t">String</span></div>
             <div class="ar"><span class="k"></span><span class="n">units</span><span class="t">Number 1-6</span></div>
             <div class="ar"><span class="k"></span><span class="n">yearLevel</span><span class="t">Number 1-4</span></div>
+            <div class="ar"><span class="k"></span><span class="n">semester</span><span class="t">Number 1-2</span></div>
+            <div class="ar"><span class="k"></span><span class="n">department</span><span class="t">String</span></div>
             <div class="ar"><span class="k"></span><span class="n">isActive</span><span class="t">Boolean</span></div>
         </div>
 
@@ -178,6 +183,7 @@
             <div class="eh sec">StudentSchedule</div>
             <div class="ar"><span class="k pk">PK</span><span class="n">_id</span><span class="t">ObjectId</span></div>
             <div class="ar"><span class="k fk">FK</span><span class="n">student</span><span class="t">→ User</span></div>
+            <div class="ar"><span class="k fk">FK</span><span class="n">course</span><span class="t">→ Course</span></div>
             <div class="ar"><span class="k"></span><span class="n">day</span><span class="t">Mon–Sat</span></div>
             <div class="ar"><span class="k"></span><span class="n">startTime</span><span class="t">String "HH:MM"</span></div>
             <div class="ar"><span class="k"></span><span class="n">endTime</span><span class="t">String "HH:MM"</span></div>
@@ -212,6 +218,16 @@
             <div class="ar"><span class="k"></span><span class="n">comment</span><span class="t">String</span></div>
         </div>
 
+        <!-- DEPARTMENT (row 3, left) -->
+        <div class="entity" style="left: 0; top: 660; width: 190px;">
+            <div class="eh sec">Department</div>
+            <div class="ar"><span class="k pk">PK</span><span class="n">_id</span><span class="t">ObjectId</span></div>
+            <div class="ar"><span class="k"></span><span class="n">name</span><span class="t">String (unique)</span></div>
+            <div class="ar"><span class="k"></span><span class="n">code</span><span class="t">String (unique)</span></div>
+            <div class="ar"><span class="k"></span><span class="n">description</span><span class="t">String</span></div>
+            <div class="ar"><span class="k"></span><span class="n">isActive</span><span class="t">Boolean</span></div>
+        </div>
+
         <!-- ANNOUNCEMENT (row 3, center-left) -->
         <div class="entity" style="left: 310; top: 660; width: 210px;">
             <div class="eh sec">Announcement</div>
@@ -241,6 +257,7 @@
         <tr><td>User</td><td>applies as tutor</td><td>TutorProfile</td><td><span class="card">1 : M</span></td><td>A user can have multiple tutor profiles (one per course)</td></tr>
         <tr><td>Course</td><td>has tutors via</td><td>TutorProfile</td><td><span class="card">1 : M</span></td><td>A course can have many approved tutors</td></tr>
         <tr><td>User</td><td>has schedule</td><td>StudentSchedule</td><td><span class="card">1 : M</span></td><td>A student has multiple time-block entries per week</td></tr>
+        <tr><td>Course</td><td>is linked to</td><td>StudentSchedule</td><td><span class="card">1 : M</span></td><td>A course can appear in many schedule entries (enrolled students)</td></tr>
         <tr><td>User</td><td>tutors in</td><td>Session</td><td><span class="card">1 : M</span></td><td>A tutor can conduct many sessions</td></tr>
         <tr><td>User</td><td>attends as tutee</td><td>Session</td><td><span class="card">M : M</span></td><td>Multiple tutees can join a session</td></tr>
         <tr><td>Course</td><td>is subject of</td><td>Session</td><td><span class="card">1 : M</span></td><td>Sessions are tied to a specific course</td></tr>
@@ -252,6 +269,6 @@
         <tr><td>User (admin)</td><td>reviews</td><td>TutorProfile</td><td><span class="card">1 : M</span></td><td>An admin reviews tutor applications</td></tr>
     </table>
 
-    <p style="text-align: center; margin-top: 24px; font-size: 12px; font-style: italic; color: #64748b;">Figure: SkillSwap Entity-Relationship Diagram</p>
+    <p style="text-align: center; margin-top: 24px; font-size: 12px; font-style: italic; color: #64748b;">Figure: Acadia Entity-Relationship Diagram</p>
 </body>
 </html>

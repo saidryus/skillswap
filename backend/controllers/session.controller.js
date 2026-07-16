@@ -1,5 +1,4 @@
 const Session = require('../models/Session');
-const StudentSchedule = require('../models/StudentSchedule');
 const TutorProfile = require('../models/TutorProfile');
 const { createNotifications } = require('../utils/notify');
 
@@ -26,9 +25,13 @@ function timesOverlap(aStart, aEnd, bStart, bEnd) {
 
 /**
  * Build busy map for a list of user IDs.
- * busy[userId][day] = [[startTime, endTime], ...]
+ * Uses Availability model (when users are NOT available) and existing sessions.
+ * 
+ * The busy map marks times when users are UNAVAILABLE.
+ * Available slots = total day time MINUS busy blocks.
  */
 async function buildBusyMap(userIds, dateStr) {
+  const Availability = require('../models/Availability');
   const busy = {};
 
   // Initialize
@@ -37,12 +40,45 @@ async function buildBusyMap(userIds, dateStr) {
     for (const day of DAYS) busy[id.toString()][day] = [];
   }
 
-  // Weekly class schedules
-  const classSchedules = await StudentSchedule.find({ student: { $in: userIds } });
-  for (const s of classSchedules) {
-    const uid = s.student.toString();
-    if (!busy[uid][s.day]) busy[uid][s.day] = [];
-    busy[uid][s.day].push([s.startTime, s.endTime]);
+  // Get user availability — times they ARE free
+  // We invert this: everything NOT in their availability is "busy"
+  const availabilities = await Availability.find({ user: { $in: userIds } });
+
+  // For each user, mark all time outside their availability as busy
+  for (const id of userIds) {
+    const uid = id.toString();
+    const userAvail = availabilities.filter(a => a.user.toString() === uid);
+
+    for (const day of DAYS) {
+      const daySlots = userAvail.filter(a => a.day === day);
+
+      if (daySlots.length === 0) {
+        // No availability set for this day — entire day is busy
+        busy[uid][day].push(['07:00', '21:00']);
+      } else {
+        // Mark gaps between availability slots as busy
+        // Sort slots by start time
+        const sorted = daySlots.sort((a, b) => parseTime(a.startTime) - parseTime(b.startTime));
+
+        // Before first available slot
+        if (parseTime(sorted[0].startTime) > parseTime('07:00')) {
+          busy[uid][day].push(['07:00', sorted[0].startTime]);
+        }
+
+        // Between slots
+        for (let i = 0; i < sorted.length - 1; i++) {
+          if (parseTime(sorted[i].endTime) < parseTime(sorted[i + 1].startTime)) {
+            busy[uid][day].push([sorted[i].endTime, sorted[i + 1].startTime]);
+          }
+        }
+
+        // After last available slot
+        const lastSlot = sorted[sorted.length - 1];
+        if (parseTime(lastSlot.endTime) < parseTime('21:00')) {
+          busy[uid][day].push([lastSlot.endTime, '21:00']);
+        }
+      }
+    }
   }
 
   // Existing sessions on the requested date (if provided)
@@ -74,10 +110,24 @@ async function buildBusyMap(userIds, dateStr) {
 /**
  * Find all mutual free time slots for a set of users on a given day.
  * Returns array of { startTime, endTime } pairs (30-min minimum, up to 3 hrs).
+ * If dateStr is today, slots in the past are excluded.
  */
-function findMutualFreeSlots(busyMap, userIds, day, sessionDurationMinutes = 60) {
+function findMutualFreeSlots(busyMap, userIds, day, sessionDurationMinutes = 60, dateStr = null) {
   const slotsNeeded = sessionDurationMinutes / 30;
   const free = [];
+
+  // If the requested date is today, compute the cutoff time (now + 30 min buffer)
+  let pastCutoffMinutes = 0;
+  if (dateStr) {
+    const now = new Date();
+    const requestedDate = new Date(dateStr + 'T00:00:00');
+    const todayDate = new Date();
+    todayDate.setHours(0, 0, 0, 0);
+    if (requestedDate.getTime() === todayDate.getTime()) {
+      // Add 30 minutes buffer so slots starting "right now" aren't shown
+      pastCutoffMinutes = now.getHours() * 60 + now.getMinutes() + 30;
+    }
+  }
 
   for (let ti = 0; ti <= TIME_SLOTS.length - slotsNeeded; ti++) {
     const startTime = TIME_SLOTS[ti];
@@ -91,6 +141,9 @@ function findMutualFreeSlots(busyMap, userIds, day, sessionDurationMinutes = 60)
 
     if (!endTime) continue;
     if (parseTime(endTime) > parseTime('21:00')) break;
+
+    // Skip slots that have already passed (or are too soon) for today
+    if (pastCutoffMinutes > 0 && parseTime(startTime) < pastCutoffMinutes) continue;
 
     // Check all users are free during this slot
     const allFree = userIds.every((uid) => {
@@ -128,6 +181,18 @@ const suggestSlots = async (req, res) => {
       }
     }
 
+    // Check if the requested date is a holiday or Sunday
+    if (date) {
+      const { isHoliday, isSunday } = require('../utils/holidays');
+      if (isSunday(date)) {
+        return res.status(400).json({ message: 'Cannot schedule sessions on Sundays.' });
+      }
+      const holidayCheck = isHoliday(date);
+      if (holidayCheck.isHoliday) {
+        return res.status(400).json({ message: `Cannot schedule on ${holidayCheck.holiday.name} (${holidayCheck.holiday.type} holiday).` });
+      }
+    }
+
     const allUserIds = [tutorId, ...tuteeIds];
     const busyMap = await buildBusyMap(allUserIds, date);
 
@@ -138,14 +203,14 @@ const suggestSlots = async (req, res) => {
       const d = new Date(date);
       const dowIndex = d.getDay(); // 0=Sun
       const dayName = dowIndex === 0 ? 'Sunday' : DAYS[dowIndex - 1];
-      const slots = findMutualFreeSlots(busyMap, allUserIds, dayName, durationMinutes);
+      const slots = findMutualFreeSlots(busyMap, allUserIds, dayName, durationMinutes, date);
       suggestions.push({ day: dayName, date, slots });
     } else {
       // Return suggestions for each day of the week
       for (const day of DAYS) {
         const slots = findMutualFreeSlots(busyMap, allUserIds, day, durationMinutes);
         if (slots.length > 0) {
-          suggestions.push({ day, slots }); // all available slots
+          suggestions.push({ day, slots });
         }
       }
     }
@@ -167,11 +232,12 @@ const createSession = async (req, res) => {
       return res.status(400).json({ message: 'tutorId, courseId, date, startTime, endTime are required' });
     }
 
-    // Require schedule before booking a session
-    const tuteeScheduleCount = await StudentSchedule.countDocuments({ student: req.user._id });
-    if (tuteeScheduleCount === 0) {
+    // Require availability before booking a session
+    const Availability = require('../models/Availability');
+    const tuteeAvailCount = await Availability.countDocuments({ user: req.user._id });
+    if (tuteeAvailCount === 0) {
       return res.status(400).json({
-        message: 'You must upload your class schedule before booking a session. Go to your schedule page to upload your study load.',
+        message: 'You must set your availability before booking a session. Go to your availability settings.',
       });
     }
 
@@ -326,6 +392,20 @@ const completeSession = async (req, res) => {
       session.tutor.toString() !== req.user._id.toString()
     ) {
       return res.status(403).json({ message: 'Only the tutor or admin can complete a session' });
+    }
+
+    if (session.status !== 'scheduled') {
+      return res.status(400).json({ message: `Cannot complete a session that is ${session.status}` });
+    }
+
+    // Prevent completing a session before its scheduled date/time
+    const now = new Date();
+    const sessionDate = new Date(session.date);
+    const [endH, endM] = session.endTime.split(':').map(Number);
+    sessionDate.setHours(endH, endM, 0, 0);
+
+    if (req.user.role !== 'admin' && now < sessionDate) {
+      return res.status(400).json({ message: 'Cannot mark as completed before the session has ended. Please wait until after the scheduled time.' });
     }
 
     session.status = 'completed';
@@ -512,9 +592,120 @@ const getUserSessions = async (req, res) => {
   }
 };
 
-// @desc    Get session statistics (frequency tracking)
-// @route   GET /api/sessions/stats
-// @access  Admin
+// @desc    Get analytics for the logged-in student (as tutee)
+// @route   GET /api/sessions/my-stats
+// @access  Private
+const getMyStats = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // ── Session counts ──
+    const [completed, cancelled, scheduled, pending, rejected] = await Promise.all([
+      Session.countDocuments({ tutees: userId, status: 'completed' }),
+      Session.countDocuments({ tutees: userId, status: 'cancelled' }),
+      Session.countDocuments({ tutees: userId, status: 'scheduled' }),
+      Session.countDocuments({ tutees: userId, status: 'pending' }),
+      Session.countDocuments({ tutees: userId, status: 'rejected' }),
+    ]);
+    const total = completed + cancelled + scheduled + pending + rejected;
+    const attempted = completed + cancelled;
+    const attendanceRate = attempted > 0 ? Math.round((completed / attempted) * 100) : 100;
+
+    // ── Per-course breakdown ──
+    const courseSessions = await Session.find({ tutees: userId })
+      .populate('course', 'courseCode courseName')
+      .lean();
+
+    const courseMap = {};
+    for (const s of courseSessions) {
+      if (!s.course) continue;
+      const key = s.course._id.toString();
+      if (!courseMap[key]) {
+        courseMap[key] = {
+          courseId: key,
+          courseCode: s.course.courseCode,
+          courseName: s.course.courseName,
+          total: 0, completed: 0, cancelled: 0,
+        };
+      }
+      courseMap[key].total++;
+      if (s.status === 'completed') courseMap[key].completed++;
+      if (s.status === 'cancelled') courseMap[key].cancelled++;
+    }
+    const courseBreakdown = Object.values(courseMap)
+      .sort((a, b) => b.completed - a.completed);
+
+    // ── Monthly trend (last 6 months) ──
+    const monthlyData = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const start = new Date(d.getFullYear(), d.getMonth(), 1);
+      const end = new Date(d.getFullYear(), d.getMonth() + 1, 1);
+      const [bookedCount, completedCount] = await Promise.all([
+        Session.countDocuments({ tutees: userId, createdAt: { $gte: start, $lt: end } }),
+        Session.countDocuments({ tutees: userId, status: 'completed', date: { $gte: start, $lt: end } }),
+      ]);
+      monthlyData.push({
+        month: d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }),
+        booked: bookedCount,
+        completed: completedCount,
+      });
+    }
+
+    // ── Tutor diversity (unique tutors worked with) ──
+    const completedSessions = await Session.find({ tutees: userId, status: 'completed' })
+      .populate('tutor', 'firstName lastName')
+      .lean();
+    const tutorSet = new Map();
+    for (const s of completedSessions) {
+      if (s.tutor) {
+        tutorSet.set(s.tutor._id.toString(), `${s.tutor.firstName} ${s.tutor.lastName}`);
+      }
+    }
+    const uniqueTutors = tutorSet.size;
+
+    // ── Venue preference ──
+    const onlineSessions = courseSessions.filter(s => s.venueType === 'online').length;
+    const onCampusSessions = courseSessions.filter(s => s.venueType === 'on-campus').length;
+
+    // ── Upcoming sessions (next 5) ──
+    const upcoming = await Session.find({
+      tutees: userId,
+      status: 'scheduled',
+      date: { $gte: new Date() },
+    })
+      .populate('tutor', 'firstName lastName')
+      .populate('course', 'courseCode courseName')
+      .sort({ date: 1, startTime: 1 })
+      .limit(5)
+      .lean();
+
+    // ── Recent completed sessions ──
+    const recent = await Session.find({
+      tutees: userId,
+      status: 'completed',
+    })
+      .populate('tutor', 'firstName lastName')
+      .populate('course', 'courseCode courseName')
+      .sort({ date: -1 })
+      .limit(5)
+      .lean();
+
+    res.json({
+      overview: {
+        total, completed, cancelled, scheduled, pending, rejected,
+        attendanceRate, uniqueTutors, onlineSessions, onCampusSessions,
+      },
+      courseBreakdown,
+      monthlyData,
+      upcoming,
+      recent,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
 const getSessionStats = async (req, res) => {
   try {
     const total = await Session.countDocuments();
@@ -601,4 +792,5 @@ module.exports = {
   getSessionHistory,
   getUserSessions,
   getSessionStats,
+  getMyStats,
 };

@@ -8,7 +8,7 @@ const courseSchema = new mongoose.Schema(
     units: { type: Number, required: true, min: 1, max: 12 },
     yearLevel: { type: Number, enum: [1, 2, 3, 4], default: null },
     semester: { type: Number, enum: [1, 2], default: null },
-    department: { type: String, trim: true, default: 'Information Technology' },
+    department: { type: String, trim: true, default: '' },
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }

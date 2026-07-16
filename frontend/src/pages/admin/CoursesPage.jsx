@@ -3,11 +3,32 @@ import { motion } from 'framer-motion';
 import { HiPlus, HiPencil, HiTrash, HiSearch, HiUpload } from 'react-icons/hi';
 import PageHeader from '../../components/PageHeader';
 import Modal from '../../components/Modal';
+import ConfirmModal from '../../components/ConfirmModal';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
 const YEAR_LABELS = { 1: '1st Year', 2: '2nd Year', 3: '3rd Year', 4: '4th Year' };
-const emptyForm = { courseCode: '', courseName: '', description: '', units: 3, yearLevel: '', semester: '', department: 'Information Technology', isActive: true };
+const emptyForm = { courseCode: '', courseName: '', description: '', units: 3, yearLevel: '', semester: '', department: '', isActive: true };
+
+// Parse a single CSV line handling quoted fields (commas inside quotes)
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      inQuotes = !inQuotes;
+    } else if (ch === ',' && !inQuotes) {
+      result.push(current);
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  result.push(current);
+  return result;
+}
 
 export default function CoursesPage() {
   const [courses, setCourses] = useState([]);
@@ -24,6 +45,7 @@ export default function CoursesPage() {
   const [importText, setImportText] = useState('');
   const [importLoading, setImportLoading] = useState(false);
   const [departments, setDepartments] = useState([]);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   const fetchCourses = async () => {
     try {
@@ -72,10 +94,10 @@ export default function CoursesPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this course?')) return;
     try {
       await api.delete(`/courses/${id}`);
       toast.success('Course deleted');
+      setDeleteConfirm(null);
       fetchCourses();
     } catch (err) { toast.error(err.response?.data?.message || 'Failed to delete'); }
   };
@@ -84,26 +106,31 @@ export default function CoursesPage() {
     if (!importText.trim()) { toast.error('Paste CSV data first'); return; }
     setImportLoading(true);
     try {
-      const lines = importText.trim().split('\n');
-      const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
+      const lines = importText.trim().replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').filter(l => l.trim());
+      const headers = parseCSVLine(lines[0]).map(h => h.trim().toLowerCase());
       const rows = lines.slice(1).map(line => {
-        const vals = line.split(',').map(v => v.replace(/"/g, '').trim());
+        const vals = parseCSVLine(line).map(v => v.trim());
         return headers.reduce((obj, h, i) => { obj[h] = vals[i] || ''; return obj; }, {});
-      }).filter(r => r.coursecode || r.courseCode);
+      }).filter(r => r.coursecode || r.code);
 
-      // Normalize header keys
+      if (rows.length === 0) { toast.error('No valid rows found. Check your CSV format.'); setImportLoading(false); return; }
+
+      // Normalize header keys to match what backend expects
       const normalized = rows.map(r => ({
-        courseCode: r.coursecode || r.courseCode || '',
-        courseName: r.coursename || r.courseName || '',
+        courseCode: r.coursecode || r.code || '',
+        courseName: r.coursename || r.name || '',
         description: r.description || '',
         units: r.units || '3',
-        yearLevel: r.yearlevel || r.yearLevel || '',
+        yearLevel: r.yearlevel || r.year || '',
         semester: r.semester || '',
-        department: r.department || 'Information Technology',
+        department: r.department || '',
       }));
 
       const { data } = await api.post('/courses/import', normalized);
       toast.success(`Imported: ${data.created} created, ${data.skipped} skipped${data.errors.length ? `, ${data.errors.length} errors` : ''}`);
+      if (data.errors.length) {
+        data.errors.slice(0, 3).forEach(e => toast.error(`${e.row}: ${e.reason}`));
+      }
       setImportOpen(false);
       setImportText('');
       fetchCourses();
@@ -191,7 +218,7 @@ export default function CoursesPage() {
                   <td className="table-cell">
                     <div className="flex items-center gap-2">
                       <button onClick={() => openEdit(c)} className="p-1.5 text-surface-500 dark:text-surface-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors"><HiPencil className="w-4 h-4" /></button>
-                      <button onClick={() => handleDelete(c._id)} className="p-1.5 text-surface-500 dark:text-surface-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"><HiTrash className="w-4 h-4" /></button>
+                      <button onClick={() => setDeleteConfirm(c)} className="p-1.5 text-surface-500 dark:text-surface-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"><HiTrash className="w-4 h-4" /></button>
                     </div>
                   </td>
                 </motion.tr>
@@ -205,27 +232,27 @@ export default function CoursesPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div><label className="label">Course Code</label><input value={form.courseCode} onChange={e => setForm({...form, courseCode: e.target.value.toUpperCase()})} className="input-field font-mono uppercase" required placeholder="IT101" /></div>
-            <div><label className="label">Units</label><input type="number" value={form.units} onChange={e => setForm({...form, units: Number(e.target.value)})} className="input-field" min={1} max={6} required /></div>
+            <div><label className="label">Units</label><input type="number" value={form.units} onChange={e => setForm({...form, units: Number(e.target.value)})} className="input-field" min={1} max={12} required /></div>
           </div>
           <div><label className="label">Course Name</label><input value={form.courseName} onChange={e => setForm({...form, courseName: e.target.value})} className="input-field" required /></div>
           <div><label className="label">Description</label><input value={form.description} onChange={e => setForm({...form, description: e.target.value})} className="input-field" placeholder="Optional" /></div>
           <div><label className="label">Year Level</label>
-            <select value={form.yearLevel} onChange={e => setForm({...form, yearLevel: e.target.value})} className="input-field">
-              <option value="">Not specified</option>
+            <select value={form.yearLevel} onChange={e => setForm({...form, yearLevel: e.target.value})} className="input-field" required>
+              <option value="">Select year level</option>
               <option value="1">1st Year</option><option value="2">2nd Year</option>
               <option value="3">3rd Year</option><option value="4">4th Year</option>
             </select>
           </div>
           <div><label className="label">Semester</label>
-            <select value={form.semester} onChange={e => setForm({...form, semester: e.target.value})} className="input-field">
-              <option value="">Not specified</option>
+            <select value={form.semester} onChange={e => setForm({...form, semester: e.target.value})} className="input-field" required>
+              <option value="">Select semester</option>
               <option value="1">1st Semester</option><option value="2">2nd Semester</option>
             </select>
           </div>
           <div><label className="label">Department</label>
-            <select value={form.department} onChange={e => setForm({...form, department: e.target.value})} className="input-field">
-              <option value="Information Technology">Information Technology</option>
-              {departments.filter(d => d.isActive && d.name !== 'Information Technology').map(d => (
+            <select value={form.department} onChange={e => setForm({...form, department: e.target.value})} className="input-field" required>
+              <option value="">Select department...</option>
+              {departments.filter(d => d.isActive).map(d => (
                 <option key={d._id} value={d.name}>{d.name}</option>
               ))}
             </select>
@@ -252,7 +279,7 @@ export default function CoursesPage() {
               <button
                 onClick={() => {
                   const header = 'courseCode,courseName,description,units,yearLevel,semester,department';
-                  const sample = 'IT101,Introduction to Computing,Fundamentals of computing,3,1,1,Information Technology\nIT201,Data Structures,Core data structures and algorithms,3,2,1,Information Technology';
+                  const sample = 'NCM101,Anatomy and Physiology,"Structure and functions of the human body",5,1,1,College of Nursing\nIT101,Introduction to Computing,"Fundamentals of computing",3,1,1,Information Technology';
                   const blob = new Blob([`${header}\n${sample}`], { type: 'text/csv' });
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement('a');
@@ -266,12 +293,36 @@ export default function CoursesPage() {
                 <HiUpload className="w-3 h-3 rotate-180" /> Download Template
               </button>
             </div>
-            <p className="font-mono">courseCode,courseName,description,units,yearLevel,semester,department</p>
-            <p className="font-mono text-surface-400 dark:text-surface-500">IT101,Introduction to Computing,Fundamentals,3,1,1,Information Technology</p>
-            <p className="mt-1 text-surface-400 dark:text-surface-500">yearLevel: 1-4 · semester: 1-2 · units: 1-6 · description & department are optional</p>
+            <p className="font-mono text-xs break-all">courseCode,courseName,description,units,yearLevel,semester,department</p>
+            <p className="font-mono text-xs text-surface-400 dark:text-surface-500 break-all">NCM101,Anatomy and Physiology,"Structure and functions...",5,1,1,College of Nursing</p>
+            <p className="mt-1 text-xs text-surface-400 dark:text-surface-500">yearLevel: 1-4 · semester: 1-2 · units: 1-12 · Wrap descriptions with commas in quotes. Department must match an existing department name.</p>
           </div>
           <div>
-            <label className="label">Paste CSV data</label>
+            <label className="label">Upload CSV file or paste data</label>
+            <div className="flex gap-2 mb-2">
+              <button
+                type="button"
+                className="btn-secondary text-xs px-3 py-2 flex items-center gap-2"
+                onClick={() => document.getElementById('csvCourseFileInput').click()}
+              >
+                📄 Choose CSV File
+              </button>
+              <input
+                id="csvCourseFileInput"
+                type="file"
+                accept=".csv,.txt"
+                className="hidden"
+                onChange={e => {
+                  const file = e.target.files[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = (ev) => setImportText(ev.target.result);
+                  reader.readAsText(file);
+                  e.target.value = '';
+                }}
+              />
+              <span className="text-xs text-surface-400 self-center">or paste below</span>
+            </div>
             <textarea
               value={importText}
               onChange={e => setImportText(e.target.value)}
@@ -291,6 +342,15 @@ export default function CoursesPage() {
           </div>
         </div>
       </Modal>
+
+      <ConfirmModal
+        isOpen={!!deleteConfirm}
+        onClose={() => setDeleteConfirm(null)}
+        onConfirm={() => handleDelete(deleteConfirm?._id)}
+        title="Delete Course"
+        message={deleteConfirm ? `Delete course ${deleteConfirm.courseCode} — ${deleteConfirm.courseName}? This cannot be undone.` : ''}
+        confirmText="Delete Course"
+      />
     </div>
   );
 }

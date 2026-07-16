@@ -34,18 +34,26 @@ const DAY_MAP = {
  */
 function parseDays(dayStr) {
   if (!dayStr) return [];
-  const upper = dayStr.trim().toUpperCase();
+  // Clean OCR artifacts and normalize
+  const upper = dayStr.trim().toUpperCase().replace(/[^A-Z]/g, '');
 
-  // Handle common patterns explicitly
+  if (!upper) return [];
+
+  // Handle common patterns explicitly (including OCR misreads)
   const patterns = {
     MWF: ['Monday', 'Wednesday', 'Friday'],
+    MWR: ['Monday', 'Wednesday', 'Friday'], // OCR misread F→R
+    MVF: ['Monday', 'Wednesday', 'Friday'], // OCR misread W→V
     TTH: ['Tuesday', 'Thursday'],
+    TH: ['Tuesday', 'Thursday'], // sometimes just TH
     TTHS: ['Tuesday', 'Thursday', 'Saturday'],
     MW: ['Monday', 'Wednesday'],
     TF: ['Tuesday', 'Friday'],
     MF: ['Monday', 'Friday'],
     SAT: ['Saturday'],
     MWFS: ['Monday', 'Wednesday', 'Friday', 'Saturday'],
+    MTW: ['Monday', 'Tuesday', 'Wednesday'],
+    MTWF: ['Monday', 'Tuesday', 'Wednesday', 'Friday'],
   };
 
   if (patterns[upper]) return patterns[upper];
@@ -188,14 +196,15 @@ function parseStudyLoadText(text) {
   if (courseMatch) result.course = courseMatch[1].trim();
 
   // Parse schedule entries
-  // Pattern: IT - XXXXX SubjectCode - LEC/LAB  Time  Days  Units
-  // The EDP code pattern: "IT - 32094" or similar
-  const linePattern = /IT\s*-\s*(\d{5})\s+([\w-]+(?:\s*[-_]+\s*)?)\s*-\s*(LEC|LAB)\s+([\d:]+\s*-\s*[\d:]+\s*-?\s*[AP]M)\s+([A-Z]+)\s+(\d+)/gi;
+  // Pattern: EDP_CODE SUBJECT - LEC/LAB TIME | DAYS | UNITS
+  // Handle OCR artifacts: pipes |, spaces, misread prefixes
+  // Format: IT - 32094 IT-SYSADMN32 - LAB 10:30 - 12:00 - PM TTH 1 -
+  const linePattern = /(?:IT|IM|1M|1m|Im|CC)\s*[-.]?\s*(\d{5})\s+([\w_-]+[\w\d_]*)\s*-\s*(LEC|LAB)\s+([\d:]+\s*-\s*[\d:]+\s*-?\s*[AP]M)\s*\|?\s*([A-Za-z]+)\s*\|?\s*(\d+)/gi;
 
   let match;
   while ((match = linePattern.exec(text)) !== null) {
     const [, edpCode, subjectRaw, type, timeStr, daysStr, units] = match;
-    const subject = subjectRaw.replace(/[\s_]+$/, '').trim();
+    const subject = subjectRaw.replace(/[_]+$/, '').trim();
     const timeData = parseTime(timeStr);
     const days = parseDays(daysStr);
 
@@ -223,10 +232,11 @@ function parseStudyLoadText(text) {
     const lines = text.split(/\n/);
     for (const line of lines) {
       const flexMatch = line.match(
-        /(\d{5})\s+([\w-]+\d*)\s*-\s*(LEC|LAB)\s+([\d:]+\s*-\s*[\d:]+\s*-?\s*[AP]M)\s+([A-Z]+)\s+(\d+)/i
+        /(\d{5})\s+([\w_-]+[\w\d_]*)\s*-\s*(LEC|LAB)\s+([\d:]+\s*-\s*[\d:]+\s*-?\s*[AP]M)\s*\|?\s*([A-Za-z]+)\s*\|?\s*(\d+)/i
       );
       if (flexMatch) {
-        const [, edpCode, subject, type, timeStr, daysStr, units] = flexMatch;
+        const [, edpCode, subjectRaw, type, timeStr, daysStr, units] = flexMatch;
+        const subject = subjectRaw.replace(/[_]+$/, '').trim();
         const timeData = parseTime(timeStr);
         const days = parseDays(daysStr);
 
@@ -249,6 +259,52 @@ function parseStudyLoadText(text) {
     }
   }
 
+  // Third fallback: very forgiving pattern for OCR-garbled text from images
+  if (result.entries.length === 0) {
+    const lines = text.split(/\n/);
+    for (const line of lines) {
+      // Look for any line with a time pattern and day abbreviations
+      // Time: "10:30 - 12:00 - PM" or "1:30 - 2:30-PM" or "3:00 - 4:30 - PM"
+      const timeMatch = line.match(/(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})\s*-?\s*(AM|PM)/i);
+      // Days: MWF, TTH, TH, MW, SAT, etc (case insensitive, may be surrounded by pipes/spaces)
+      const daysMatch = line.match(/\|?\s*(MWF|MWR|MVF|TTH|TTHS|MW|TF|MF|SAT|MWFS|MTW|MTWF|TH|Mwr|mwf|tth|sat|mw)\s*\|?/i);
+      // EDP code: 5 digits (may have noise before it)
+      const edpMatch = line.match(/(\d{5})/);
+      // Subject: XX-SOMETHING32 pattern
+      const subjectMatch = line.match(/([A-Z]{2,}-[A-Z0-9_]+\d*)\s*-?\s*(LEC|LAB)/i);
+
+      if (timeMatch && daysMatch) {
+        const fullTimeStr = `${timeMatch[1]} - ${timeMatch[2]} - ${timeMatch[3]}`;
+        const timeData = parseTime(fullTimeStr);
+        const days = parseDays(daysMatch[1]);
+        const edpCode = edpMatch ? edpMatch[1] : '';
+        const subject = subjectMatch ? subjectMatch[1] : '';
+        const type = subjectMatch ? subjectMatch[2] : '';
+
+        if (timeData && days.length > 0) {
+          let label = '';
+          if (edpCode && subject) label = `${edpCode} - ${subject} (${type})`;
+          else if (edpCode) label = `${edpCode} - Class`;
+          else if (subject) label = `${subject} (${type})`;
+          else label = 'Class';
+
+          for (const day of days) {
+            result.entries.push({
+              day,
+              startTime: timeData.startTime,
+              endTime: timeData.endTime,
+              label,
+              edpCode,
+              subject,
+              type,
+              units: 0,
+            });
+          }
+        }
+      }
+    }
+  }
+
   return result;
 }
 
@@ -262,6 +318,9 @@ async function extractStudyLoad(filePath) {
   try {
     const text = await extractText(filePath);
 
+    console.log(`[StudyLoadExtractor] Extracted ${text?.length || 0} chars from ${filePath.split(/[/\\]/).pop()}`);
+    if (text) console.log(`[StudyLoadExtractor] First 500 chars:\n${text.substring(0, 500)}`);
+
     if (!text || text.trim().length < 20) {
       return {
         success: false,
@@ -272,6 +331,11 @@ async function extractStudyLoad(filePath) {
     }
 
     const parsed = parseStudyLoadText(text);
+
+    console.log(`[StudyLoadExtractor] Parsed ${parsed.entries.length} entries. StudentID: ${parsed.studentId}, Year: ${parsed.yearLevel}`);
+    if (parsed.entries.length > 0) {
+      parsed.entries.slice(0, 3).forEach(e => console.log(`  → ${e.day} ${e.startTime}-${e.endTime} ${e.label}`));
+    }
 
     if (parsed.entries.length === 0) {
       return {

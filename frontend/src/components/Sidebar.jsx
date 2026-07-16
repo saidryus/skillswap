@@ -7,8 +7,8 @@ import { useState, useEffect } from 'react';
 import api from '../utils/api';
 import {
   HiHome, HiUsers, HiAcademicCap, HiBell, HiLogout,
-  HiChevronLeft, HiChevronRight, HiClipboardList,
-  HiCalendar, HiSearch, HiBookOpen, HiStar, HiOfficeBuilding,
+  HiChevronLeft, HiChevronRight, HiClipboardList, HiDocumentText,
+  HiCalendar, HiSearch, HiBookOpen, HiStar, HiOfficeBuilding, HiChartBar,
 } from 'react-icons/hi';
 
 const navItems = {
@@ -22,7 +22,6 @@ const navItems = {
     { to: '/admin/tutor-applications', label: 'Tutor Applications', icon: HiStar, permission: 'tutor-applications' },
     { section: 'Monitoring' },
     { to: '/admin/sessions', label: 'Sessions', icon: HiCalendar, permission: 'sessions' },
-    { to: '/admin/student-schedules', label: 'Student Schedules', icon: HiClipboardList, permission: 'student-schedules' },
     { section: 'Other' },
     { to: '/admin/announcements', label: 'Announcements', icon: HiBell, permission: 'announcements' },
   ],
@@ -30,12 +29,14 @@ const navItems = {
     { section: 'Main' },
     { to: '/student', label: 'Dashboard', icon: HiHome, end: true },
     { to: '/student/find-tutor', label: 'Find a Tutor', icon: HiSearch },
-    { to: '/student/book-session', label: 'Book a Session', icon: HiCalendar },
     { to: '/student/my-sessions', label: 'My Sessions', icon: HiBookOpen },
     { to: '/student/become-tutor', label: 'Become a Tutor', icon: HiStar },
-    { section: 'Schedule' },
-    { to: '/student/my-schedule', label: 'My Schedule', icon: HiClipboardList },
+    { to: '/student/tutor-dashboard', label: 'Tutor Dashboard', icon: HiAcademicCap },
+    { section: 'Availability' },
+    { to: '/student/my-availability', label: 'My Availability', icon: HiClipboardList },
+    { to: '/student/my-analytics', label: 'My Analytics', icon: HiChartBar },
     { section: 'Other' },
+    { to: '/student/resources', label: 'Resources', icon: HiDocumentText },
     { to: '/student/announcements', label: 'Announcements', icon: HiBell },
   ],
 };
@@ -149,10 +150,10 @@ export default function Sidebar({ open, setOpen, isMobile }) {
               <Logo size={34} />
               <div>
                 <h1 className="text-base font-bold text-surface-900 dark:text-white tracking-tight">
-                  SkillSwap
+                  Acadia
                 </h1>
                 <p className="text-[10px] font-medium text-primary-500 tracking-widest uppercase">
-                  IT Department
+                  Peer Tutoring
                 </p>
               </div>
             </motion.div>
@@ -321,3 +322,4 @@ export default function Sidebar({ open, setOpen, isMobile }) {
     </motion.aside>
   );
 }
+

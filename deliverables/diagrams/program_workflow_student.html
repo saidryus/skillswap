@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SkillSwap - Program Workflow (Student Perspective)</title>
+    <title>Acadia - Program Workflow (Student Perspective)</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -30,7 +30,7 @@
     </style>
 </head>
 <body>
-    <div class="page-title">SkillSwap — Program Workflow (Student Perspective)</div>
+    <div class="page-title">Acadia — Program Workflow (Student Perspective)</div>
     <div id="canvas"></div>
 
     <script>
@@ -46,7 +46,7 @@
         const offsetX = (W - totalFlowW) / 2;
         const BOX_W = Math.min(190, COL_W * 0.8);
         const FONT = Math.max(9, Math.min(12, H / 60));
-        const DIAMOND_SIZE = Math.max(34, Math.min(44, H / 16));
+        const DIAMOND_SIZE = Math.max(44, Math.min(54, H / 14));
         const GREEN = '#1e3a5f';
         const DARK = '#1e293b';
         const RED = '#ef4444';
@@ -58,6 +58,8 @@
                 items: [
                     { type: 'terminal', text: 'Start' },
                     { type: 'process', text: 'Student logs in with Student ID and password' },
+                    { type: 'process', text: 'System forces password change on first login' },
+                    { type: 'process', text: 'Student uploads class schedule (study load)' },
                     { type: 'process', text: 'Student views dashboard and personal class schedule' },
                     { type: 'process', text: 'Student searches for a tutor by selecting a course' },
                     { type: 'process', text: 'System displays ranked tutor list based on competency score' },
@@ -153,12 +155,12 @@
                     canvas.appendChild(el);
 
                     const txt = document.createElement('div');
-                    txt.style.cssText = `position:absolute;left:${cx - 30}px;top:${cy - 8}px;width:60px;font-size:${FONT - 1}px;font-weight:800;color:white;text-align:center;line-height:1.2;pointer-events:none;`;
+                    txt.style.cssText = `position:absolute;left:${cx - 40}px;top:${cy - 10}px;width:80px;font-size:${FONT - 1}px;font-weight:800;color:white;text-align:center;line-height:1.2;pointer-events:none;`;
                     txt.innerHTML = item.text.replace('\n', '<br>');
                     canvas.appendChild(txt);
 
                     // "no" line going left — longer to avoid overlap
-                    const noLineEnd = cx - s/2 - 24;
+                    const noLineEnd = cx - s/2 - 30;
                     const noLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
                     noLine.setAttribute('x1', cx - s/2); noLine.setAttribute('y1', cy);
                     noLine.setAttribute('x2', noLineEnd); noLine.setAttribute('y2', cy);
@@ -173,7 +175,7 @@
 
                     // Branch box — spaced further left
                     const noBox = document.createElement('div');
-                    noBox.style.cssText = `position:absolute;left:${noLineEnd - 72}px;top:${cy - 12}px;width:66px;background:white;border:1.5px solid ${RED};color:${DARK};padding:2px 3px;border-radius:3px;font-size:${FONT - 2}px;font-weight:600;text-align:center;line-height:1.2;`;
+                    noBox.style.cssText = `position:absolute;left:${noLineEnd - 78}px;top:${cy - 14}px;width:72px;background:white;border:1.5px solid ${RED};color:${DARK};padding:3px 4px;border-radius:3px;font-size:${FONT - 2}px;font-weight:600;text-align:center;line-height:1.2;`;
                     noBox.innerHTML = item.no.replace('\n', '<br>');
                     canvas.appendChild(noBox);
 

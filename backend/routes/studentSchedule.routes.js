@@ -31,8 +31,11 @@ router.get('/my-courses', async (req, res) => {
     ).values()];
 
     // Get previous courses (lower year levels, or same year but previous semester)
+    // Only show courses from the student's department
+    const studentDept = req.user.department || '';
     const previousFilter = {
       isActive: true,
+      ...(studentDept && { department: studentDept }),
       $or: [
         { yearLevel: { $lt: studentYear } },
       ],

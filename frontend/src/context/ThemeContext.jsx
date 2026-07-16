@@ -4,7 +4,7 @@ const ThemeContext = createContext(null);
 
 export function ThemeProvider({ children }) {
   const [theme, setTheme] = useState(() => {
-    const stored = localStorage.getItem('skillswap_theme');
+    const stored = localStorage.getItem('Acadia_theme');
     if (stored) return stored;
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
@@ -16,14 +16,14 @@ export function ThemeProvider({ children }) {
     } else {
       root.classList.remove('dark');
     }
-    localStorage.setItem('skillswap_theme', theme);
+    localStorage.setItem('Acadia_theme', theme);
   }, [theme]);
 
   // Listen for system preference changes
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handler = (e) => {
-      const stored = localStorage.getItem('skillswap_theme');
+      const stored = localStorage.getItem('Acadia_theme');
       if (!stored) {
         setTheme(e.matches ? 'dark' : 'light');
       }
@@ -47,3 +47,4 @@ export function useTheme() {
   if (!ctx) throw new Error('useTheme must be used within ThemeProvider');
   return ctx;
 }
+

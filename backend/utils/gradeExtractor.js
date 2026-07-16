@@ -36,13 +36,84 @@ async function extractTextFromPdf(filePath) {
 
 /**
  * Extract text from an image file using Tesseract OCR
+ * Preprocesses: removes table lines by detecting straight lines and whiting them out
  */
 async function extractTextFromImage(filePath) {
   const Tesseract = require('tesseract.js');
-  const { data: { text } } = await Tesseract.recognize(filePath, 'eng', {
-    logger: () => {}, // suppress progress logs
-  });
-  return text;
+  const sharp = require('sharp');
+  const fs = require('fs');
+
+  const preprocessedPath = filePath + '.preprocessed.png';
+  try {
+    // Get image metadata
+    const metadata = await sharp(filePath).metadata();
+    const width = metadata.width;
+    const height = metadata.height;
+
+    // Step 1: Create a high-res grayscale version
+    const upscaleWidth = Math.max(width, 2500);
+    let pipeline = sharp(filePath)
+      .resize({ width: upscaleWidth, withoutEnlargement: false })
+      .grayscale();
+
+    // Step 2: Get raw pixel buffer to manually remove table lines
+    const { data: rawBuffer, info } = await pipeline
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    const w = info.width;
+    const h = info.height;
+    const buf = Buffer.from(rawBuffer);
+
+    // Remove horizontal lines: if a row has >60% dark pixels in a line, white it out
+    for (let y = 0; y < h; y++) {
+      let darkCount = 0;
+      for (let x = 0; x < w; x++) {
+        if (buf[y * w + x] < 128) darkCount++;
+      }
+      // If more than 40% of the row is dark, it's likely a horizontal line
+      if (darkCount > w * 0.4) {
+        for (let x = 0; x < w; x++) {
+          buf[y * w + x] = 255; // white out the line
+        }
+      }
+    }
+
+    // Remove vertical lines: if a column has >50% dark pixels, white it out
+    for (let x = 0; x < w; x++) {
+      let darkCount = 0;
+      for (let y = 0; y < h; y++) {
+        if (buf[y * w + x] < 128) darkCount++;
+      }
+      if (darkCount > h * 0.4) {
+        for (let y = 0; y < h; y++) {
+          buf[y * w + x] = 255;
+        }
+      }
+    }
+
+    // Step 3: Save processed image and run OCR
+    await sharp(buf, { raw: { width: w, height: h, channels: 1 } })
+      .normalize()
+      .sharpen({ sigma: 1.5 })
+      .toFile(preprocessedPath);
+
+    const { data: { text } } = await Tesseract.recognize(preprocessedPath, 'eng', {
+      logger: () => {},
+    });
+
+    try { fs.unlinkSync(preprocessedPath); } catch (_) {}
+    return text;
+  } catch (err) {
+    console.log('[GradeExtractor] Image preprocessing failed:', err.message);
+    try { fs.unlinkSync(preprocessedPath); } catch (_) {}
+
+    // Fallback: raw OCR
+    const { data: { text } } = await Tesseract.recognize(filePath, 'eng', {
+      logger: () => {},
+    });
+    return text;
+  }
 }
 
 /**
@@ -81,9 +152,10 @@ async function extractText(filePath) {
 /**
  * Find a grade value for a course code in extracted text.
  * 
- * Strategy: Find the course code in the text, then look for the nearest
- * grade value (1.0-5.0) that appears AFTER the course code within a reasonable
- * character distance.
+ * Strategy: Find the course code in the text, then look for grade values
+ * (1.0-5.0) that appear AFTER the course code within a reasonable distance.
+ * If exactly 2 grades are found (midterm + final), take the second (final).
+ * Otherwise take the first match.
  * 
  * Returns the grade as a number or null if not found.
  */
@@ -92,36 +164,40 @@ function findGradeForCourse(text, courseCode) {
 
   const normalizedCode = courseCode.replace(/[-\s]/g, '').toUpperCase();
 
-  // Find all positions of the course code in the text
   const normalizedText = text.replace(/[-]/g, '');
   const upperText = normalizedText.toUpperCase();
 
   const codeIndex = upperText.indexOf(normalizedCode);
   if (codeIndex === -1) return null;
 
-  // Look at the text AFTER the course code, within 150 chars
-  // (covers: course name + units + grade)
-  const afterCode = normalizedText.substring(codeIndex + normalizedCode.length, codeIndex + normalizedCode.length + 150);
-
-  // Find grade patterns (decimal): 1.00, 1.25, 1.50, 1.75, 2.00, etc.
-  const gradePattern = /\b([1-5])\.([0-9]{2})\b/g;
-  const matches = [...afterCode.matchAll(gradePattern)];
-
-  if (matches.length > 0) {
-    const grade = parseFloat(matches[0][0]);
-    if (grade >= 1.0 && grade <= 5.0) return grade;
+  // Look at text AFTER the course code — but stop at the next row (next EDP code = 5-digit number at start)
+  let afterCode = normalizedText.substring(codeIndex + normalizedCode.length, codeIndex + normalizedCode.length + 250);
+  
+  // Cut off at the next row boundary (5-digit EDP code signals a new row)
+  const nextRowMatch = afterCode.match(/\s\d{5}\s/);
+  if (nextRowMatch) {
+    afterCode = afterCode.substring(0, nextRowMatch.index);
   }
 
-  // Try single decimal: 1.5, 2.0, 3.0
-  const singleDecPattern = /\b([1-5])\.([0-9])\b/g;
-  const singleMatches = [...afterCode.matchAll(singleDecPattern)];
+  // Find grade patterns: 1.0, 1.00, 1.25, 1.5, 2.00, etc.
+  const gradePattern = /\b([1-5])\.([0-9]{1,2})\b/g;
+  const allMatches = [...afterCode.matchAll(gradePattern)];
 
-  if (singleMatches.length > 0) {
-    const grade = parseFloat(singleMatches[0][0]);
-    if (grade >= 1.0 && grade <= 5.0) return grade;
+  const validGrades = allMatches
+    .map(m => parseFloat(m[0]))
+    .filter(g => g >= 1.0 && g <= 5.0);
+
+  console.log(`[GradeExtractor] Course: ${courseCode}, found grades: [${validGrades.join(', ')}] in text: "${afterCode.substring(0, 100)}..."`);
+
+  if (validGrades.length === 0) return null;
+
+  // If exactly 2 grades (midterm + final pattern), take the second (final)
+  if (validGrades.length === 2) {
+    return validGrades[1];
   }
 
-  return null;
+  // Otherwise take the first match (safest default)
+  return validGrades[0];
 }
 
 /**

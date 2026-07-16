@@ -25,6 +25,19 @@ const login = async (req, res) => {
       user = await User.findOne({ studentIdNumber: identifier.trim() });
     }
 
+    // Helper: append to login audit log (keep last 20 entries)
+    const auditEntry = (success) => ({
+      success,
+      ip: req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '',
+      userAgent: req.headers['user-agent'] || '',
+      timestamp: new Date(),
+    });
+    const pushAudit = async (userId, entry) => {
+      await User.findByIdAndUpdate(userId, {
+        $push: { loginAuditLog: { $each: [entry], $slice: -20 } },
+      });
+    };
+
     if (!user) {
       return res.status(401).json({ message: 'Invalid ID number or password' });
     }
@@ -42,14 +55,14 @@ const login = async (req, res) => {
     // Verify password
     const isMatch = await user.matchPassword(password);
     if (!isMatch) {
-      // Increment failed attempts
+      await pushAudit(user._id, auditEntry(false));
+
       const attempts = (user.loginAttempts || 0) + 1;
       const update = { loginAttempts: attempts };
 
-      // Lock after 3 failed attempts (progressive: 30s → 60s → 180s max)
       if (attempts >= 3) {
         const lockCount = (user.lockCount || 0) + 1;
-        const lockDurations = [30, 60, 180]; // seconds
+        const lockDurations = [30, 60, 180];
         const lockSeconds = lockDurations[Math.min(lockCount - 1, lockDurations.length - 1)];
         update.lockUntil = new Date(Date.now() + lockSeconds * 1000);
         update.loginAttempts = 0;
@@ -69,7 +82,8 @@ const login = async (req, res) => {
       });
     }
 
-    // Successful login — reset attempts
+    // Successful login — reset attempts and log
+    await pushAudit(user._id, auditEntry(true));
     if (user.loginAttempts > 0 || user.lockUntil || user.lockCount > 0) {
       await User.findByIdAndUpdate(user._id, { loginAttempts: 0, lockUntil: null, lockCount: 0 });
     }

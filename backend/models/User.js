@@ -6,7 +6,6 @@ const ADMIN_PERMISSIONS = [
   'courses',
   'tutor-applications',
   'sessions',
-  'student-schedules',
   'announcements',
 ];
 
@@ -20,7 +19,7 @@ const userSchema = new mongoose.Schema(
     role: { type: String, enum: ['admin', 'student'], default: 'student' },
     yearLevel: { type: Number, enum: [1, 2, 3, 4], default: null },
     phone: { type: String, trim: true },
-    department: { type: String, trim: true, default: 'Information Technology' },
+    department: { type: String, trim: true, default: '' },
     isActive: { type: Boolean, default: true },
     isTutor: { type: Boolean, default: false }, // true if approved for at least one course
     maxSessionsPerWeek: { type: Number, default: 5, min: 1, max: 20 }, // tutor availability cap
@@ -30,6 +29,19 @@ const userSchema = new mongoose.Schema(
     loginAttempts: { type: Number, default: 0 },
     lockUntil: { type: Date, default: null },
     lockCount: { type: Number, default: 0 },
+    // Doc-access lockout — persists across sessions and server restarts
+    docAccessLockedUntil: { type: Date, default: null },
+    docAccessAttempts: { type: Number, default: 0 },
+    // Login audit — last 20 entries kept (successful + failed)
+    loginAuditLog: {
+      type: [{
+        success:   { type: Boolean },
+        ip:        { type: String, default: '' },
+        userAgent: { type: String, default: '' },
+        timestamp: { type: Date, default: Date.now },
+      }],
+      default: [],
+    },
     permissions: {
       type: [{ type: String, enum: ADMIN_PERMISSIONS }],
       default: undefined,
@@ -60,5 +72,8 @@ userSchema.virtual('fullName').get(function () {
 });
 
 userSchema.set('toJSON', { virtuals: true });
+
+// Prevent duplicate student IDs (sparse: skip docs where studentIdNumber is empty)
+userSchema.index({ studentIdNumber: 1 }, { unique: true, sparse: true, partialFilterExpression: { studentIdNumber: { $ne: '' } } });
 
 module.exports = mongoose.model('User', userSchema);

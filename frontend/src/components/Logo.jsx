@@ -61,7 +61,7 @@ export default function Logo({ size = 40, showText = false, textSize = 'text-xl'
       {showText && (
         <div className="flex flex-col leading-none">
           <span className={`font-bold tracking-tight text-surface-900 dark:text-white ${textSize}`}>
-            Skill<span className="text-primary-500">Swap</span>
+            Aca<span className="text-primary-500">dia</span>
           </span>
           <span className="text-surface-400 dark:text-surface-500 text-[10px] font-medium tracking-wider uppercase mt-0.5">
             Peer Tutoring Platform

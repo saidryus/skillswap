@@ -1,0 +1,31 @@
+courseCode,courseName,description,units,yearLevel,semester,department
+CC-INTCOM11,Introduction to Computing,"Fundamentals of computing and information technology",3,1,1,Information Technology
+CC-COMPROG11,Computer Programming 1,"Introduction to programming concepts and logic",3,1,1,Information Technology
+IT-WEBDEV11,Web Design & Development,"Basic web technologies including HTML, CSS, and JavaScript",2,1,1,Information Technology
+CC-COMPROG12,Computer Programming 2,"Advanced programming with object-oriented concepts",3,1,2,Information Technology
+CC-DISCRET12,Discrete Structures,"Mathematical foundations for computing",2,1,2,Information Technology
+CC-DIGILOG21,Digital Logic Design,"Logic gates, circuits, and digital systems",3,2,1,Information Technology
+CC-DASTRUC21,Data Structures & Algorithms,"Core data structures and algorithm design",3,2,1,Information Technology
+IT-OOPROG21,Object Oriented Programming,"OOP principles, inheritance, polymorphism",3,2,1,Information Technology
+CC-ACCTG21,Accounting for IT,"Basic accounting principles for IT professionals",3,2,1,Information Technology
+CC-TWRITE21,Tech. Writing & Presentation Skills in IT,"Technical documentation and presentation",3,2,1,Information Technology
+CC-QUAMETH22,Quantitative Methods w/ Prob. Stat.,"Probability and statistics for computing",3,2,2,Information Technology
+IT-PLATECH22,Platform Technologies w/ Op. Sys.,"Operating systems and platform technologies",3,2,2,Information Technology
+CC-APPSDEV22,Applications Dev't & Emerging Tech.,"Application development using emerging technologies",3,2,2,Information Technology
+CC-DATACOM22,Data Communications,"Network fundamentals and data communication",3,2,2,Information Technology
+IT-SAD22,System Analysis & Design,"Systems analysis methodologies and design techniques",3,2,2,Information Technology
+IT-IMDBSYS31,Information Management (DB Sys. 1),"Database design, SQL, and normalization",3,3,1,Information Technology
+IT-NETWORK31,Computer Networks,"Network protocols, configuration, and administration",3,3,1,Information Technology
+IT-TESTQUA31,Testing & Quality Assurance,"Software testing methods and quality standards",3,3,1,Information Technology
+CC-HCI31,Human Computer Interaction,"UI/UX design principles and usability",3,3,1,Information Technology
+CC-RESCOM31,Methods of Research in Computing,"Research methodologies for IT studies",3,3,1,Information Technology
+IT-IMDBSYS32,Information Management (DB Sys. 2),"Advanced database systems and administration",3,3,2,Information Technology
+IT-INFOSEC32,Information Assurance & Security,"Cybersecurity principles and information protection",3,3,2,Information Technology
+IT-SYSARCH32,System Integration & Architecture,"Enterprise system architecture and integration",3,3,2,Information Technology
+CC-TECHNO32,Technopreneurship,"IT entrepreneurship and business planning",3,3,2,Information Technology
+IT-INTPROG32,Integrative Prog & Technologies,"Full-stack development and integrative programming",3,3,2,Information Technology
+IT-SYSADMN32,Systems Administration & Maintenance,"Server administration and system maintenance",3,3,2,Information Technology
+IT-CPSTONE30,Capstone Project 1,"Research and development phase of capstone",3,4,1,Information Technology
+CC-PROFIS10,Professional Issues in Computing,"Ethics, laws, and professional practice in IT",3,4,1,Information Technology
+IT-CPSTONE40,Capstone Project 2,"Implementation and defense of capstone project",3,4,1,Information Technology
+CC-PRACT40,Practicum,"Industry immersion and on-the-job training",9,4,2,Information Technology

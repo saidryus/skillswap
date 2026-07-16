@@ -1,6 +1,7 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
+import ChatWidget from './ChatWidget';
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -162,6 +163,7 @@ export default function Layout() {
           </div>
         </main>
       </div>
+      <ChatWidget />
     </div>
   );
 }

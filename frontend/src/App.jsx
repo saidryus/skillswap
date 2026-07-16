@@ -9,18 +9,19 @@ import UsersPage from './pages/admin/UsersPage';
 import CoursesPage from './pages/admin/CoursesPage';
 import TutorApplicationsPage from './pages/admin/TutorApplicationsPage';
 import SessionsPage from './pages/admin/SessionsPage';
-import StudentSchedulesPage from './pages/admin/StudentSchedulesPage';
 import DepartmentsPage from './pages/admin/DepartmentsPage';
 
 // Student pages
 import StudentDashboard from './pages/student/StudentDashboard';
 import FindTutorPage from './pages/student/FindTutorPage';
-import BookSessionPage from './pages/student/BookSessionPage';
 import MySessionsPage from './pages/student/MySessionsPage';
 import BecomeTutorPage from './pages/student/BecomeTutorPage';
 import MySchedulePage from './pages/student/MySchedulePage';
+import TutorDashboardPage from './pages/student/TutorDashboardPage';
+import MyAnalyticsPage from './pages/student/MyAnalyticsPage';
 
 import AnnouncementsPage from './pages/shared/AnnouncementsPage';
+import ResourcesPage from './pages/shared/ResourcesPage';
 import ChangePasswordPage from './pages/ChangePasswordPage';
 
 const ProtectedRoute = ({ children, roles }) => {
@@ -64,7 +65,6 @@ function AppRoutes() {
         <Route path="departments" element={<DepartmentsPage />} />
         <Route path="tutor-applications" element={<TutorApplicationsPage />} />
         <Route path="sessions" element={<SessionsPage />} />
-        <Route path="student-schedules" element={<StudentSchedulesPage />} />
         <Route path="announcements" element={<AnnouncementsPage />} />
       </Route>
 
@@ -72,10 +72,12 @@ function AppRoutes() {
       <Route path="/student" element={<ProtectedRoute roles={['student']}><Layout /></ProtectedRoute>}>
         <Route index element={<StudentDashboard />} />
         <Route path="find-tutor" element={<FindTutorPage />} />
-        <Route path="book-session" element={<BookSessionPage />} />
         <Route path="my-sessions" element={<MySessionsPage />} />
         <Route path="become-tutor" element={<BecomeTutorPage />} />
-        <Route path="my-schedule" element={<MySchedulePage />} />
+        <Route path="tutor-dashboard" element={<TutorDashboardPage />} />
+        <Route path="my-availability" element={<MySchedulePage />} />
+        <Route path="my-analytics" element={<MyAnalyticsPage />} />
+        <Route path="resources" element={<ResourcesPage />} />
         <Route path="announcements" element={<AnnouncementsPage />} />
       </Route>
 

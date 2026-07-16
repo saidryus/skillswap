@@ -3,24 +3,29 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 /**
  * Competency score display with hover tooltip showing breakdown.
- * Matches GLM 5.2 design with progress bar + detailed hover breakdown.
  * 
- * @param {{ score: number, rating: number, grade: number, completedSessions: number, reliability: number }} props
+ * New weights:
+ *   Average Tutor Rating:         45%
+ *   Faculty Recommendation Score: 15%
+ *   Completion Rate:              20%
+ *   Completed Sessions:           20%
+ *
+ * @param {{ score: number, rating: number, recommendationScore: number, completedSessions: number, reliability: number }} props
  */
-export default function CompetencyTooltip({ score = 0, rating = 0, grade = 0, completedSessions = 0, reliability = 0 }) {
+export default function CompetencyTooltip({ score = 0, rating = 0, recommendationScore = 0, completedSessions = 0, reliability = 0 }) {
   const [hovered, setHovered] = useState(false);
 
   // Calculate individual contributions
-  const ratingContrib = Math.round((rating / 5) * 35);
-  const gradeContrib = grade > 0 ? Math.round((1 - (grade - 1) / 4) * 25) : 0;
+  const ratingContrib = Math.round((rating / 5) * 45);
+  const recContrib = Math.round((recommendationScore / 100) * 15);
   const completionContrib = Math.min(20, Math.round((reliability / 100) * 20));
   const sessionsContrib = Math.min(20, Math.round((completedSessions / 20) * 20));
 
   const breakdowns = [
-    { label: 'Ratings (35%)', value: ratingContrib, color: 'text-amber-500' },
-    { label: 'Grade (25%)', value: gradeContrib, color: 'text-emerald-500' },
+    { label: 'Ratings (45%)', value: ratingContrib, color: 'text-amber-500' },
+    { label: 'Recommendation (15%)', value: recContrib, color: 'text-purple-500' },
     { label: 'Completion (20%)', value: completionContrib, color: 'text-blue-500' },
-    { label: 'Sessions (20%)', value: sessionsContrib, color: 'text-purple-500' },
+    { label: 'Sessions (20%)', value: sessionsContrib, color: 'text-emerald-500' },
   ];
 
   return (
@@ -55,7 +60,7 @@ export default function CompetencyTooltip({ score = 0, rating = 0, grade = 0, co
             transition={{ duration: 0.15 }}
             className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50
                        bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700
-                       rounded-xl p-3.5 min-w-[200px] shadow-lg"
+                       rounded-xl p-3.5 min-w-[220px] shadow-lg"
           >
             <p className="text-xs font-bold text-surface-700 dark:text-surface-200 mb-2.5">
               Score Breakdown

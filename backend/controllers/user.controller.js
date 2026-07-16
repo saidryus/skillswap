@@ -39,7 +39,7 @@ const getUserById = async (req, res) => {
 // @access  Admin
 const createUser = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, role, yearLevel, phone, studentIdNumber, permissions } = req.body;
+    const { firstName, lastName, email, password, role, yearLevel, phone, studentIdNumber, department, permissions } = req.body;
 
     if (role === 'admin' && !req.user.isSuperAdmin) {
       return res.status(403).json({ message: 'Only the super admin can create admin accounts' });
@@ -48,13 +48,18 @@ const createUser = async (req, res) => {
     const userExists = await User.findOne({ email });
     if (userExists) return res.status(400).json({ message: 'Email already in use' });
 
+    if (studentIdNumber && studentIdNumber.trim()) {
+      const idExists = await User.findOne({ studentIdNumber: studentIdNumber.trim() });
+      if (idExists) return res.status(400).json({ message: `Student ID ${studentIdNumber} is already assigned to another user` });
+    }
+
     const userData = {
       firstName,
       lastName,
       email,
       password,
       role: role || 'student',
-      department: 'Information Technology',
+      department: department || '',
     };
 
     if (phone && phone.trim() !== '') userData.phone = phone.trim();
@@ -99,7 +104,7 @@ const updateUser = async (req, res) => {
       return res.status(403).json({ message: 'Only the super admin can modify admin accounts' });
     }
 
-    const { firstName, lastName, email, yearLevel, phone, isActive, password, permissions, studentIdNumber } = req.body;
+    const { firstName, lastName, email, yearLevel, phone, isActive, password, permissions, studentIdNumber, currentSemester } = req.body;
 
     if (firstName) user.firstName = firstName;
     if (lastName) user.lastName = lastName;
@@ -107,12 +112,10 @@ const updateUser = async (req, res) => {
     if (phone !== undefined) user.phone = phone && phone.trim() !== '' ? phone.trim() : undefined;
     if (yearLevel !== undefined) {
       const newYear = yearLevel ? Number(yearLevel) : null;
-      // If year level changed, delete the old schedule (it's no longer valid)
-      if (newYear !== user.yearLevel) {
-        const StudentSchedule = require('../models/StudentSchedule');
-        await StudentSchedule.deleteMany({ student: user._id });
-      }
       user.yearLevel = newYear;
+    }
+    if (currentSemester !== undefined) {
+      user.currentSemester = currentSemester ? Number(currentSemester) : null;
     }
     if (isActive !== undefined) user.isActive = isActive;
     if (password) user.password = password;
@@ -173,34 +176,60 @@ const importStudents = async (req, res) => {
     }
 
     const results = { created: 0, skipped: 0, errors: [] };
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     for (const row of rows) {
-      const email = row.email?.toString().trim().toLowerCase();
-      const firstName = row.firstName?.toString().trim();
-      const lastName = row.lastName?.toString().trim();
+      const email = (row.email || row.Email || '')?.toString().trim().toLowerCase();
+      const firstName = (row.firstName || row.firstname || row.Firstname || row['first name'] || '')?.toString().trim();
+      const lastName = (row.lastName || row.lastname || row.Lastname || row['last name'] || '')?.toString().trim();
+      const sid = (row.studentIdNumber || row.studentidnumber || row.studentid || row['student id'] || '')?.toString().trim();
+      const yearLevel = Number(row.yearLevel || row.yearlevel || row.year) || 0;
+      const currentSemester = Number(row.semester || row.currentSemester || row.Semester) || null;
+      const department = (row.department || row.Department || '')?.toString().trim();
 
-      if (!email || !firstName || !lastName) {
-        results.errors.push({ row: email || '?', reason: 'Missing required fields' });
+      // Validate required fields
+      if (!firstName || !lastName) {
+        results.errors.push({ row: email || sid || '?', reason: 'Missing first name or last name' });
+        continue;
+      }
+      if (!email) {
+        results.errors.push({ row: `${firstName} ${lastName}`, reason: 'Missing email' });
+        continue;
+      }
+      if (!emailRegex.test(email)) {
+        results.errors.push({ row: email, reason: 'Invalid email format' });
+        continue;
+      }
+      if (!sid) {
+        results.errors.push({ row: email, reason: 'Missing Student ID' });
+        continue;
+      }
+      if (![1, 2, 3, 4].includes(yearLevel)) {
+        results.errors.push({ row: email, reason: 'Invalid or missing year level (must be 1-4)' });
         continue;
       }
 
+      // Check duplicates
       const exists = await User.findOne({ email });
       if (exists) { results.skipped++; continue; }
 
+      const sidExists = await User.findOne({ studentIdNumber: sid });
+      if (sidExists) { results.errors.push({ row: email, reason: `Student ID ${sid} already exists` }); continue; }
+
       try {
-        const sid = row.studentIdNumber?.toString().trim() || '';
         const last3 = sid.slice(-3);
         await User.create({
           firstName,
           lastName,
           email,
-          password: row.password?.toString().trim() || last3 || 'skillswap123',
+          password: (row.password || row.Password || '')?.toString().trim() || last3,
           mustChangePassword: true,
           role: 'student',
-          department: 'Information Technology',
+          department,
           studentIdNumber: sid,
-          yearLevel: [1,2,3,4].includes(Number(row.yearLevel)) ? Number(row.yearLevel) : null,
-          phone: row.phone?.toString().trim() || '',
+          yearLevel,
+          currentSemester,
+          phone: (row.phone || row.Phone || '')?.toString().trim(),
         });
         results.created++;
       } catch (err) {

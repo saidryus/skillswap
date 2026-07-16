@@ -33,22 +33,15 @@ export default function BecomeTutorPage() {
   const fileRef = useRef();
 
   const fetchData = async () => {
-    const [coursesRes, appsRes, schedRes] = await Promise.all([
-      api.get('/student-schedules/my-courses'),
+    const [coursesRes, appsRes, availRes] = await Promise.all([
+      api.get('/curriculum/eligible'),
       api.get('/tutor-profiles/my-applications'),
-      api.get('/student-schedules/has-schedule'),
+      api.get('/availability/has-availability'),
     ]);
-    setHasSchedule(schedRes.data.hasSchedule);
-    // Keep enrolled and previous separate
-    const { enrolledCourses, previousCourses } = coursesRes.data;
-    // Tag them so we can group properly
-    const tagged = [
-      ...enrolledCourses.map(c => ({ ...c, _group: 'enrolled' })),
-      ...previousCourses.map(c => ({ ...c, _group: 'previous' })),
-    ];
-    // Deduplicate by _id
-    const uniqueCourses = [...new Map(tagged.map(c => [c._id, c])).values()];
-    setCourses(uniqueCourses);
+    setHasSchedule(availRes.data.hasAvailability);
+    // Use curriculum-based eligible courses
+    const allCourses = coursesRes.data.courses || [];
+    setCourses(allCourses);
     setMyApplications(appsRes.data);
   };
 
@@ -65,25 +58,20 @@ export default function BecomeTutorPage() {
   const studentYear = user?.yearLevel || 1;
 
   const groupedCourses = {};
-  // Currently enrolled (from schedule)
-  const enrolled = availableCourses.filter(c => c._group === 'enrolled');
-  if (enrolled.length > 0) groupedCourses['current'] = enrolled;
-  // Previous courses — group by year level
-  const previous = availableCourses.filter(c => c._group === 'previous');
-  if (previous.length > 0) {
-    // Get unique year levels, sorted descending
-    const years = [...new Set(previous.map(c => c.yearLevel))].sort((a, b) => b - a);
-    for (const y of years) {
-      const yearCourses = previous.filter(c => c.yearLevel === y);
-      if (yearCourses.length > 0) groupedCourses[`year-${y}`] = yearCourses;
+  // Group by year level
+  const years = [...new Set(availableCourses.map(c => c.yearLevel))].filter(Boolean).sort((a, b) => b - a);
+  for (const y of years) {
+    const yearCourses = availableCourses.filter(c => c.yearLevel === y);
+    if (yearCourses.length > 0) {
+      const key = y === studentYear ? 'current' : `year-${y}`;
+      groupedCourses[key] = yearCourses;
     }
   }
-  // Courses without a year level
-  const ungrouped = availableCourses.filter(c => !c.yearLevel && !c._group);
+  const ungrouped = availableCourses.filter(c => !c.yearLevel);
   if (ungrouped.length > 0) groupedCourses['general'] = ungrouped;
 
   const getGroupLabel = (key) => {
-    if (key === 'current') return `Currently Enrolled (Year ${studentYear})`;
+    if (key === 'current') return `Year ${studentYear} Subjects (Current)`;
     if (key === 'general') return 'General Subjects';
     if (key.startsWith('year-')) return `Year ${key.split('-')[1]} Subjects`;
     return key;
@@ -102,7 +90,7 @@ export default function BecomeTutorPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!selectedCourse) { toast.error('Select a course'); return; }
-    if (!file) { toast.error('Upload your grade slip or class card'); return; }
+    if (!file) { toast.error('Upload your letter of recommendation'); return; }
 
     setSubmitting(true);
     setSubmitError('');
@@ -110,7 +98,7 @@ export default function BecomeTutorPage() {
     try {
       const formData = new FormData();
       formData.append('courseId', selectedCourse);
-      formData.append('gradeDocument', file);
+      formData.append('recommendationDocument', file);
 
       await api.post('/tutor-profiles', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -147,12 +135,12 @@ export default function BecomeTutorPage() {
               <HiCalendar className="w-5 h-5 text-amber-600 dark:text-amber-400" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-amber-800 dark:text-amber-200">Schedule Required</h3>
+              <h3 className="text-sm font-bold text-amber-800 dark:text-amber-200">Availability Required</h3>
               <p className="text-sm text-amber-700 dark:text-amber-300 mt-0.5">
-                You need to upload your class schedule before applying as a tutor. The system uses your schedule to match you with tutees.
+                You need to set your availability before applying as a tutor. This tells the system when you're free for sessions.
               </p>
-              <a href="/student/my-schedule" className="inline-block mt-2 text-sm font-medium text-amber-700 dark:text-amber-300 underline hover:text-amber-900 dark:hover:text-amber-100">
-                Upload your schedule →
+              <a href="/student/my-availability" className="inline-block mt-2 text-sm font-medium text-amber-700 dark:text-amber-300 underline hover:text-amber-900 dark:hover:text-amber-100">
+                Set your availability →
               </a>
             </div>
           </div>
@@ -171,7 +159,7 @@ export default function BecomeTutorPage() {
             Apply to Tutor a Course
           </h3>
           <p className="text-sm text-surface-500 dark:text-surface-400 mb-5">
-            Upload your grade slip or class card as proof. Admin will review and approve your application.
+            Upload a letter of recommendation from your department head. Admin will review and approve your application.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -203,8 +191,29 @@ export default function BecomeTutorPage() {
               )}
             </div>
 
+            {/* Upload guidelines */}
+            {selectedCourse && (
+              <div className="rounded-xl p-4 bg-surface-50 dark:bg-surface-800/50 border border-surface-200 dark:border-surface-700">
+                <p className="text-xs font-semibold text-surface-700 dark:text-surface-200 mb-2">Recommendation Letter Requirements</p>
+                <p className="text-[11px] text-surface-500 dark:text-surface-400 mb-2">
+                  Your letter should preferably contain:
+                </p>
+                <ul className="text-[11px] text-surface-500 dark:text-surface-400 space-y-0.5 list-disc list-inside">
+                  <li>Faculty Name, Position & Department</li>
+                  <li>Your name as the student being recommended</li>
+                  <li>Recommended tutoring subjects</li>
+                  <li>Assessment of your teaching capability</li>
+                  <li>Recommendation statement</li>
+                  <li>Faculty signature</li>
+                </ul>
+                <p className="text-[10px] text-surface-400 mt-2 italic">
+                  No specific format required — the system accepts different layouts and writing styles.
+                </p>
+              </div>
+            )}
+
             <div>
-              <label className="label">Grade Slip / Class Card</label>
+              <label className="label">Letter of Recommendation</label>
               <div
                 onClick={() => fileRef.current?.click()}
                 className={`border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all duration-300
@@ -236,9 +245,9 @@ export default function BecomeTutorPage() {
                       <HiUpload className="w-6 h-6 text-surface-400" />
                     </div>
                     <p className="text-sm font-medium text-surface-700 dark:text-surface-300">
-                      Click to upload your grade slip
+                      Click to upload your letter of recommendation
                     </p>
-                    <p className="text-xs text-surface-400 mt-1">PDF, JPG, or PNG · Max 5MB</p>
+                    <p className="text-xs text-surface-400 mt-1">PDF, JPG, or PNG · Max 5MB · Signed by department head</p>
                   </>
                 )}
               </div>

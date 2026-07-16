@@ -3,10 +3,31 @@ import { motion } from 'framer-motion';
 import { HiPlus, HiPencil, HiTrash, HiUpload } from 'react-icons/hi';
 import PageHeader from '../../components/PageHeader';
 import Modal from '../../components/Modal';
+import ConfirmModal from '../../components/ConfirmModal';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
 const emptyForm = { name: '', code: '', description: '', isActive: true };
+
+// Parse a single CSV line handling quoted fields (commas inside quotes)
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      inQuotes = !inQuotes;
+    } else if (ch === ',' && !inQuotes) {
+      result.push(current);
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  result.push(current);
+  return result;
+}
 
 export default function DepartmentsPage() {
   const [departments, setDepartments] = useState([]);
@@ -17,6 +38,7 @@ export default function DepartmentsPage() {
   const [form, setForm] = useState(emptyForm);
   const [importText, setImportText] = useState('');
   const [importLoading, setImportLoading] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   const fetchDepartments = async () => {
     try {
@@ -47,10 +69,10 @@ export default function DepartmentsPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this department?')) return;
     try {
       await api.delete(`/departments/${id}`);
       toast.success('Department deleted');
+      setDeleteConfirm(null);
       fetchDepartments();
     } catch (err) { toast.error(err.response?.data?.message || 'Failed to delete'); }
   };
@@ -59,15 +81,20 @@ export default function DepartmentsPage() {
     if (!importText.trim()) { toast.error('Paste CSV data first'); return; }
     setImportLoading(true);
     try {
-      const lines = importText.trim().split('\n');
-      const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
+      const lines = importText.trim().replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').filter(l => l.trim());
+      const headers = parseCSVLine(lines[0]).map(h => h.trim().toLowerCase());
       const rows = lines.slice(1).map(line => {
-        const vals = line.split(',').map(v => v.replace(/"/g, '').trim());
+        const vals = parseCSVLine(line).map(v => v.trim());
         return headers.reduce((obj, h, i) => { obj[h] = vals[i] || ''; return obj; }, {});
       }).filter(r => r.name || r.code);
 
+      if (rows.length === 0) { toast.error('No valid rows found. Check your CSV format.'); setImportLoading(false); return; }
+
       const { data } = await api.post('/departments/import', rows);
       toast.success(`Imported: ${data.created} created, ${data.skipped} skipped${data.errors.length ? `, ${data.errors.length} errors` : ''}`);
+      if (data.errors.length) {
+        data.errors.slice(0, 3).forEach(e => toast.error(`${e.row}: ${e.reason}`));
+      }
       setImportOpen(false);
       setImportText('');
       fetchDepartments();
@@ -126,7 +153,7 @@ export default function DepartmentsPage() {
                         <button onClick={() => openEdit(d)} className="p-1.5 text-surface-500 dark:text-surface-400 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-colors">
                           <HiPencil className="w-4 h-4" />
                         </button>
-                        <button onClick={() => handleDelete(d._id)} className="p-1.5 text-surface-500 dark:text-surface-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
+                        <button onClick={() => setDeleteConfirm(d)} className="p-1.5 text-surface-500 dark:text-surface-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
                           <HiTrash className="w-4 h-4" />
                         </button>
                       </div>
@@ -157,7 +184,7 @@ export default function DepartmentsPage() {
           </div>
           <div>
             <label className="label">Department Name</label>
-            <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="input-field" required placeholder="Information Technology" />
+            <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="input-field" required placeholder="e.g. Computer Studies" />
           </div>
           <div>
             <label className="label">Description</label>
@@ -179,7 +206,7 @@ export default function DepartmentsPage() {
               <button
                 onClick={() => {
                   const header = 'code,name,description';
-                  const sample = 'BSIT,Information Technology,Bachelor of Science in Information Technology\nBSCS,Computer Science,Bachelor of Science in Computer Science';
+                  const sample = 'BSIT,Information Technology,"College of Computer Studies — BSIT Program"\nBSCS,Computer Science,"College of Computer Studies — BSCS Program"\nBSN,College of Nursing,"Bachelor of Science in Nursing"';
                   const blob = new Blob([`${header}\n${sample}`], { type: 'text/csv' });
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement('a');
@@ -193,17 +220,42 @@ export default function DepartmentsPage() {
                 <HiUpload className="w-3 h-3 rotate-180" /> Download Template
               </button>
             </div>
-            <p className="font-mono">code,name,description</p>
-            <p className="font-mono text-surface-400 dark:text-surface-500">BSIT,Information Technology,Bachelor of Science in IT</p>
+            <p className="font-mono text-xs break-all">code,name,description</p>
+            <p className="font-mono text-xs text-surface-400 dark:text-surface-500 break-all">BSIT,Information Technology,College of Computer Studies</p>
+            <p className="mt-1 text-xs text-surface-400 dark:text-surface-500">code and name are required. Wrap descriptions with commas in quotes.</p>
           </div>
           <div>
-            <label className="label">Paste CSV data</label>
+            <label className="label">Upload CSV file or paste data</label>
+            <div className="flex gap-2 mb-2">
+              <button
+                type="button"
+                className="btn-secondary text-xs px-3 py-2 flex items-center gap-2"
+                onClick={() => document.getElementById('csvDeptFileInput').click()}
+              >
+                📄 Choose CSV File
+              </button>
+              <input
+                id="csvDeptFileInput"
+                type="file"
+                accept=".csv,.txt"
+                className="hidden"
+                onChange={e => {
+                  const file = e.target.files[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = (ev) => setImportText(ev.target.result);
+                  reader.readAsText(file);
+                  e.target.value = '';
+                }}
+              />
+              <span className="text-xs text-surface-400 self-center">or paste below</span>
+            </div>
             <textarea
               value={importText}
               onChange={e => setImportText(e.target.value)}
               className="input-field font-mono text-xs"
               rows={6}
-              placeholder="code,name,description&#10;BSIT,Information Technology,Bachelor of Science in IT"
+              placeholder="code,name,description&#10;BSIT,Information Technology,College of Computer Studies"
             />
           </div>
           <div className="flex gap-3">
@@ -217,6 +269,15 @@ export default function DepartmentsPage() {
           </div>
         </div>
       </Modal>
+
+      <ConfirmModal
+        isOpen={!!deleteConfirm}
+        onClose={() => setDeleteConfirm(null)}
+        onConfirm={() => handleDelete(deleteConfirm?._id)}
+        title="Delete Department"
+        message={deleteConfirm ? `Delete department "${deleteConfirm.name}" (${deleteConfirm.code})? This cannot be undone.` : ''}
+        confirmText="Delete Department"
+      />
     </div>
   );
 }

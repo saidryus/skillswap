@@ -7,8 +7,8 @@ const announcementSchema = new mongoose.Schema(
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     targetRoles: {
       type: [String],
-      enum: ['admin', 'faculty', 'student'],
-      default: ['admin', 'faculty', 'student'],
+      enum: ['admin', 'student'],
+      default: ['admin', 'student'],
     },
     isPinned: { type: Boolean, default: false },
     isActive: { type: Boolean, default: true },

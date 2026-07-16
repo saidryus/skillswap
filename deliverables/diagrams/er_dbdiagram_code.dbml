@@ -1,0 +1,141 @@
+// SkillSwap ER Diagram — dbdiagram.io code
+// Updated to include: semester (Course), currentSemester (User), course ref (StudentSchedule), Department collection
+
+Table User {
+  _id ObjectId [pk]
+  studentIdNumber String
+  firstName String [not null]
+  lastName String [not null]
+  email String [not null, unique]
+  password String [not null]
+  role Enum [not null, note: 'admin | student']
+  yearLevel Number [note: '1-4']
+  currentSemester Number [note: '1 | 2']
+  phone String
+  department String [note: 'e.g. Information Technology']
+  isActive Boolean [default: true]
+  isTutor Boolean [default: false]
+  maxSessionsPerWeek Number [default: 5]
+  mustChangePassword Boolean [default: false]
+  isSuperAdmin Boolean [default: false]
+  permissions Array
+  assignedDepartments Array
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+Table Course {
+  _id ObjectId [pk]
+  courseCode String [not null, unique]
+  courseName String [not null]
+  description String
+  units Number [not null, note: '1-12']
+  yearLevel Number [note: '1-4']
+  semester Number [note: '1 | 2']
+  department String [note: 'e.g. Information Technology']
+  isActive Boolean [default: true]
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+Table TutorProfile {
+  _id ObjectId [pk]
+  tutor ObjectId [not null, ref: > User._id]
+  course ObjectId [not null, ref: > Course._id]
+  status Enum [not null, note: 'pending | approved | rejected']
+  grade Number [note: '1.0-5.0']
+  detectedGrade Number
+  gradeDetectionConfidence Enum [note: 'none | low | medium | high | error']
+  gradeDetectionMessage String
+  gradeDocument String
+  gradeDocumentName String
+  adminNotes String
+  reviewedBy ObjectId [ref: > User._id]
+  reviewedAt DateTime
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+Table StudentSchedule {
+  _id ObjectId [pk]
+  student ObjectId [not null, ref: > User._id]
+  course ObjectId [ref: > Course._id]
+  day Enum [not null, note: 'Monday-Saturday']
+  startTime String [not null, note: 'HH:MM']
+  endTime String [not null, note: 'HH:MM']
+  label String
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+Table Session {
+  _id ObjectId [pk]
+  tutor ObjectId [not null, ref: > User._id]
+  tutees Array [not null, note: 'Array of User ObjectIds']
+  course ObjectId [not null, ref: > Course._id]
+  date Date [not null]
+  startTime String [not null]
+  endTime String [not null]
+  venue String
+  venueType Enum [note: 'on-campus | online']
+  status Enum [not null, note: 'pending | scheduled | completed | cancelled | rejected']
+  notes String
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+Table Rating {
+  _id ObjectId [pk]
+  session ObjectId [not null, ref: > Session._id]
+  tutor ObjectId [not null, ref: > User._id]
+  ratedBy ObjectId [not null, ref: > User._id]
+  course ObjectId [ref: > Course._id]
+  score Number [not null, note: '1-5']
+  comment String
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+Table Notification {
+  _id ObjectId [pk]
+  recipient ObjectId [not null, ref: > User._id]
+  type Enum [not null, note: '9 notification types']
+  title String [not null]
+  message String [not null]
+  isRead Boolean [default: false]
+  link String
+  meta Mixed
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+Table Announcement {
+  _id ObjectId [pk]
+  author ObjectId [not null, ref: > User._id]
+  title String [not null]
+  content String [not null]
+  targetRoles Array
+  isPinned Boolean [default: false]
+  isActive Boolean [default: true]
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+Table Department {
+  _id ObjectId [pk]
+  name String [not null, unique]
+  code String [not null, unique]
+  description String
+  isActive Boolean [default: true]
+  createdAt DateTime
+  updatedAt DateTime
+}
+
+Table Settings {
+  _id ObjectId [pk]
+  key String [unique]
+  studentIdPrefix String
+  studentIdCounter Number
+  createdAt DateTime
+  updatedAt DateTime
+}

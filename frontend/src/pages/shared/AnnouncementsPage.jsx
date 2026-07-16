@@ -8,7 +8,7 @@ import { playSound } from '../../utils/sounds';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
-const emptyForm = { title: '', content: '', targetRoles: ['admin', 'faculty', 'student'], isPinned: false };
+const emptyForm = { title: '', content: '', targetRoles: ['admin', 'student'], isPinned: false };
 
 export default function AnnouncementsPage() {
   const { user } = useAuth();
@@ -18,7 +18,7 @@ export default function AnnouncementsPage() {
   const [editAnn, setEditAnn] = useState(null);
   const [form, setForm] = useState(emptyForm);
 
-  const canManage = user?.role === 'admin' || user?.role === 'faculty';
+  const canManage = user?.role === 'admin';
 
   const fetchAnnouncements = async () => {
     try {
@@ -123,7 +123,6 @@ export default function AnnouncementsPage() {
                       {a.targetRoles.map((r) => (
                         <span key={r} className={`badge text-[10px] ${
                           r === 'admin' ? 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300'
-                          : r === 'faculty' ? 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
                           : 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300'
                         }`}>{r}</span>
                       ))}
@@ -168,7 +167,7 @@ export default function AnnouncementsPage() {
           <div>
             <label className="label">Visible To</label>
             <div className="flex gap-3">
-              {['admin', 'faculty', 'student'].map((role) => (
+              {['admin', 'student'].map((role) => (
                 <label key={role} className="flex items-center gap-2 cursor-pointer px-3 py-2 rounded-xl border border-surface-200 dark:border-surface-700 hover:border-primary-300 dark:hover:border-primary-700 transition-colors">
                   <input type="checkbox" checked={form.targetRoles.includes(role)} onChange={() => toggleRole(role)}
                     className="w-4 h-4 rounded border-surface-300 dark:border-surface-600 text-primary-500 focus:ring-primary-500" />

@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { HiCalendar, HiCheck, HiX, HiStar } from 'react-icons/hi';
+import { motion, AnimatePresence } from 'framer-motion';
+import { HiCalendar, HiCheck, HiX, HiStar, HiChat, HiVideoCamera } from 'react-icons/hi';
 import PageHeader from '../../components/PageHeader';
 import Modal from '../../components/Modal';
+import ConfirmModal from '../../components/ConfirmModal';
+import SessionChat from '../../components/SessionChat';
+import VideoRoom from '../../components/VideoRoom';
 import { playSound } from '../../utils/sounds';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
@@ -25,6 +28,12 @@ export default function MySessionsPage() {
   const [rateScore, setRateScore] = useState(0);
   const [rateComment, setRateComment] = useState('');
   const [ratedSessions, setRatedSessions] = useState(new Set());
+  const [declineModal, setDeclineModal] = useState(null);
+  const [declineReason, setDeclineReason] = useState('');
+  const [cancelModal, setCancelModal] = useState(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [chatSession, setChatSession] = useState(null);
+  const [videoSession, setVideoSession] = useState(null);
 
   const fetchSessions = async () => {
     try {
@@ -46,10 +55,10 @@ export default function MySessionsPage() {
   };
 
   const handleCancel = async (id) => {
-    if (!confirm('Cancel this session?')) return;
     try {
       await api.put(`/sessions/${id}/cancel`);
       toast.success('Session cancelled');
+      setCancelModal(null);
       fetchSessions();
     } catch (err) { toast.error(err.response?.data?.message || 'Failed'); }
   };
@@ -64,10 +73,11 @@ export default function MySessionsPage() {
   };
 
   const handleReject = async (id) => {
-    const reason = prompt('Reason for declining (optional):') || '';
     try {
-      await api.put(`/sessions/${id}/reject`, { reason });
+      await api.put(`/sessions/${id}/reject`, { reason: declineReason });
       toast.success('Session declined');
+      setDeclineModal(null);
+      setDeclineReason('');
       fetchSessions();
     } catch (err) { toast.error(err.response?.data?.message || 'Failed'); }
   };
@@ -205,7 +215,7 @@ export default function MySessionsPage() {
                                      hover:bg-emerald-100 dark:hover:bg-emerald-950/50 text-xs font-medium transition-colors">
                           <HiCheck className="w-3.5 h-3.5" /> Accept
                         </motion.button>
-                        <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleReject(s._id)}
+                        <motion.button whileTap={{ scale: 0.95 }} onClick={() => { setDeclineModal(s); setDeclineReason(''); }}
                           className="flex items-center gap-1 px-3 py-2 rounded-xl 
                                      bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 
                                      border border-red-200 dark:border-red-800/50
@@ -221,7 +231,7 @@ export default function MySessionsPage() {
                                          border border-amber-200 dark:border-amber-800/50 px-3 py-2 rounded-xl font-medium">
                           Awaiting tutor
                         </span>
-                        <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleCancel(s._id)}
+                        <motion.button whileTap={{ scale: 0.95 }} onClick={() => setCancelModal(s)}
                           className="flex items-center gap-1 px-3 py-2 rounded-xl 
                                      bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 
                                      border border-red-200 dark:border-red-800/50
@@ -233,6 +243,22 @@ export default function MySessionsPage() {
 
                     {s.status === 'scheduled' && (
                       <>
+                        <motion.button whileTap={{ scale: 0.95 }} onClick={() => { playSound('click'); setChatSession(s); }}
+                          className="flex items-center gap-1 px-3 py-2 rounded-xl 
+                                     bg-primary-50 dark:bg-primary-950/30 text-primary-700 dark:text-primary-300 
+                                     border border-primary-200 dark:border-primary-800/50
+                                     hover:bg-primary-100 dark:hover:bg-primary-950/50 text-xs font-medium transition-colors">
+                          <HiChat className="w-3.5 h-3.5" /> Chat
+                        </motion.button>
+                        {s.venueType === 'online' && (
+                          <motion.button whileTap={{ scale: 0.95 }} onClick={() => { playSound('click'); setVideoSession(s); }}
+                            className="flex items-center gap-1 px-3 py-2 rounded-xl 
+                                       bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 
+                                       border border-purple-200 dark:border-purple-800/50
+                                       hover:bg-purple-100 dark:hover:bg-purple-950/50 text-xs font-medium transition-colors">
+                            <HiVideoCamera className="w-3.5 h-3.5" /> Video
+                          </motion.button>
+                        )}
                         {isTutor && (
                           <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleComplete(s._id)}
                             className="flex items-center gap-1 px-3 py-2 rounded-xl 
@@ -242,7 +268,7 @@ export default function MySessionsPage() {
                             <HiCheck className="w-3.5 h-3.5" /> Complete
                           </motion.button>
                         )}
-                        <motion.button whileTap={{ scale: 0.95 }} onClick={() => handleCancel(s._id)}
+                        <motion.button whileTap={{ scale: 0.95 }} onClick={() => setCancelModal(s)}
                           className="flex items-center gap-1 px-3 py-2 rounded-xl 
                                      bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 
                                      border border-red-200 dark:border-red-800/50
@@ -339,6 +365,106 @@ export default function MySessionsPage() {
           </div>
         )}
       </Modal>
+
+      {/* Decline modal */}
+      <Modal isOpen={!!declineModal} onClose={() => setDeclineModal(null)} title="Decline Session">
+        {declineModal && (
+          <div className="space-y-5">
+            <div className="rounded-xl p-4 bg-surface-50 dark:bg-surface-800 border border-surface-200 dark:border-surface-700">
+              <p className="text-sm font-bold text-surface-800 dark:text-surface-100">
+                {declineModal.course?.courseCode} — {declineModal.course?.courseName}
+              </p>
+              <p className="text-xs text-surface-500 dark:text-surface-400 mt-1">
+                Requested by: {declineModal.tutees?.map(t => `${t.firstName} ${t.lastName}`).join(', ')}
+              </p>
+              <p className="text-xs text-surface-400 mt-0.5">
+                {new Date(declineModal.date).toLocaleDateString()} · {declineModal.startTime}–{declineModal.endTime}
+              </p>
+            </div>
+
+            <div>
+              <label className="label">Reason for declining (required)</label>
+              <textarea
+                value={declineReason}
+                onChange={e => setDeclineReason(e.target.value)}
+                className="input-field"
+                rows={3}
+                placeholder="e.g. Schedule conflict, not available that day..."
+                required
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button onClick={() => setDeclineModal(null)} className="btn-secondary flex-1">Cancel</button>
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={() => {
+                  if (!declineReason.trim()) { toast.error('Please provide a reason for declining'); return; }
+                  handleReject(declineModal._id);
+                }}
+                className="btn-danger flex-1 flex items-center justify-center gap-2"
+              >
+                <HiX className="w-4 h-4" /> Decline Session
+              </motion.button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Cancel confirmation modal */}
+      <Modal isOpen={!!cancelModal} onClose={() => setCancelModal(null)} title="Cancel Session">
+        {cancelModal && (
+          <div className="space-y-5">
+            <div className="rounded-xl p-4 bg-surface-50 dark:bg-surface-800 border border-surface-200 dark:border-surface-700">
+              <p className="text-sm font-bold text-surface-800 dark:text-surface-100">
+                {cancelModal.course?.courseCode} — {cancelModal.course?.courseName}
+              </p>
+              <p className="text-xs text-surface-500 dark:text-surface-400 mt-1">
+                {new Date(cancelModal.date).toLocaleDateString()} · {cancelModal.startTime}–{cancelModal.endTime}
+              </p>
+            </div>
+
+            <div>
+              <label className="label">Reason for cancelling (required)</label>
+              <textarea
+                value={cancelReason}
+                onChange={e => setCancelReason(e.target.value)}
+                className="input-field"
+                rows={3}
+                placeholder="e.g. Can't make it, emergency came up..."
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button onClick={() => setCancelModal(null)} className="btn-secondary flex-1">Go Back</button>
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={() => {
+                  if (!cancelReason.trim()) { toast.error('Please provide a reason for cancelling'); return; }
+                  handleCancel(cancelModal._id);
+                }}
+                className="btn-danger flex-1 flex items-center justify-center gap-2"
+              >
+                <HiX className="w-4 h-4" /> Cancel Session
+              </motion.button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Session Chat Modal */}
+      <AnimatePresence>
+        {chatSession && (
+          <SessionChat session={chatSession} onClose={() => setChatSession(null)} />
+        )}
+      </AnimatePresence>
+
+      {/* Video Room (full screen) */}
+      <AnimatePresence>
+        {videoSession && (
+          <VideoRoom session={videoSession} onClose={() => setVideoSession(null)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

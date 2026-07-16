@@ -60,13 +60,13 @@ const sounds = {
 };
 
 // Global sound enabled state
-let soundEnabled = localStorage.getItem('skillswap_sounds') !== 'false';
+let soundEnabled = localStorage.getItem('Acadia_sounds') !== 'false';
 
 export const isSoundEnabled = () => soundEnabled;
 
 export const setSoundEnabled = (enabled) => {
   soundEnabled = enabled;
-  localStorage.setItem('skillswap_sounds', enabled ? 'true' : 'false');
+  localStorage.setItem('Acadia_sounds', enabled ? 'true' : 'false');
 };
 
 export const playSound = (name) => {
@@ -76,3 +76,4 @@ export const playSound = (name) => {
 };
 
 export default sounds;
+

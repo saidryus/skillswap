@@ -56,7 +56,7 @@ export default function RegisterPage() {
             <Logo size={56} />
           </div>
           <h1 className="text-2xl font-bold text-surface-900 dark:text-white">Create Account</h1>
-          <p className="text-surface-500 dark:text-surface-400 mt-1 text-sm">Join the SkillSwap community</p>
+          <p className="text-surface-500 dark:text-surface-400 mt-1 text-sm">Join the Acadia community</p>
         </div>
 
         <div className="card p-6 sm:p-8">
@@ -74,7 +74,7 @@ export default function RegisterPage() {
 
             <div>
               <label className="label">Email</label>
-              <input type="email" name="email" value={form.email} onChange={handleChange} className="input-field" placeholder="email@skillswap.edu" required />
+              <input type="email" name="email" value={form.email} onChange={handleChange} className="input-field" placeholder="email@Acadia.edu" required />
             </div>
 
             <div>
@@ -131,3 +131,4 @@ export default function RegisterPage() {
     </div>
   );
 }
+

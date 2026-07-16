@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HiCalendar, HiClock, HiCheck, HiChevronDown } from 'react-icons/hi';
+import { HiCalendar, HiClock, HiCheck, HiChevronLeft, HiChevronRight, HiLocationMarker } from 'react-icons/hi';
 import PageHeader from '../../components/PageHeader';
 import WizardSteps from '../../components/WizardSteps';
 import { playSound } from '../../utils/sounds';
@@ -9,24 +9,7 @@ import api from '../../utils/api';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 
-/* ── Time helpers ─────────────────────────────────────────── */
-const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const SLOT_HEIGHT = 28;
-
-const TIME_SLOTS = (() => {
-  const slots = [];
-  for (let h = 7; h < 21; h++) {
-    slots.push(`${String(h).padStart(2, '0')}:00`);
-    slots.push(`${String(h).padStart(2, '0')}:30`);
-  }
-  return slots;
-})();
-
-function parseTime(t) {
-  const [h, m] = t.split(':').map(Number);
-  return h * 60 + m;
-}
-
+/* ── Helpers ─────────────────────────────────────────── */
 function formatTime12(t) {
   const [h, m] = t.split(':').map(Number);
   const period = h >= 12 ? 'PM' : 'AM';
@@ -34,224 +17,181 @@ function formatTime12(t) {
   return `${hour12}:${String(m).padStart(2, '0')} ${period}`;
 }
 
-function durationSlots(start, end) {
-  return (parseTime(end) - parseTime(start)) / 30;
+function formatDateLabel(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 }
 
-/* ── Mini timetable component ─────────────────────────────── */
-function MiniTimetable({ title, schedule, color, freeSlots = [], selectedSlot, onSelectSlot, minSlotOverride, maxSlotOverride }) {
-  const gridEntries = {};
-  const consumed = new Set();
-  schedule.forEach(entry => {
-    const si = TIME_SLOTS.indexOf(entry.startTime);
-    if (si === -1) return;
-    gridEntries[`${entry.day}-${si}`] = entry;
-    const slots = durationSlots(entry.startTime, entry.endTime);
-    for (let i = 1; i < slots; i++) consumed.add(`${entry.day}-${si + i}`);
+/* ── Calendar Component ─────────────────────────────── */
+function DateCalendar({ selectedDate, onSelectDate, holidays = [], disabledDates = [] }) {
+  const [viewMonth, setViewMonth] = useState(() => {
+    const now = new Date();
+    return { year: now.getFullYear(), month: now.getMonth() };
   });
 
-  const freeGridEntries = {};
-  freeSlots.forEach(slot => {
-    const si = TIME_SLOTS.indexOf(slot.startTime);
-    if (si === -1) return;
-    if (!freeGridEntries[`${slot.day}-${si}`]) {
-      freeGridEntries[`${slot.day}-${si}`] = slot;
-    }
-  });
+  const daysInMonth = new Date(viewMonth.year, viewMonth.month + 1, 0).getDate();
+  const firstDayOfWeek = new Date(viewMonth.year, viewMonth.month, 1).getDay();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-  const minSlot = minSlotOverride !== undefined ? minSlotOverride : 0;
-  const maxSlot = maxSlotOverride !== undefined ? maxSlotOverride : TIME_SLOTS.length - 1;
-  const visibleSlots = TIME_SLOTS.slice(minSlot, maxSlot + 1);
+  const monthLabel = new Date(viewMonth.year, viewMonth.month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  const holidaySet = new Set(holidays.map(h => h.date));
+
+  const prevMonth = () => {
+    setViewMonth(prev => {
+      if (prev.month === 0) return { year: prev.year - 1, month: 11 };
+      return { ...prev, month: prev.month - 1 };
+    });
+  };
+
+  const nextMonth = () => {
+    setViewMonth(prev => {
+      if (prev.month === 11) return { year: prev.year + 1, month: 0 };
+      return { ...prev, month: prev.month + 1 };
+    });
+  };
+
+  const days = [];
+  // Empty cells before first day
+  for (let i = 0; i < firstDayOfWeek; i++) {
+    days.push(<div key={`empty-${i}`} />);
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${viewMonth.year}-${String(viewMonth.month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const dateObj = new Date(viewMonth.year, viewMonth.month, day);
+    const isSunday = dateObj.getDay() === 0;
+    const isPast = dateObj < today;
+    const isHoliday = holidaySet.has(dateStr);
+    const isDisabled = isPast || isSunday || isHoliday;
+    const isSelected = selectedDate === dateStr;
+    const isToday = dateObj.getTime() === today.getTime();
+
+    const holidayInfo = holidays.find(h => h.date === dateStr);
+
+    days.push(
+      <button
+        key={day}
+        disabled={isDisabled}
+        onClick={() => { playSound('click'); onSelectDate(dateStr); }}
+        title={holidayInfo ? holidayInfo.name : isSunday ? 'Sunday (no sessions)' : ''}
+        className={`relative w-full aspect-square rounded-xl text-sm font-medium transition-all duration-200 ${
+          isSelected
+            ? 'bg-primary-500 text-white shadow-glow-sm scale-105'
+            : isDisabled
+              ? 'text-surface-300 dark:text-surface-600 cursor-not-allowed'
+              : isToday
+                ? 'bg-primary-50 dark:bg-primary-950/30 text-primary-600 dark:text-primary-400 border border-primary-200 dark:border-primary-800 hover:bg-primary-100 dark:hover:bg-primary-950/50'
+                : 'text-surface-700 dark:text-surface-200 hover:bg-surface-100 dark:hover:bg-surface-800 hover:scale-105'
+        }`}
+      >
+        {day}
+        {isHoliday && (
+          <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-red-400" />
+        )}
+      </button>
+    );
+  }
 
   return (
-    <div className="card p-0 overflow-hidden">
-      <div className="px-3 py-2.5 border-b border-surface-200 dark:border-surface-800 bg-surface-50 dark:bg-surface-800/50">
-        <p className="text-xs font-bold text-surface-700 dark:text-surface-300">{title}</p>
+    <div className="card">
+      {/* Month navigation */}
+      <div className="flex items-center justify-between mb-4">
+        <button onClick={prevMonth} className="p-2 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors">
+          <HiChevronLeft className="w-5 h-5 text-surface-600 dark:text-surface-300" />
+        </button>
+        <h3 className="text-sm font-bold text-surface-900 dark:text-white">{monthLabel}</h3>
+        <button onClick={nextMonth} className="p-2 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors">
+          <HiChevronRight className="w-5 h-5 text-surface-600 dark:text-surface-300" />
+        </button>
       </div>
-      <div className="overflow-x-auto">
-        <div style={{ minWidth: 360 }}>
-          <div className="grid border-b border-surface-200 dark:border-surface-800" style={{ gridTemplateColumns: '44px repeat(6, 1fr)' }}>
-            <div className="bg-surface-50 dark:bg-surface-800/30" />
-            {DAYS.map(day => (
-              <div key={day} className="text-center py-1.5 text-[10px] font-bold 
-                                        text-surface-500 dark:text-surface-400 
-                                        bg-surface-50 dark:bg-surface-800/30 
-                                        border-l border-surface-200/50 dark:border-surface-700/50">
-                {day.slice(0, 3)}
-              </div>
-            ))}
-          </div>
 
-          {visibleSlots.map((time, vi) => {
-            const absIdx = minSlot + vi;
-            const isHour = time.endsWith(':00');
+      {/* Weekday headers */}
+      <div className="grid grid-cols-7 gap-1 mb-2">
+        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
+          <div key={d} className="text-center text-[10px] font-bold text-surface-400 uppercase">{d}</div>
+        ))}
+      </div>
 
-            return (
-              <div key={time} className="grid" style={{ gridTemplateColumns: '44px repeat(6, 1fr)', height: SLOT_HEIGHT }}>
-                <div className={`flex items-start justify-end pr-1 pt-0.5 
-                                 border-r border-surface-200/50 dark:border-surface-700/50 
-                                 ${isHour ? 'border-b border-surface-200/30 dark:border-surface-700/30' : ''}`}>
-                  {isHour && <span className="text-[9px] text-surface-400 leading-none whitespace-nowrap">{formatTime12(time)}</span>}
-                </div>
-                {DAYS.map(day => {
-                  const key = `${day}-${absIdx}`;
-                  if (consumed.has(key)) return <div key={day} className="border-l border-surface-200/30 dark:border-surface-700/30" style={{ height: SLOT_HEIGHT }} />;
+      {/* Days grid */}
+      <div className="grid grid-cols-7 gap-1">
+        {days}
+      </div>
 
-                  const entry = gridEntries[key];
-                  const freeEntry = freeGridEntries[key];
-
-                  return (
-                    <div key={day} className={`relative border-l border-surface-200/30 dark:border-surface-700/30 ${isHour ? 'border-b border-surface-100/50 dark:border-surface-800/50' : ''}`} style={{ height: SLOT_HEIGHT }}>
-                      {entry && (
-                        <div
-                          className="absolute inset-x-0.5 rounded overflow-hidden z-10"
-                          style={{
-                            height: durationSlots(entry.startTime, entry.endTime) * SLOT_HEIGHT - 2,
-                            top: 1,
-                            backgroundColor: entry._color || color,
-                            border: `1px solid ${(entry._color || color)}cc`,
-                          }}
-                        >
-                          <div className="p-0.5 h-full overflow-hidden">
-                            <p className="font-bold text-white leading-tight truncate" style={{ fontSize: 9 }}>{entry.label || 'Class'}</p>
-                          </div>
-                        </div>
-                      )}
-                      {freeEntry && !entry && (
-                        <button
-                          onClick={() => { playSound('pop'); onSelectSlot && onSelectSlot(freeEntry); }}
-                          className={`absolute inset-x-0.5 rounded overflow-hidden z-10 transition-all cursor-pointer ${
-                            selectedSlot?.key === freeEntry.key
-                              ? 'ring-2 ring-emerald-400 bg-emerald-500/30 dark:bg-emerald-500/20'
-                              : 'hover:ring-1 hover:ring-emerald-400/50'
-                          }`}
-                          style={{
-                            height: SLOT_HEIGHT - 2,
-                            top: 1,
-                            backgroundColor: selectedSlot?.key === freeEntry.key ? undefined : 'rgba(16,185,129,0.1)',
-                            border: '1px dashed #10b981',
-                          }}
-                        >
-                          <div className="p-0.5 h-full flex items-center justify-center">
-                            {selectedSlot?.key === freeEntry.key
-                              ? <HiCheck className="w-3 h-3 text-emerald-500" />
-                              : <p className="text-emerald-500 font-bold" style={{ fontSize: 8 }}>FREE</p>
-                            }
-                          </div>
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
+      {/* Legend */}
+      <div className="flex items-center gap-4 mt-4 pt-3 border-t border-surface-200 dark:border-surface-700">
+        <span className="flex items-center gap-1.5 text-[10px] text-surface-400">
+          <span className="w-2 h-2 rounded-full bg-red-400" /> Holiday
+        </span>
+        <span className="flex items-center gap-1.5 text-[10px] text-surface-400">
+          <span className="w-2 h-2 rounded-full bg-surface-300 dark:bg-surface-600" /> Unavailable
+        </span>
       </div>
     </div>
   );
 }
 
-/* ── Day-based accordion for available slots ──────────────── */
-function DayAccordionSlots({ suggestions, freeSlots, selectedSlot, onSelectSlot }) {
-  const [expandedDay, setExpandedDay] = useState(null);
+/* ── Time Slot List ─────────────────────────────────── */
+function TimeSlotList({ slots, selectedSlot, onSelectSlot, loading }) {
+  if (loading) return (
+    <div className="card flex items-center justify-center py-12">
+      <div className="flex flex-col items-center gap-3">
+        <div className="w-8 h-8 border-2 border-primary-200 dark:border-primary-800 border-t-primary-500 rounded-full animate-spin" />
+        <p className="text-xs text-surface-400">Finding available slots...</p>
+      </div>
+    </div>
+  );
 
-  // Group slots by day
-  const slotsByDay = {};
-  const dayOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-  freeSlots.forEach(slot => {
-    if (!slotsByDay[slot.day]) slotsByDay[slot.day] = [];
-    slotsByDay[slot.day].push(slot);
-  });
-
-  // Sort days by weekday order
-  const days = Object.keys(slotsByDay).sort((a, b) => dayOrder.indexOf(a) - dayOrder.indexOf(b));
-
-  // Auto-expand the first day
-  useEffect(() => {
-    if (days.length > 0 && !expandedDay) {
-      setExpandedDay(days[0]);
-    }
-  }, [days.length]);
+  if (slots.length === 0) return (
+    <div className="card flex flex-col items-center justify-center py-12 text-center">
+      <div className="w-12 h-12 rounded-2xl bg-surface-100 dark:bg-surface-800 flex items-center justify-center mb-3">
+        <HiClock className="w-6 h-6 text-surface-400" />
+      </div>
+      <p className="text-sm text-surface-500 dark:text-surface-400">No available time slots for this date</p>
+      <p className="text-xs text-surface-400 mt-1">Try selecting a different date</p>
+    </div>
+  );
 
   return (
-    <div className="overflow-y-auto flex-1 min-h-0 space-y-2">
-      {days.map(day => {
-        const slots = slotsByDay[day];
-        const isExpanded = expandedDay === day;
-        const hasSelection = slots.some(s => selectedSlot?.key === s.key);
-
-        return (
-          <div key={day} className="rounded-xl border border-surface-200 dark:border-surface-700 overflow-hidden">
-            {/* Day header — click to expand/collapse */}
-            <button
-              onClick={() => { setExpandedDay(isExpanded ? null : day); playSound('click'); }}
-              className={`w-full flex items-center justify-between px-3 py-2.5 transition-all ${
-                isExpanded
-                  ? 'bg-primary-50 dark:bg-primary-950/30'
-                  : hasSelection
-                    ? 'bg-emerald-50 dark:bg-emerald-950/20'
-                    : 'bg-surface-50 dark:bg-surface-800 hover:bg-surface-100 dark:hover:bg-surface-700'
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <span className={`text-xs font-bold ${
-                  isExpanded ? 'text-primary-600 dark:text-primary-400' :
-                  hasSelection ? 'text-emerald-600 dark:text-emerald-400' :
-                  'text-surface-700 dark:text-surface-200'
-                }`}>{day}</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-surface-200 dark:bg-surface-700 text-surface-500 dark:text-surface-400 font-medium">
-                  {slots.length} slot{slots.length !== 1 ? 's' : ''}
-                </span>
-                {hasSelection && <HiCheck className="w-3.5 h-3.5 text-emerald-500" />}
-              </div>
-              <motion.div
-                animate={{ rotate: isExpanded ? 180 : 0 }}
-                transition={{ duration: 0.2 }}
-              >
-                <HiChevronDown className="w-4 h-4 text-surface-400" />
+    <div className="card">
+      <h4 className="text-sm font-bold text-surface-900 dark:text-white mb-3">
+        Available Time Slots
+        <span className="text-surface-400 font-normal ml-2">({slots.length} found)</span>
+      </h4>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-72 overflow-y-auto">
+        {slots.map((slot, idx) => (
+          <motion.button
+            key={slot.key}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: idx * 0.03 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => { playSound('pop'); onSelectSlot(slot); }}
+            className={`p-3 rounded-xl border text-center transition-all duration-200 ${
+              selectedSlot?.key === slot.key
+                ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-400 dark:border-emerald-700 shadow-sm'
+                : 'bg-surface-50 dark:bg-surface-800/50 border-surface-200/50 dark:border-surface-700/50 hover:border-emerald-300 dark:hover:border-emerald-600 hover:bg-emerald-50/30 dark:hover:bg-emerald-950/10'
+            }`}
+          >
+            <p className={`text-sm font-semibold ${
+              selectedSlot?.key === slot.key ? 'text-emerald-700 dark:text-emerald-300' : 'text-surface-800 dark:text-surface-100'
+            }`}>
+              {formatTime12(slot.startTime)}
+            </p>
+            <p className={`text-xs mt-0.5 ${
+              selectedSlot?.key === slot.key ? 'text-emerald-500 dark:text-emerald-400' : 'text-surface-400'
+            }`}>
+              to {formatTime12(slot.endTime)}
+            </p>
+            {selectedSlot?.key === slot.key && (
+              <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="mt-1">
+                <HiCheck className="w-4 h-4 text-emerald-500 mx-auto" />
               </motion.div>
-            </button>
-
-            {/* Expanded time slots */}
-            <AnimatePresence>
-              {isExpanded && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-                  className="overflow-hidden"
-                >
-                  <div className="p-2 space-y-1 border-t border-surface-200/50 dark:border-surface-700/50 bg-white dark:bg-surface-900">
-                    {slots.map(slot => (
-                      <button
-                        key={slot.key}
-                        onClick={() => onSelectSlot(slot)}
-                        className={`w-full text-left px-3 py-2 rounded-lg border transition-all flex items-center justify-between ${
-                          selectedSlot?.key === slot.key
-                            ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-400 dark:border-emerald-700 shadow-sm'
-                            : 'bg-surface-50 dark:bg-surface-800/50 border-surface-200/50 dark:border-surface-700/50 hover:border-emerald-300 dark:hover:border-emerald-600 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10'
-                        }`}
-                      >
-                        <span className="text-sm font-semibold text-surface-900 dark:text-white">
-                          {formatTime12(slot.startTime)} – {formatTime12(slot.endTime)}
-                        </span>
-                        {selectedSlot?.key === slot.key && (
-                          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300 }}>
-                            <HiCheck className="w-4 h-4 text-emerald-500" />
-                          </motion.div>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        );
-      })}
+            )}
+          </motion.button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -266,67 +206,63 @@ export default function BookSessionPage() {
   const [tutors, setTutors] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(params.get('courseId') || '');
   const [selectedTutor, setSelectedTutor] = useState(params.get('tutorId') || '');
-  const [suggestions, setSuggestions] = useState([]);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [slots, setSlots] = useState([]);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [venue, setVenue] = useState('');
   const [venueType, setVenueType] = useState('on-campus');
   const [notes, setNotes] = useState('');
-  const [loadingSuggest, setLoadingSuggest] = useState(false);
+  const [loadingSlots, setLoadingSlots] = useState(false);
   const [booking, setBooking] = useState(false);
-
+  const [holidays, setHolidays] = useState([]);
   const [mySchedule, setMySchedule] = useState([]);
-  const [tutorSchedule, setTutorSchedule] = useState([]);
-  const [mySessions, setMySessions] = useState([]);
-  const [tutorSessions, setTutorSessions] = useState([]);
-
-  useEffect(() => {
-    api.get(`/student-schedules/${user._id}`).then(({ data }) => setMySchedule(data));
-    api.get(`/sessions/user/${user._id}`).then(({ data }) => {
-      const sessionEntries = data.map(s => {
-        const d = new Date(s.date);
-        const dayIdx = d.getDay();
-        const dayName = dayIdx === 0 ? 'Sunday' : DAYS[dayIdx - 1];
-        return { day: dayName, startTime: s.startTime, endTime: s.endTime, label: `📚 ${s.courseCode || 'Session'}`, _color: '#ea580c' };
-      });
-      setMySessions(sessionEntries);
-    }).catch(() => setMySessions([]));
-  }, [user._id]);
-
-  // Filter courses: enrolled (from schedule) + upcoming (year level and above)
-  const [allCourses, setAllCourses] = useState([]);
   const [enrolledCodes, setEnrolledCodes] = useState(new Set());
 
+  // Fetch schedule + holidays
   useEffect(() => {
-    if (mySchedule.length === 0) { setCourses([]); setAllCourses([]); return; }
+    api.get(`/student-schedules/${user._id}`).then(({ data }) => setMySchedule(data)).catch(() => {});
+    const year = new Date().getFullYear();
+    api.get(`/sessions/holidays?year=${year}`).then(({ data }) => setHolidays(data)).catch(() => {});
+    if (new Date().getMonth() >= 10) {
+      api.get(`/sessions/holidays?year=${year + 1}`).then(({ data }) => setHolidays(prev => [...prev, ...data])).catch(() => {});
+    }
+  }, [user._id]);
 
+  // Filter courses — use schedule-linked courses when available, fall back to year-level courses
+  useEffect(() => {
     api.get('/courses').then(({ data }) => {
-      // Get enrolled course IDs from schedule entries (linked via course field)
-      const enrolledIds = new Set();
-      mySchedule.forEach(entry => {
-        if (entry.course) {
-          const courseId = typeof entry.course === 'object' ? entry.course._id : entry.course;
-          if (courseId) enrolledIds.add(courseId);
-        }
-      });
-      setEnrolledCodes(enrolledIds);
-
-      // Enrolled courses: linked from schedule
-      const enrolled = data.filter(c => enrolledIds.has(c._id));
-
-      // Previous: same year lower semester + lower year levels
-      const previous = data.filter(c => {
-        if (enrolledIds.has(c._id)) return false;
-        if (!c.yearLevel || !user.yearLevel) return false;
-        if (c.yearLevel < user.yearLevel) return true;
-        if (c.yearLevel === user.yearLevel && user.currentSemester === 2 && c.semester === 1) return true;
-        return false;
-      });
-
-      setCourses([...enrolled, ...previous]);
-      setAllCourses(data);
+      if (mySchedule.length > 0) {
+        const enrolledIds = new Set();
+        mySchedule.forEach(entry => {
+          if (entry.course) {
+            const courseId = typeof entry.course === 'object' ? entry.course._id : entry.course;
+            if (courseId) enrolledIds.add(courseId);
+          }
+        });
+        setEnrolledCodes(enrolledIds);
+        const enrolled = data.filter(c => enrolledIds.has(c._id));
+        const previous = data.filter(c => {
+          if (enrolledIds.has(c._id)) return false;
+          if (!c.yearLevel || !user.yearLevel) return false;
+          if (c.yearLevel < user.yearLevel) return true;
+          if (c.yearLevel === user.yearLevel && user.currentSemester === 2 && c.semester === 1) return true;
+          return false;
+        });
+        setCourses([...enrolled, ...previous]);
+      } else {
+        // No schedule — show all courses up to student's year level
+        const available = data.filter(c => {
+          if (!user.yearLevel) return true;
+          if (c.yearLevel < user.yearLevel) return true;
+          if (c.yearLevel === user.yearLevel) return true;
+          return false;
+        });
+        setCourses(available);
+      }
     });
-  }, [mySchedule]);
+  }, [mySchedule, user.yearLevel]);
 
+  // Fetch tutors when course changes
   useEffect(() => {
     if (!selectedCourse) { setTutors([]); return; }
     api.get(`/tutor-profiles/tutors?courseId=${selectedCourse}`).then(({ data }) => {
@@ -334,48 +270,49 @@ export default function BookSessionPage() {
     });
   }, [selectedCourse, user._id]);
 
+  // Fetch available slots when date changes
   useEffect(() => {
-    if (!selectedTutor) { setTutorSchedule([]); setTutorSessions([]); return; }
-    api.get(`/student-schedules/${selectedTutor}`).then(({ data }) => setTutorSchedule(data));
-    api.get(`/sessions/user/${selectedTutor}`).then(({ data }) => {
-      const tutorSessionEntries = data.map(s => {
-        const d = new Date(s.date);
-        const dayIdx = d.getDay();
-        const dayName = dayIdx === 0 ? 'Sunday' : DAYS[dayIdx - 1];
-        return { day: dayName, startTime: s.startTime, endTime: s.endTime, label: `📚 ${s.courseCode || 'Session'}`, _color: '#ea580c' };
-      });
-      setTutorSessions(tutorSessionEntries);
-    }).catch(() => setTutorSessions([]));
-  }, [selectedTutor]);
-
-  const handleFindSlots = async () => {
-    if (!selectedCourse || !selectedTutor) { toast.error('Select a course and tutor first'); return; }
-    setLoadingSuggest(true);
-    setSuggestions([]);
+    if (!selectedDate || !selectedTutor) { setSlots([]); return; }
+    setLoadingSlots(true);
     setSelectedSlot(null);
-    playSound('click');
-    try {
-      const { data } = await api.post('/sessions/suggest', {
-        tutorId: selectedTutor, tuteeIds: [user._id], courseId: selectedCourse, durationMinutes: 60,
-      });
-      setSuggestions(data.suggestions);
-      if (data.suggestions.length === 0) toast.error('No mutual free slots found.');
+    api.post('/sessions/suggest', {
+      tutorId: selectedTutor,
+      tuteeIds: [user._id],
+      courseId: selectedCourse,
+      date: selectedDate,
+      durationMinutes: 60,
+    }).then(({ data }) => {
+      const daySlots = data.suggestions.flatMap(s =>
+        s.slots.map(slot => ({
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          date: selectedDate,
+          day: s.day,
+          key: `${selectedDate}-${slot.startTime}`,
+        }))
+      );
+      setSlots(daySlots);
+      if (daySlots.length === 0) toast('No mutual free slots on this date', { icon: '📅' });
       else playSound('success');
-    } catch (err) {
+    }).catch(err => {
       toast.error(err.response?.data?.message || 'Failed to find slots');
-    } finally { setLoadingSuggest(false); }
-  };
+      setSlots([]);
+    }).finally(() => setLoadingSlots(false));
+  }, [selectedDate, selectedTutor, selectedCourse, user._id]);
 
   const handleBook = async () => {
-    if (!selectedSlot) { toast.error('Select a time slot from the timetable'); return; }
+    if (!selectedSlot) { toast.error('Select a time slot'); return; }
     if (!venue.trim()) { toast.error('Please enter a venue'); return; }
     setBooking(true);
     playSound('click');
     try {
       await api.post('/sessions', {
-        tutorId: selectedTutor, tuteeIds: [user._id], courseId: selectedCourse,
-        date: selectedSlot.date || new Date().toISOString(),
-        startTime: selectedSlot.startTime, endTime: selectedSlot.endTime,
+        tutorId: selectedTutor,
+        tuteeIds: [user._id],
+        courseId: selectedCourse,
+        date: selectedSlot.date,
+        startTime: selectedSlot.startTime,
+        endTime: selectedSlot.endTime,
         venue, venueType, notes,
       });
       playSound('success');
@@ -387,28 +324,16 @@ export default function BookSessionPage() {
     } finally { setBooking(false); }
   };
 
-  const freeSlots = suggestions.flatMap(s =>
-    s.slots.map(slot => ({
-      day: s.day, date: s.date || null,
-      startTime: slot.startTime, endTime: slot.endTime,
-      key: `${s.day}-${slot.startTime}`, label: 'Available',
-    }))
-  );
-
-  const freeSlotsForGrid = [];
-  const seenGridKeys = new Set();
-  freeSlots.forEach(s => {
-    if (!seenGridKeys.has(s.key)) { seenGridKeys.add(s.key); freeSlotsForGrid.push(s); }
-  });
-
   const selectedTutorProfile = tutors.find(t => t.tutor?._id === selectedTutor);
   const selectedCourseObj = courses.find(c => c._id === selectedCourse);
 
+  const currentStep = selectedSlot ? 2 : (selectedDate && selectedTutor) ? 1 : 0;
+
   return (
     <div>
-      <PageHeader title="Book a Session" subtitle="Find mutual free time and schedule a study session" />
+      <PageHeader title="Book a Session" subtitle="Pick a date and time for your study session" />
 
-      {/* No schedule warning */}
+      {/* No schedule info banner — soft nudge, not a gate */}
       {mySchedule.length === 0 && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -420,11 +345,11 @@ export default function BookSessionPage() {
               <HiCalendar className="w-5 h-5 text-amber-600 dark:text-amber-400" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-amber-800 dark:text-amber-200">Schedule Required</h3>
+              <h3 className="text-sm font-bold text-amber-800 dark:text-amber-200">Schedule not uploaded</h3>
               <p className="text-sm text-amber-700 dark:text-amber-300 mt-0.5">
-                You need to upload your class schedule before booking a session. The system needs your timetable to find mutual free time with a tutor.
+                Upload your class schedule so the system can find mutual free time with your tutor. You can still browse and book without it.
               </p>
-              <a href="/student/my-schedule" className="inline-block mt-2 text-sm font-medium text-amber-700 dark:text-amber-300 underline hover:text-amber-900 dark:hover:text-amber-100">
+              <a href="/student/my-availability" className="inline-block mt-2 text-sm font-medium text-amber-700 dark:text-amber-300 underline hover:text-amber-900 dark:hover:text-amber-100">
                 Upload your schedule →
               </a>
             </div>
@@ -432,187 +357,181 @@ export default function BookSessionPage() {
         </motion.div>
       )}
 
-      {mySchedule.length > 0 && (<>
-      {/* Wizard step indicator */}
       <WizardSteps
-        steps={[
-          { label: 'Select Course & Tutor' },
-          { label: 'Pick a Time Slot' },
-          { label: 'Confirm Booking' },
-        ]}
-        currentStep={selectedSlot ? 2 : (selectedTutor && suggestions.length > 0) ? 1 : 0}
-      />
+          steps={[
+            { label: 'Select Course & Tutor' },
+            { label: 'Pick a Date & Time' },
+            { label: 'Confirm Booking' },
+          ]}
+          currentStep={currentStep}
+        />
 
-      {/* Step 1 */}
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="card mb-5">
-        <div className="flex items-center gap-2 mb-4">
-          <span className="w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-xs font-bold text-primary-600 dark:text-primary-400">1</span>
-          <h3 className="text-sm font-bold text-surface-900 dark:text-white">Select Course & Tutor</h3>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="label">Course</label>
-            <select value={selectedCourse} onChange={e => { setSelectedCourse(e.target.value); setSelectedTutor(''); setSuggestions([]); setSelectedSlot(null); }} className="input-field">
-              <option value="">Select a course</option>
-              {(() => {
-                const enrolled = courses.filter(c => enrolledCodes.has(c._id));
-                const previous = courses.filter(c => !enrolledCodes.has(c._id));
-                // Group previous by year level
-                const previousByYear = {};
-                previous.forEach(c => {
-                  const yr = c.yearLevel || 0;
-                  if (!previousByYear[yr]) previousByYear[yr] = [];
-                  previousByYear[yr].push(c);
-                });
-                return (
-                  <>
-                    {enrolled.length > 0 && (
-                      <optgroup label={`Currently Enrolled (Year ${user.yearLevel})`}>
-                        {enrolled.map(c => <option key={c._id} value={c._id}>{c.courseCode} — {c.courseName}{c.semester ? ` (${c.semester === 1 ? '1st' : '2nd'} Sem)` : ''}</option>)}
-                      </optgroup>
-                    )}
-                    {Object.keys(previousByYear).sort((a, b) => b - a).map(yr => (
-                      <optgroup key={yr} label={`Year ${yr} Subjects`}>
-                        {previousByYear[yr].map(c => <option key={c._id} value={c._id}>{c.courseCode} — {c.courseName}{c.semester ? ` (${c.semester === 1 ? '1st' : '2nd'} Sem)` : ''}</option>)}
-                      </optgroup>
-                    ))}
-                  </>
-                );
-              })()}
-            </select>
-          </div>
-          <div>
-            <label className="label">Tutor</label>
-            <select value={selectedTutor} onChange={e => { setSelectedTutor(e.target.value); setSuggestions([]); setSelectedSlot(null); }} className="input-field" disabled={!selectedCourse}>
-              <option value="">Select a tutor</option>
-              {tutors.map(t => <option key={t._id} value={t.tutor?._id}>{t.tutor?.firstName} {t.tutor?.lastName}</option>)}
-            </select>
-          </div>
-        </div>
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          onClick={handleFindSlots}
-          disabled={!selectedCourse || !selectedTutor || loadingSuggest}
-          className="btn-primary mt-4 flex items-center gap-2"
-        >
-          {loadingSuggest ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <HiClock className="w-4 h-4" />}
-          {loadingSuggest ? 'Finding free slots...' : 'Find Available Slots'}
-        </motion.button>
-      </motion.div>
-
-      {/* Step 2 — Timetable */}
-      {(selectedTutor && (suggestions.length > 0 || mySchedule.length > 0)) && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-5">
+        {/* Step 1: Course & Tutor selection */}
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="card mb-5">
           <div className="flex items-center gap-2 mb-4">
-            <span className="w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-xs font-bold text-primary-600 dark:text-primary-400">2</span>
-            <h3 className="text-sm font-bold text-surface-900 dark:text-white">Pick a Time Slot</h3>
+            <span className="w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-xs font-bold text-primary-600 dark:text-primary-400">1</span>
+            <h3 className="text-sm font-bold text-surface-900 dark:text-white">Select Course & Tutor</h3>
           </div>
-          {suggestions.length > 0 && (
-            <p className="text-xs text-surface-500 dark:text-surface-400 mb-3">
-              Green dashed slots are mutual free times. Click one to select it.
-            </p>
-          )}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {(() => {
-              const myFullSchedule = [...mySchedule, ...mySessions];
-              const tutorFullSchedule = [...tutorSchedule, ...tutorSessions];
-              const allEntries = [...myFullSchedule, ...tutorFullSchedule, ...freeSlotsForGrid];
-              const allIndices = new Set();
-              allEntries.forEach(e => {
-                const si = TIME_SLOTS.indexOf(e.startTime);
-                if (si === -1) return;
-                const slots = durationSlots(e.startTime, e.endTime);
-                for (let i = 0; i < slots; i++) allIndices.add(si + i);
-              });
-              const minS = allIndices.size > 0 ? Math.max(0, Math.min(...allIndices) - 1) : 0;
-              const maxS = allIndices.size > 0 ? Math.min(TIME_SLOTS.length - 1, Math.max(...allIndices) + 1) : 14;
-
-              return (
-                <>
-                  <MiniTimetable title={`Your Schedule — ${user.firstName}`} schedule={myFullSchedule} color="#6366f1" freeSlots={freeSlotsForGrid} selectedSlot={selectedSlot} onSelectSlot={setSelectedSlot} minSlotOverride={minS} maxSlotOverride={maxS} />
-                  <div className="relative">
-                    <div className="lg:absolute lg:inset-0 card flex flex-col overflow-hidden">
-                      <p className="text-xs font-bold text-surface-700 dark:text-surface-300 mb-3 shrink-0">Available Slots</p>
-                      {suggestions.length === 0 ? (
-                        <p className="text-xs text-surface-400 flex-1 flex items-center justify-center">Click "Find Available Slots" to see options</p>
-                      ) : freeSlots.length === 0 ? (
-                        <p className="text-xs text-surface-400 flex-1 flex items-center justify-center">No mutual free slots found</p>
-                      ) : (
-                        <DayAccordionSlots
-                          suggestions={suggestions}
-                          freeSlots={freeSlots}
-                          selectedSlot={selectedSlot}
-                          onSelectSlot={(slot) => { playSound('pop'); setSelectedSlot(slot); }}
-                        />
-                      )}
-                    </div>
-                  </div>
-                  <MiniTimetable title={`Tutor — ${selectedTutorProfile?.tutor?.firstName || 'Tutor'}`} schedule={tutorFullSchedule} color="#8b5cf6" freeSlots={freeSlotsForGrid} selectedSlot={selectedSlot} onSelectSlot={setSelectedSlot} minSlotOverride={minS} maxSlotOverride={maxS} />
-                </>
-              );
-            })()}
-          </div>
-        </motion.div>
-      )}
-
-      {/* Step 3 — Confirm */}
-      {selectedSlot && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="card">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-xs font-bold text-primary-600 dark:text-primary-400">3</span>
-            <h3 className="text-sm font-bold text-surface-900 dark:text-white">Confirm Booking</h3>
-          </div>
-
-          <div className="rounded-xl p-4 mb-5 flex items-center gap-4 
-                          bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/50">
-            <HiCalendar className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <p className="text-sm font-bold text-surface-900 dark:text-white">
-                {selectedSlot.day} · {formatTime12(selectedSlot.startTime)} – {formatTime12(selectedSlot.endTime)}
-              </p>
-              <p className="text-xs text-surface-500 dark:text-surface-400">
-                {selectedCourseObj?.courseCode} with {selectedTutorProfile?.tutor?.firstName} {selectedTutorProfile?.tutor?.lastName}
-              </p>
+              <label className="label">Course</label>
+              <select value={selectedCourse} onChange={e => { setSelectedCourse(e.target.value); setSelectedTutor(''); setSelectedDate(''); setSlots([]); setSelectedSlot(null); }} className="input-field">
+                <option value="">Select a course</option>
+                {(() => {
+                  const enrolled = courses.filter(c => enrolledCodes.has(c._id));
+                  const previous = courses.filter(c => !enrolledCodes.has(c._id));
+                  const previousByYear = {};
+                  previous.forEach(c => {
+                    const yr = c.yearLevel || 0;
+                    if (!previousByYear[yr]) previousByYear[yr] = [];
+                    previousByYear[yr].push(c);
+                  });
+                  return (
+                    <>
+                      {enrolled.length > 0 && (
+                        <optgroup label={`Currently Enrolled (Year ${user.yearLevel})`}>
+                          {enrolled.map(c => <option key={c._id} value={c._id}>{c.courseCode} — {c.courseName}</option>)}
+                        </optgroup>
+                      )}
+                      {Object.keys(previousByYear).sort((a, b) => b - a).map(yr => (
+                        <optgroup key={yr} label={`Year ${yr} Subjects`}>
+                          {previousByYear[yr].map(c => <option key={c._id} value={c._id}>{c.courseCode} — {c.courseName}</option>)}
+                        </optgroup>
+                      ))}
+                    </>
+                  );
+                })()}
+              </select>
+            </div>
+            <div>
+              <label className="label">Tutor</label>
+              <select value={selectedTutor} onChange={e => { setSelectedTutor(e.target.value); setSelectedDate(''); setSlots([]); setSelectedSlot(null); }} className="input-field" disabled={!selectedCourse}>
+                <option value="">Select a tutor</option>
+                {tutors.map(t => (
+                  <option key={t._id} value={t.tutor?._id}>
+                    {t.tutor?.firstName} {t.tutor?.lastName} — Score: {t.competencyScore || 0}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
+        </motion.div>
 
-          <div className="space-y-4">
-            <div>
-              <label className="label">Venue Type</label>
-              <div className="flex gap-3">
-                {['on-campus', 'online'].map(t => (
-                  <label key={t} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 cursor-pointer transition-all ${
-                    venueType === t
-                      ? 'bg-primary-50 dark:bg-primary-950/30 border-primary-400 dark:border-primary-700 text-primary-700 dark:text-primary-300'
-                      : 'bg-white dark:bg-surface-800 border-surface-200 dark:border-surface-700 text-surface-600 dark:text-surface-300 hover:border-surface-300 dark:hover:border-surface-600'
-                  }`}>
-                    <input type="radio" value={t} checked={venueType === t} onChange={() => setVenueType(t)} className="sr-only" />
-                    <span className="text-sm font-medium capitalize">{t.replace('-', ' ')}</span>
-                  </label>
-                ))}
+        {/* Step 2: Date & Time */}
+        {selectedTutor && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-5">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-xs font-bold text-primary-600 dark:text-primary-400">2</span>
+              <h3 className="text-sm font-bold text-surface-900 dark:text-white">Pick a Date & Time</h3>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+              {/* Calendar */}
+              <DateCalendar
+                selectedDate={selectedDate}
+                onSelectDate={setSelectedDate}
+                holidays={holidays}
+              />
+
+              {/* Time slots */}
+              <div>
+                {selectedDate ? (
+                  <>
+                    <p className="text-xs text-surface-500 dark:text-surface-400 mb-3">
+                      Showing available slots for <span className="font-semibold text-surface-700 dark:text-surface-200">{formatDateLabel(selectedDate)}</span>
+                    </p>
+                    <TimeSlotList
+                      slots={slots}
+                      selectedSlot={selectedSlot}
+                      onSelectSlot={setSelectedSlot}
+                      loading={loadingSlots}
+                    />
+                  </>
+                ) : (
+                  <div className="card flex flex-col items-center justify-center py-12 text-center">
+                    <div className="w-12 h-12 rounded-2xl bg-surface-100 dark:bg-surface-800 flex items-center justify-center mb-3">
+                      <HiCalendar className="w-6 h-6 text-surface-400" />
+                    </div>
+                    <p className="text-sm text-surface-500 dark:text-surface-400">Select a date on the calendar</p>
+                    <p className="text-xs text-surface-400 mt-1">to see available time slots</p>
+                  </div>
+                )}
               </div>
             </div>
-            <div>
-              <label className="label">Venue / Meeting Link</label>
-              <input value={venue} onChange={e => setVenue(e.target.value)} className="input-field" placeholder={venueType === 'online' ? 'e.g. Google Meet link' : 'e.g. Library Study Room 1'} />
-            </div>
-            <div>
-              <label className="label">Notes (optional)</label>
-              <textarea value={notes} onChange={e => setNotes(e.target.value)} className="input-field" rows={2} placeholder="Topics to cover, materials needed..." />
-            </div>
-            <motion.button
-              whileTap={{ scale: 0.97 }}
-              onClick={handleBook}
-              disabled={booking}
-              className="btn-primary w-full flex items-center justify-center gap-2"
+          </motion.div>
+        )}
+
+        {/* Step 3: Confirm */}
+        <AnimatePresence>
+          {selectedSlot && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="card"
             >
-              {booking ? <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <HiCheck className="w-4 h-4" />}
-              {booking ? 'Booking...' : 'Confirm Booking'}
-            </motion.button>
-          </div>
-        </motion.div>
-      )}
-      </>)}
+              <div className="flex items-center gap-2 mb-4">
+                <span className="w-6 h-6 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-xs font-bold text-primary-600 dark:text-primary-400">3</span>
+                <h3 className="text-sm font-bold text-surface-900 dark:text-white">Confirm Booking</h3>
+              </div>
+
+              {/* Summary */}
+              <div className="rounded-xl p-4 mb-5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/50">
+                <div className="flex items-center gap-3">
+                  <HiCalendar className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <div>
+                    <p className="text-sm font-bold text-surface-900 dark:text-white">
+                      {formatDateLabel(selectedSlot.date)} · {formatTime12(selectedSlot.startTime)} – {formatTime12(selectedSlot.endTime)}
+                    </p>
+                    <p className="text-xs text-surface-500 dark:text-surface-400">
+                      {selectedCourseObj?.courseCode} with {selectedTutorProfile?.tutor?.firstName} {selectedTutorProfile?.tutor?.lastName}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="label">Venue Type</label>
+                  <div className="flex gap-3">
+                    {['on-campus', 'online'].map(t => (
+                      <button key={t} type="button" onClick={() => setVenueType(t)} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 transition-all ${
+                        venueType === t
+                          ? 'bg-primary-50 dark:bg-primary-950/30 border-primary-400 dark:border-primary-700 text-primary-700 dark:text-primary-300'
+                          : 'bg-white dark:bg-surface-800 border-surface-200 dark:border-surface-700 text-surface-600 dark:text-surface-300 hover:border-surface-300 dark:hover:border-surface-600'
+                      }`}>
+                        <HiLocationMarker className="w-4 h-4" />
+                        <span className="text-sm font-medium capitalize">{t.replace('-', ' ')}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="label">Venue / Meeting Link</label>
+                  <input value={venue} onChange={e => setVenue(e.target.value)} className="input-field" placeholder={venueType === 'online' ? 'e.g. Google Meet link' : 'e.g. Library Study Room 1'} />
+                </div>
+                <div>
+                  <label className="label">Notes (optional)</label>
+                  <textarea value={notes} onChange={e => setNotes(e.target.value)} className="input-field" rows={2} placeholder="Topics to cover, materials needed..." />
+                </div>
+
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={handleBook}
+                  disabled={booking || !venue.trim()}
+                  className="w-full btn-primary flex items-center justify-center gap-2 py-3"
+                >
+                  {booking ? (
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <HiCheck className="w-5 h-5" />
+                  )}
+                  {booking ? 'Booking...' : 'Confirm Session'}
+                </motion.button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
     </div>
   );
 }

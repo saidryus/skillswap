@@ -189,7 +189,9 @@ const uploadStudyLoad = async (req, res) => {
 
     const normalizedExtracted = result.studentId.replace(/[-\s]/g, '');
     const normalizedStudent = (student.studentIdNumber || '').replace(/[-\s]/g, '');
-    if (normalizedExtracted !== normalizedStudent) {
+    // Allow demo account (Rafael) to use Simone's study load
+    const isDemoBypass = student.studentIdNumber === '202203001';
+    if (normalizedExtracted !== normalizedStudent && !isDemoBypass) {
       return res.status(400).json({
         message: `Student ID mismatch. Document shows ${result.studentId} but your account is ${student.studentIdNumber}. Please upload your own study load.`,
       });
@@ -256,7 +258,15 @@ const uploadStudyLoad = async (req, res) => {
       unmatchedCodes,
       schedules: created,
     });
+
+    // Privacy: delete the uploaded file immediately after processing
+    const fs = require('fs');
+    try { fs.unlinkSync(filePath); } catch (_) {}
+
   } catch (error) {
+    // Also try to clean up the file on error
+    const fs = require('fs');
+    try { if (req.file?.path) fs.unlinkSync(req.file.path); } catch (_) {}
     console.error('[UploadStudyLoad] Error:', error);
     res.status(500).json({ message: error.message });
   }

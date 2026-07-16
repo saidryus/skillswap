@@ -8,7 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem('skillswap_user');
+    const stored = localStorage.getItem('Acadia_user');
     if (stored) {
       const parsed = JSON.parse(stored);
       setUser(parsed);
@@ -19,17 +19,17 @@ export const AuthProvider = ({ children }) => {
 
   const login = (userData) => {
     setUser(userData);
-    localStorage.setItem('skillswap_user', JSON.stringify(userData));
+    localStorage.setItem('Acadia_user', JSON.stringify(userData));
     api.defaults.headers.common['Authorization'] = `Bearer ${userData.token}`;
   };
 
   const refreshUser = async () => {
     try {
       const { data } = await api.get('/auth/me');
-      const stored = JSON.parse(localStorage.getItem('skillswap_user') || '{}');
+      const stored = JSON.parse(localStorage.getItem('Acadia_user') || '{}');
       const updated = { ...stored, ...data };
       setUser(updated);
-      localStorage.setItem('skillswap_user', JSON.stringify(updated));
+      localStorage.setItem('Acadia_user', JSON.stringify(updated));
     } catch (err) {
       // silent fail — user will see updated data on next login
     }
@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('skillswap_user');
+    localStorage.removeItem('Acadia_user');
     delete api.defaults.headers.common['Authorization'];
   };
 
@@ -53,3 +53,4 @@ export const useAuth = () => {
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
 };
+

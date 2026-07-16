@@ -13,13 +13,13 @@ import CinematicBackground from '../components/CinematicBackground';
 const FEATURES = [
   { icon: HiUserGroup, title: 'Peer Matching', desc: 'Find verified tutors ranked by expertise' },
   { icon: HiClock, title: 'Smart Scheduling', desc: 'Auto-find conflict-free time slots' },
-  { icon: HiAcademicCap, title: 'Grade Verified', desc: 'Tutors verified through academic records' },
+  { icon: HiAcademicCap, title: 'Faculty Endorsed', desc: 'Tutors verified through recommendation letters' },
   { icon: HiLightningBolt, title: 'Instant Booking', desc: 'Book sessions in seconds, not hours' },
 ];
 
 const TAGLINES = [
   'Verified Tutors, Automated Scheduling',
-  'Swap Knowledge, Excel Together',
+  'Learn Together, Grow Together',
   'Smart Matching, Smarter Learning',
 ];
 
@@ -153,7 +153,7 @@ export default function LoginPage() {
             transition={{ delay: 0.8 }}
             className="text-sm text-white/50 mt-3 leading-relaxed"
           >
-            Connect with peer tutors, swap knowledge, and excel together. Smart scheduling meets verified expertise.
+            Connect with peer tutors, share knowledge, and excel together. Smart scheduling meets verified expertise.
           </motion.p>
 
           {/* Feature grid */}
@@ -248,7 +248,7 @@ export default function LoginPage() {
               transition={{ delay: 0.5, duration: 0.5 }}
               className="text-white/50 mt-2"
             >
-              Sign in to start swapping skills
+              Sign in to start learning
             </motion.p>
           </div>
 
@@ -418,7 +418,7 @@ export default function LoginPage() {
               >
                 <option value="">Select an account to auto-fill...</option>
                 <optgroup label="Admin">
-                  <option value="admin@skillswap.edu|admin123">Admin — admin@skillswap.edu</option>
+                  <option value="admin@acadia.edu|admin123">Admin — admin@acadia.edu</option>
                 </optgroup>
                 <optgroup label="Students (with schedule)">
                   <option value="23063670|670">Simone Makinano — 23063670 (Year 3)</option>
@@ -458,10 +458,11 @@ export default function LoginPage() {
             transition={{ delay: 1.5 }}
             className="text-center text-xs text-white/20 mt-6"
           >
-            SkillSwap · College of Computer Studies · UC South Campus
+            Acadia · College of Computer Studies · UC South Campus
           </motion.p>
         </motion.div>
       </div>
     </div>
   );
 }
+

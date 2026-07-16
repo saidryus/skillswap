@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SkillSwap - Use Case Diagram</title>
+    <title>Acadia - Use Case Diagram</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -135,9 +135,10 @@
             <line class="ln-a" x1="940" y1="350" x2="820" y2="395"/>
             <line class="ln-a" x1="940" y1="350" x2="820" y2="440"/>
             <line class="ln-a" x1="940" y1="350" x2="820" y2="485"/>
+            <line class="ln-a" x1="940" y1="350" x2="820" y2="530"/>
         </svg>
 
-        <div class="system-box"><div class="system-label">SkillSwap System</div></div>
+        <div class="system-box"><div class="system-label">Acadia System</div></div>
 
         <!-- Actors -->
         <div class="actor" style="left: 28px; top: 205px;">
@@ -164,6 +165,11 @@
         <div class="uc uc-student" style="left: 145px; top: 385px;">View My Schedule</div>
         <div class="uc uc-student" style="left: 145px; top: 430px;">Upload Study Load</div>
 
+        <!-- Precondition note -->
+        <div style="position: absolute; left: 145px; top: 470px; font-size: 9px; color: #6366f1; font-style: italic; max-width: 220px;">
+            ⚠ «precondition» Book Session &amp; Apply as Tutor require schedule to be uploaded first
+        </div>
+
         <!-- TUTOR USE CASES -->
         <div class="uc uc-tutor" style="left: 145px; top: 520px;">Apply as Tutor</div>
         <div class="uc uc-tutor" style="left: 145px; top: 565px;">Upload Grade Slip</div>
@@ -183,6 +189,7 @@
         <div class="uc uc-admin" style="right: 140px; top: 385px;">Monitor Sessions</div>
         <div class="uc uc-admin" style="right: 140px; top: 430px;">View Analytics Dashboard</div>
         <div class="uc uc-admin" style="right: 140px; top: 475px;">Manage Permissions</div>
+        <div class="uc uc-admin" style="right: 140px; top: 520px;">Manage Departments</div>
 
         <!-- SHARED USE CASES (center bottom, no connecting lines — labeled instead) -->
         <div class="uc uc-shared" style="left: 280px; top: 820px;">Login</div>
@@ -198,10 +205,10 @@
     <div class="legend">
         <div class="legend-item"><div class="legend-swatch" style="background: #c7d2fe; border-color: #818cf8;"></div>Tutee Use Cases (9)</div>
         <div class="legend-item"><div class="legend-swatch" style="background: #a7f3d0; border-color: #34d399;"></div>Tutor Use Cases (6)</div>
-        <div class="legend-item"><div class="legend-swatch" style="background: #fed7aa; border-color: #fb923c;"></div>Admin Use Cases (10)</div>
+        <div class="legend-item"><div class="legend-swatch" style="background: #fed7aa; border-color: #fb923c;"></div>Admin Use Cases (11)</div>
         <div class="legend-item"><div class="legend-swatch" style="background: #fbcfe8; border-color: #f472b6;"></div>Shared Use Cases — All Actors (5)</div>
     </div>
 
-    <p style="text-align: center; margin-top: 20px; font-size: 14px; font-weight: 500; font-style: italic; color: #64748b;">Figure: SkillSwap Use Case Diagram</p>
+    <p style="text-align: center; margin-top: 20px; font-size: 14px; font-weight: 500; font-style: italic; color: #64748b;">Figure: Acadia Use Case Diagram</p>
 </body>
 </html>

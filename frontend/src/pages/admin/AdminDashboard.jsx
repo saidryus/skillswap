@@ -66,7 +66,7 @@ export default function AdminDashboard() {
 
   return (
     <div>
-      <PageHeader title="Dashboard" subtitle="SkillSwap — IT Department Peer Tutoring Overview" />
+      <PageHeader title="Dashboard" subtitle="Acadia — Peer Tutoring Overview" />
 
       {/* Stats grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8" ref={cardsRef}>
@@ -309,3 +309,4 @@ export default function AdminDashboard() {
     </div>
   );
 }
+

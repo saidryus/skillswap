@@ -19,10 +19,21 @@ const createDepartment = async (req, res) => {
   try {
     const { name, code, description } = req.body;
 
-    const exists = await Department.findOne({ $or: [{ code: code?.toUpperCase() }, { name }] });
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: 'Department name is required' });
+    }
+    if (!code || !code.trim()) {
+      return res.status(400).json({ message: 'Department code is required' });
+    }
+
+    const exists = await Department.findOne({ $or: [{ code: code.trim().toUpperCase() }, { name: name.trim() }] });
     if (exists) return res.status(400).json({ message: 'Department name or code already exists' });
 
-    const department = await Department.create({ name, code, description });
+    const department = await Department.create({
+      name: name.trim(),
+      code: code.trim().toUpperCase(),
+      description: description?.trim() || '',
+    });
     res.status(201).json(department);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -49,8 +60,19 @@ const updateDepartment = async (req, res) => {
 // @access  Admin
 const deleteDepartment = async (req, res) => {
   try {
-    const department = await Department.findByIdAndDelete(req.params.id);
+    const department = await Department.findById(req.params.id);
     if (!department) return res.status(404).json({ message: 'Department not found' });
+
+    // Check if any courses are attached to this department
+    const Course = require('../models/Course');
+    const courseCount = await Course.countDocuments({ department: department.name });
+    if (courseCount > 0) {
+      return res.status(400).json({ 
+        message: `Cannot delete this department — ${courseCount} course${courseCount > 1 ? 's are' : ' is'} still assigned to it. Remove or reassign them first.` 
+      });
+    }
+
+    await Department.findByIdAndDelete(req.params.id);
     res.json({ message: 'Department deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });

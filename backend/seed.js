@@ -1,5 +1,5 @@
 /**
- * SKILLSWAP DATABASE SEEDER
+ * Acadia DATABASE SEEDER
  * Seeds the database with: admin, departments, courses (UC-CCS BSIT curriculum),
  * students (25 per year level), schedules, tutor profiles, sessions, announcements.
  *
@@ -153,8 +153,8 @@ async function seed() {
 
   // Admin
   const admin = await User.create({
-    firstName: 'Admin', lastName: 'SkillSwap',
-    email: 'admin@skillswap.edu', password: 'admin123',
+    firstName: 'Admin', lastName: 'Acadia',
+    email: 'admin@acadia.edu', password: 'admin123',
     role: 'admin', isSuperAdmin: true, department: 'Information Technology',
   });
   console.log('✓ Admin created');
@@ -286,7 +286,7 @@ async function seed() {
 
   // Announcements
   await Announcement.create([
-    { title: 'Welcome to SkillSwap', content: 'SkillSwap is now live! Browse tutors, apply to become one, and book sessions.', author: admin._id, targetRoles: ['admin', 'student'], isPinned: true },
+    { title: 'Welcome to Acadia', content: 'Acadia is now live! Browse tutors, apply to become one, and book sessions.', author: admin._id, targetRoles: ['admin', 'student'], isPinned: true },
     { title: 'Tutor Applications Open', content: 'Students who passed their courses may apply as peer tutors. Upload your grade slip to get started.', author: admin._id, targetRoles: ['student'], isPinned: false },
   ]);
   console.log('✓ Announcements created');
@@ -297,7 +297,7 @@ async function seed() {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('');
   console.log('🔑 LOGIN CREDENTIALS:');
-  console.log('   Admin:   admin@skillswap.edu / admin123');
+  console.log('   Admin:   admin@acadia.edu / admin123');
   console.log('   Students: login with Student ID, password = last 3 digits');
   console.log('');
   console.log('   Examples:');
@@ -313,3 +313,4 @@ async function seed() {
 }
 
 seed().catch((err) => { console.error(err); process.exit(1); });
+

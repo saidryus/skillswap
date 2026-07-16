@@ -3,16 +3,36 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { HiPlus, HiPencil, HiTrash, HiSearch, HiShieldCheck, HiLockClosed, HiUpload, HiUserAdd, HiAcademicCap, HiOfficeBuilding } from 'react-icons/hi';
 import PageHeader from '../../components/PageHeader';
 import Modal from '../../components/Modal';
+import ConfirmModal from '../../components/ConfirmModal';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
+
+// Parse a single CSV line handling quoted fields (commas inside quotes)
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') {
+      inQuotes = !inQuotes;
+    } else if (ch === ',' && !inQuotes) {
+      result.push(current);
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  result.push(current);
+  return result;
+}
 
 const ALL_PERMISSIONS = [
   { key: 'users',               label: 'Student Management' },
   { key: 'courses',             label: 'Courses' },
   { key: 'tutor-applications',  label: 'Tutor Applications' },
   { key: 'sessions',            label: 'Sessions' },
-  { key: 'student-schedules',   label: 'Student Schedules' },
   { key: 'announcements',       label: 'Announcements' },
 ];
 
@@ -21,7 +41,7 @@ const YEAR_LABELS = { 1: '1st Year', 2: '2nd Year', 3: '3rd Year', 4: '4th Year'
 const emptyForm = {
   firstName: '', lastName: '', email: '', password: '',
   role: 'student', yearLevel: '', phone: '', studentIdNumber: '',
-  department: 'Information Technology', isActive: true, permissions: [],
+  department: '', isActive: true, permissions: [],
   assignedDepartments: [],
 };
 
@@ -43,6 +63,7 @@ export default function UsersPage() {
   const [importText, setImportText] = useState('');
   const [importLoading, setImportLoading] = useState(false);
   const [departments, setDepartments] = useState([]);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
 
   const fetchUsers = async () => {
     try {
@@ -90,7 +111,7 @@ export default function UsersPage() {
   const openCreate = () => { setEditUser(null); setForm(emptyForm); setModalOpen(true); };
   const openEdit = (u) => {
     setEditUser(u);
-    setForm({ ...u, password: '', yearLevel: u.yearLevel ?? '', permissions: u.permissions || [], assignedDepartments: u.assignedDepartments || [] });
+    setForm({ ...u, password: '', yearLevel: u.yearLevel ?? '', currentSemester: u.currentSemester ?? '', permissions: u.permissions || [], assignedDepartments: u.assignedDepartments || [] });
     setModalOpen(true);
   };
 
@@ -119,10 +140,10 @@ export default function UsersPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this user?')) return;
     try {
       await api.delete(`/users/${id}`);
       toast.success('User deleted');
+      setDeleteConfirm(null);
       fetchUsers();
     } catch (err) { toast.error(err.response?.data?.message || 'Failed to delete'); }
   };
@@ -131,12 +152,14 @@ export default function UsersPage() {
     if (!importText.trim()) { toast.error('Paste CSV data first'); return; }
     setImportLoading(true);
     try {
-      const lines = importText.trim().split('\n');
-      const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
+      const lines = importText.trim().replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').filter(l => l.trim());
+      const headers = parseCSVLine(lines[0]).map(h => h.trim().toLowerCase());
       const rows = lines.slice(1).map(line => {
-        const vals = line.split(',').map(v => v.replace(/"/g, '').trim());
+        const vals = parseCSVLine(line).map(v => v.trim());
         return headers.reduce((obj, h, i) => { obj[h] = vals[i] || ''; return obj; }, {});
-      }).filter(r => r.email);
+      }).filter(r => r.email || r.firstname || r.studentidnumber);
+
+      if (rows.length === 0) { toast.error('No valid rows found. Check your CSV format.'); setImportLoading(false); return; }
 
       const { data } = await api.post('/users/import', rows);
       toast.success(`Imported: ${data.created} created, ${data.skipped} skipped${data.errors.length ? `, ${data.errors.length} errors` : ''}`);
@@ -281,7 +304,7 @@ export default function UsersPage() {
                         </button>
                       )}
                       {!u.isSuperAdmin && (isSuperAdmin || u.role !== 'admin') && (
-                        <button onClick={() => handleDelete(u._id)} className="p-1.5 text-surface-500 dark:text-surface-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
+                        <button onClick={() => setDeleteConfirm(u)} className="p-1.5 text-surface-500 dark:text-surface-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
                           <HiTrash className="w-4 h-4" />
                         </button>
                       )}
@@ -366,7 +389,7 @@ export default function UsersPage() {
           {/* Password */}
           <div>
             <label className="label">{editUser ? 'New Password (leave blank to keep)' : 'Password'}</label>
-            <input type="password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} className="input-field" required={!editUser} minLength={6} placeholder={form.role === 'student' && !editUser ? 'Defaults to last 3 digits of ID' : 'Minimum 6 characters'} />
+            <input type="password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} className="input-field" required={!editUser && form.role !== 'student'} minLength={form.password ? 3 : 0} placeholder={form.role === 'student' && !editUser ? 'Defaults to last 3 digits of ID' : 'Minimum 6 characters'} />
             {form.role === 'student' && !editUser && (
               <p className="text-xs text-surface-400 mt-1">Leave blank to auto-set as last 3 digits of Student ID</p>
             )}
@@ -383,21 +406,27 @@ export default function UsersPage() {
                 transition={{ duration: 0.25 }}
                 className="space-y-4 overflow-hidden"
               >
-                <div className="grid grid-cols-2 gap-4">
-                  <div><label className="label">Student ID</label><input value={form.studentIdNumber} onChange={e => setForm({...form, studentIdNumber: e.target.value})} className="input-field" placeholder="202400001" /></div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div><label className="label">Student ID</label><input value={form.studentIdNumber} onChange={e => setForm({...form, studentIdNumber: e.target.value.replace(/\D/g, '')})} className="input-field font-mono" placeholder="202400001" required pattern="[0-9]+" title="Student ID must be numbers only" /></div>
                   <div><label className="label">Year Level</label>
-                    <select value={form.yearLevel} onChange={e => setForm({...form, yearLevel: e.target.value})} className="input-field">
+                    <select value={form.yearLevel} onChange={e => setForm({...form, yearLevel: e.target.value})} className="input-field" required>
                       <option value="">Select year</option>
                       <option value="1">1st Year</option><option value="2">2nd Year</option>
                       <option value="3">3rd Year</option><option value="4">4th Year</option>
                     </select>
                   </div>
+                  <div><label className="label">Semester</label>
+                    <select value={form.currentSemester || ''} onChange={e => setForm({...form, currentSemester: e.target.value})} className="input-field">
+                      <option value="">Select</option>
+                      <option value="1">1st Sem</option><option value="2">2nd Sem</option>
+                    </select>
+                  </div>
                 </div>
                 <div><label className="label">Phone (optional)</label><input value={form.phone || ''} onChange={e => setForm({...form, phone: e.target.value})} className="input-field" placeholder="+63 9XX XXX XXXX" /></div>
                 <div><label className="label">Department</label>
-                  <select value={form.department || 'Information Technology'} onChange={e => setForm({...form, department: e.target.value})} className="input-field">
-                    <option value="Information Technology">Information Technology</option>
-                    {departments.filter(d => d.isActive && d.name !== 'Information Technology').map(d => (
+                  <select value={form.department || ''} onChange={e => setForm({...form, department: e.target.value})} className="input-field" required>
+                    <option value="">Select department...</option>
+                    {departments.filter(d => d.isActive).map(d => (
                       <option key={d._id} value={d.name}>{d.name}</option>
                     ))}
                   </select>
@@ -411,11 +440,11 @@ export default function UsersPage() {
             {form.role === 'admin' && isSuperAdmin && (
               <motion.div
                 key="admin-fields"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
                 transition={{ duration: 0.25 }}
-                className="space-y-4 overflow-hidden"
+                className="space-y-4"
               >
                 {/* Permissions */}
                 <div className="border border-surface-200 dark:border-surface-700 rounded-xl p-4">
@@ -439,9 +468,19 @@ export default function UsersPage() {
                     {ALL_PERMISSIONS.map(({ key, label }) => {
                       const isChecked = form.permissions.includes(key);
                       return (
-                        <label
+                        <div
                           key={key}
-                          className={`flex items-center gap-3 p-2.5 rounded-xl border-2 cursor-pointer transition-all ${
+                          role="checkbox"
+                          aria-checked={isChecked}
+                          tabIndex={0}
+                          onClick={() => togglePermission(key)}
+                          onKeyDown={(e) => {
+                            if (e.key === ' ' || e.key === 'Enter') {
+                              e.preventDefault();
+                              togglePermission(key);
+                            }
+                          }}
+                          className={`flex items-center gap-3 p-2.5 rounded-xl border-2 cursor-pointer transition-all select-none ${
                             isChecked
                               ? 'bg-primary-50 dark:bg-primary-950/30 border-primary-400 dark:border-primary-700'
                               : 'bg-surface-50 dark:bg-surface-800 border-surface-200 dark:border-surface-700 hover:border-surface-300 dark:hover:border-surface-600'
@@ -457,8 +496,7 @@ export default function UsersPage() {
                             )}
                           </div>
                           <span className={`text-xs font-medium ${isChecked ? 'text-primary-700 dark:text-primary-300' : 'text-surface-600 dark:text-surface-400'}`}>{label}</span>
-                          <input type="checkbox" checked={isChecked} onChange={() => togglePermission(key)} className="sr-only" />
-                        </label>
+                        </div>
                       );
                     })}
                   </div>
@@ -493,9 +531,29 @@ export default function UsersPage() {
                     {departments.filter(d => d.isActive).map(dept => {
                       const isChecked = form.assignedDepartments.includes(dept.name);
                       return (
-                        <label
+                        <div
                           key={dept._id}
-                          className={`flex items-center gap-3 p-2.5 rounded-xl border-2 cursor-pointer transition-all ${
+                          role="checkbox"
+                          aria-checked={isChecked}
+                          tabIndex={0}
+                          onClick={() => setForm(prev => ({
+                            ...prev,
+                            assignedDepartments: isChecked
+                              ? prev.assignedDepartments.filter(d => d !== dept.name)
+                              : [...prev.assignedDepartments, dept.name],
+                          }))}
+                          onKeyDown={(e) => {
+                            if (e.key === ' ' || e.key === 'Enter') {
+                              e.preventDefault();
+                              setForm(prev => ({
+                                ...prev,
+                                assignedDepartments: isChecked
+                                  ? prev.assignedDepartments.filter(d => d !== dept.name)
+                                  : [...prev.assignedDepartments, dept.name],
+                              }));
+                            }
+                          }}
+                          className={`flex items-center gap-3 p-2.5 rounded-xl border-2 cursor-pointer transition-all select-none ${
                             isChecked
                               ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-400 dark:border-emerald-700'
                               : 'bg-surface-50 dark:bg-surface-800 border-surface-200 dark:border-surface-700 hover:border-surface-300 dark:hover:border-surface-600'
@@ -514,18 +572,7 @@ export default function UsersPage() {
                             <span className={`text-xs font-medium ${isChecked ? 'text-emerald-700 dark:text-emerald-300' : 'text-surface-600 dark:text-surface-400'}`}>{dept.name}</span>
                             <span className="text-[10px] text-surface-400 ml-1.5">({dept.code})</span>
                           </div>
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={() => setForm(prev => ({
-                              ...prev,
-                              assignedDepartments: isChecked
-                                ? prev.assignedDepartments.filter(d => d !== dept.name)
-                                : [...prev.assignedDepartments, dept.name],
-                            }))}
-                            className="sr-only"
-                          />
-                        </label>
+                        </div>
                       );
                     })}
                   </div>
@@ -564,8 +611,8 @@ export default function UsersPage() {
               <p className="font-semibold text-surface-700 dark:text-surface-300">Expected CSV format:</p>
               <button
                 onClick={() => {
-                  const header = 'firstName,lastName,email,password,studentIdNumber,yearLevel,phone';
-                  const sample = 'Juan,Dela Cruz,juan@student.edu,pass123,202400001,1,09171234567\nAna,Gonzales,ana@student.edu,,202400002,1,';
+                  const header = 'firstName,lastName,email,password,studentIdNumber,yearLevel,semester,phone';
+                  const sample = 'Juan,Dela Cruz,juan@student.edu,pass123,202400001,1,1,09171234567\nAna,Gonzales,ana@student.edu,,202400002,1,2,';
                   const blob = new Blob([`${header}\n${sample}`], { type: 'text/csv' });
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement('a');
@@ -579,18 +626,42 @@ export default function UsersPage() {
                 <HiUpload className="w-3 h-3 rotate-180" /> Download Template
               </button>
             </div>
-            <p className="font-mono">firstName,lastName,email,password,studentIdNumber,yearLevel,phone</p>
-            <p className="font-mono text-surface-400 dark:text-surface-500">Juan,Dela Cruz,juan@student.edu,pass123,2024-00001,1,</p>
-            <p className="mt-1 text-surface-400 dark:text-surface-500">password defaults to <span className="text-surface-700 dark:text-surface-300">skillswap123</span> if blank · phone is optional</p>
+            <p className="font-mono text-xs break-all">firstName,lastName,email,password,studentIdNumber,yearLevel,semester,phone</p>
+            <p className="font-mono text-xs text-surface-400 dark:text-surface-500 break-all">Juan,Dela Cruz,juan@student.edu,pass123,2024-00001,1,1,</p>
+            <p className="mt-1 text-xs text-surface-400 dark:text-surface-500">password defaults to <span className="text-surface-700 dark:text-surface-300 font-semibold">last 3 digits of Student ID</span> if blank · phone is optional</p>
           </div>
           <div>
-            <label className="label">Paste CSV data</label>
+            <label className="label">Upload CSV file or paste data</label>
+            <div className="flex gap-2 mb-2">
+              <button
+                type="button"
+                className="btn-secondary text-xs px-3 py-2 flex items-center gap-2"
+                onClick={() => document.getElementById('csvFileInput').click()}
+              >
+                📄 Choose CSV File
+              </button>
+              <input
+                id="csvFileInput"
+                type="file"
+                accept=".csv,.txt"
+                className="hidden"
+                onChange={e => {
+                  const file = e.target.files[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = (ev) => setImportText(ev.target.result);
+                  reader.readAsText(file);
+                  e.target.value = '';
+                }}
+              />
+              <span className="text-xs text-surface-400 self-center">or paste below</span>
+            </div>
             <textarea
               value={importText}
               onChange={e => setImportText(e.target.value)}
               className="input-field font-mono text-xs"
               rows={8}
-              placeholder="firstName,lastName,email,password,studentIdNumber,yearLevel,phone&#10;Juan,Dela Cruz,juan@student.edu,,2024-00001,1,"
+              placeholder="firstName,lastName,email,password,studentIdNumber,yearLevel,semester,phone&#10;Juan,Dela Cruz,juan@student.edu,,2024-00001,1,1,"
             />
           </div>
           <div className="flex gap-3">
@@ -604,6 +675,16 @@ export default function UsersPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Delete confirmation */}
+      <ConfirmModal
+        isOpen={!!deleteConfirm}
+        onClose={() => setDeleteConfirm(null)}
+        onConfirm={() => handleDelete(deleteConfirm?._id)}
+        title="Delete User"
+        message={deleteConfirm ? `Are you sure you want to delete ${deleteConfirm.firstName} ${deleteConfirm.lastName} (${deleteConfirm.studentIdNumber || deleteConfirm.email})? This action cannot be undone.` : ''}
+        confirmText="Delete User"
+      />
     </div>
   );
 }
