@@ -1,0 +1,20 @@
+[
+  {
+    "text": "ML model predicts Strong recommendation for: Networking, Information Security, Systems Administration. Confidence: 74%.",
+    "strength": "strong",
+    "subjects": [
+      "Networking",
+      "Information Security",
+      "Systems Administration"
+    ],
+    "softSkills": [
+      "Communication",
+      "Leadership",
+      "Patience",
+      "Knowledgeable"
+    ],
+    "source": "admin_correction",
+    "correctionNotes": "First soft skill mentioned mastery of subjects mentioned but ML missed it",
+    "createdAt": "2026-07-16T06:23:04.996Z"
+  }
+]

@@ -11,266 +11,297 @@
             background: white;
             padding: 40px;
         }
-        .page-title {
-            font-size: 20px;
-            font-weight: 800;
-            color: #1e293b;
-            margin-bottom: 8px;
-        }
-        .subtitle {
-            font-size: 14px;
-            font-weight: 500;
-            color: #64748b;
-            margin-bottom: 30px;
-        }
-        .gantt {
-            display: flex;
-            flex-direction: column;
-            gap: 0;
-        }
-        /* Month headers */
+        .page-title { font-size: 20px; font-weight: 800; color: #1e293b; margin-bottom: 4px; }
+        .subtitle   { font-size: 13px; font-weight: 500; color: #64748b; margin-bottom: 28px; }
+
+        /*
+         * 7 months × 100px = 700px bar area
+         * June=0  July=100  Aug=200  Sep=300  Oct=400  Nov=500  Dec=600
+         * Half-month = 50px
+         */
+        :root { --lw: 290px; }
+
         .month-header {
             display: flex;
-            margin-left: 280px;
+            margin-left: var(--lw);
             border-bottom: 2px solid #1e293b;
-            margin-bottom: 6px;
+            margin-bottom: 5px;
         }
         .month-label {
-            width: 100px;
-            text-align: center;
-            font-size: 14px;
-            font-weight: 800;
-            color: #1e293b;
-            padding: 8px 0;
+            width: 100px; text-align: center;
+            font-size: 13px; font-weight: 800; color: #1e293b;
+            padding: 7px 0;
             border-left: 1px solid #e2e8f0;
         }
         .month-label:first-child { border-left: none; }
 
-        /* Rows */
         .gantt-row {
-            display: flex;
-            align-items: center;
-            height: 30px;
+            display: flex; align-items: center;
+            height: 26px; margin-bottom: 2px;
         }
-        .gantt-row.is-phase {
-            height: 34px;
-            margin-top: 8px;
+        .gantt-row.phase-row {
+            height: 32px; margin-top: 10px; margin-bottom: 3px;
         }
         .task-name {
-            width: 280px;
-            font-size: 13px;
-            font-weight: 500;
-            color: #334155;
-            padding-right: 16px;
-            flex-shrink: 0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            width: var(--lw); flex-shrink: 0;
+            font-size: 12px; font-weight: 500; color: #334155;
+            padding-right: 12px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        .gantt-row.is-phase .task-name {
-            font-weight: 800;
-            font-size: 14px;
-            color: #1e293b;
+        .gantt-row.phase-row .task-name {
+            font-weight: 800; font-size: 13px; color: #1e293b;
         }
-        /* Bar area: 7 months * 100px = 700px */
+        .task-name.ind { padding-left: 16px; }
+
         .bar-area {
             position: relative;
-            width: 700px;
-            height: 20px;
-            flex-shrink: 0;
-        }
-        /* Grid lines */
-        .bar-area::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            width: 700px; height: 100%; flex-shrink: 0;
             background: repeating-linear-gradient(
-                to right,
-                transparent,
-                transparent 99px,
-                #f1f5f9 99px,
-                #f1f5f9 100px
+                to right, transparent, transparent 99px, #f1f5f9 99px, #f1f5f9 100px
             );
         }
         .bar {
-            position: absolute;
-            top: 2px;
-            bottom: 2px;
+            position: absolute; top: 4px; bottom: 4px;
             border-radius: 4px;
         }
-        /* Colors */
-        .c-blue { background: #3b82f6; }
-        .c-green { background: #1e3a5f; }
-        .c-purple { background: #8b5cf6; }
-        .c-orange { background: #f59e0b; }
-        .c-red { background: #ef4444; }
-        .c-teal { background: #14b8a6; }
-
-        /* 
-          Positioning: each month = 100px
-          June = 0, July = 100, Aug = 200, Sep = 300, Oct = 400, Nov = 500, Dec = 600
-          Half month = 50px
-        */
+        .c1 { background: #3b82f6; }
+        .c2 { background: #1e3a5f; }
+        .c3 { background: #8b5cf6; }
+        .c4 { background: #f59e0b; }
+        .c5 { background: #ef4444; }
+        .c6 { background: #14b8a6; }
 
         .legend {
-            display: grid;
-            grid-template-columns: auto auto auto;
-            gap: 6px 24px;
+            display: flex; flex-wrap: wrap; gap: 8px 28px;
             margin-top: 24px;
-            margin-left: 0;
-            width: fit-content;
         }
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 13px;
-            font-weight: 500;
-            color: #475569;
-        }
-        .legend-color {
-            width: 14px;
-            height: 14px;
-            border-radius: 3px;
-        }
+        .legend-item { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 500; color: #475569; }
+        .legend-dot  { width: 13px; height: 13px; border-radius: 3px; flex-shrink: 0; }
     </style>
 </head>
 <body>
-    <div class="page-title">Project Development Gantt Chart</div>
-    <div class="subtitle">Acadia: Peer-to-Peer Academic Tutoring Platform — June to December 2025</div>
+<div class="page-title">Project Development Gantt Chart</div>
+<div class="subtitle">Acadia: Peer-to-Peer Academic Tutoring Platform &mdash; June to December 2025</div>
 
-    <div class="gantt">
-        <!-- Month headers -->
-        <div class="month-header">
-            <div class="month-label">June</div>
-            <div class="month-label">July</div>
-            <div class="month-label">August</div>
-            <div class="month-label">September</div>
-            <div class="month-label">October</div>
-            <div class="month-label">November</div>
-            <div class="month-label">December</div>
-        </div>
+<div class="gantt">
 
-        <!-- Phase 1: Foundation — June -->
-        <div class="gantt-row is-phase">
-            <div class="task-name">Phase 1: Foundation</div>
-            <div class="bar-area"><div class="bar c-blue" style="left: 0; width: 100px;"></div></div>
-        </div>
-        <div class="gantt-row">
-            <div class="task-name">&nbsp;&nbsp;&nbsp;Requirements Analysis</div>
-            <div class="bar-area"><div class="bar c-blue" style="left: 0; width: 50px;"></div></div>
-        </div>
-        <div class="gantt-row">
-            <div class="task-name">&nbsp;&nbsp;&nbsp;Database Design</div>
-            <div class="bar-area"><div class="bar c-blue" style="left: 15px; width: 60px;"></div></div>
-        </div>
-        <div class="gantt-row">
-            <div class="task-name">&nbsp;&nbsp;&nbsp;UI Wireframes & Prototyping</div>
-            <div class="bar-area"><div class="bar c-blue" style="left: 35px; width: 55px;"></div></div>
-        </div>
-        <div class="gantt-row">
-            <div class="task-name">&nbsp;&nbsp;&nbsp;Authentication Module</div>
-            <div class="bar-area"><div class="bar c-blue" style="left: 60px; width: 40px;"></div></div>
-        </div>
-
-        <!-- Phase 2: Core Features — July to mid-August -->
-        <div class="gantt-row is-phase">
-            <div class="task-name">Phase 2: Core Features</div>
-            <div class="bar-area"><div class="bar c-green" style="left: 100px; width: 150px;"></div></div>
-        </div>
-        <div class="gantt-row">
-            <div class="task-name">&nbsp;&nbsp;&nbsp;User Management (CRUD)</div>
-            <div class="bar-area"><div class="bar c-green" style="left: 100px; width: 60px;"></div></div>
-        </div>
-        <div class="gantt-row">
-            <div class="task-name">&nbsp;&nbsp;&nbsp;Course Management</div>
-            <div class="bar-area"><div class="bar c-green" style="left: 120px; width: 45px;"></div></div>
-        </div>
-        <div class="gantt-row">
-            <div class="task-name">&nbsp;&nbsp;&nbsp;Schedule Input Module</div>
-            <div class="bar-area"><div class="bar c-green" style="left: 150px; width: 55px;"></div></div>
-        </div>
-        <div class="gantt-row">
-            <div class="task-name">&nbsp;&nbsp;&nbsp;Tutor Application + OCR</div>
-            <div class="bar-area"><div class="bar c-green" style="left: 175px; width: 75px;"></div></div>
-        </div>
-
-        <!-- Phase 3: Intelligent Engine — mid-August to September -->
-        <div class="gantt-row is-phase">
-            <div class="task-name">Phase 3: Intelligent Engine</div>
-            <div class="bar-area"><div class="bar c-purple" style="left: 250px; width: 130px;"></div></div>
-        </div>
-        <div class="gantt-row">
-            <div class="task-name">&nbsp;&nbsp;&nbsp;Constraint-Based Scheduling Engine</div>
-            <div class="bar-area"><div class="bar c-purple" style="left: 250px; width: 70px;"></div></div>
-        </div>
-        <div class="gantt-row">
-            <div class="task-name">&nbsp;&nbsp;&nbsp;Competency Scoring Algorithm</div>
-            <div class="bar-area"><div class="bar c-purple" style="left: 310px; width: 40px;"></div></div>
-        </div>
-        <div class="gantt-row">
-            <div class="task-name">&nbsp;&nbsp;&nbsp;Session Lifecycle Management</div>
-            <div class="bar-area"><div class="bar c-purple" style="left: 320px; width: 60px;"></div></div>
-        </div>
-
-        <!-- Phase 4: Polish — October -->
-        <div class="gantt-row is-phase">
-            <div class="task-name">Phase 4: Polish & Integration</div>
-            <div class="bar-area"><div class="bar c-orange" style="left: 400px; width: 100px;"></div></div>
-        </div>
-        <div class="gantt-row">
-            <div class="task-name">&nbsp;&nbsp;&nbsp;Notifications & Announcements</div>
-            <div class="bar-area"><div class="bar c-orange" style="left: 400px; width: 50px;"></div></div>
-        </div>
-        <div class="gantt-row">
-            <div class="task-name">&nbsp;&nbsp;&nbsp;Dashboard & Analytics</div>
-            <div class="bar-area"><div class="bar c-orange" style="left: 430px; width: 50px;"></div></div>
-        </div>
-        <div class="gantt-row">
-            <div class="task-name">&nbsp;&nbsp;&nbsp;UI Refinement & Responsive Design</div>
-            <div class="bar-area"><div class="bar c-orange" style="left: 450px; width: 50px;"></div></div>
-        </div>
-
-        <!-- Phase 5: Testing — November -->
-        <div class="gantt-row is-phase">
-            <div class="task-name">Phase 5: Testing & Evaluation</div>
-            <div class="bar-area"><div class="bar c-red" style="left: 500px; width: 100px;"></div></div>
-        </div>
-        <div class="gantt-row">
-            <div class="task-name">&nbsp;&nbsp;&nbsp;System & Integration Testing</div>
-            <div class="bar-area"><div class="bar c-red" style="left: 500px; width: 45px;"></div></div>
-        </div>
-        <div class="gantt-row">
-            <div class="task-name">&nbsp;&nbsp;&nbsp;Alpha Deployment</div>
-            <div class="bar-area"><div class="bar c-red" style="left: 535px; width: 35px;"></div></div>
-        </div>
-        <div class="gantt-row">
-            <div class="task-name">&nbsp;&nbsp;&nbsp;Qualitative Evaluation & Data Collection</div>
-            <div class="bar-area"><div class="bar c-red" style="left: 550px; width: 50px;"></div></div>
-        </div>
-
-        <!-- Phase 6: Finalization — December -->
-        <div class="gantt-row is-phase">
-            <div class="task-name">Phase 6: Finalization</div>
-            <div class="bar-area"><div class="bar c-teal" style="left: 600px; width: 100px;"></div></div>
-        </div>
-        <div class="gantt-row">
-            <div class="task-name">&nbsp;&nbsp;&nbsp;Final Revisions & Documentation</div>
-            <div class="bar-area"><div class="bar c-teal" style="left: 600px; width: 100px;"></div></div>
-        </div>
-
-        <!-- Legend -->
-        <div class="legend">
-            <div class="legend-item"><div class="legend-color" style="background: #3b82f6;"></div>Phase 1: Foundation (June)</div>
-            <div class="legend-item"><div class="legend-color" style="background: #1e3a5f;"></div>Phase 2: Core Features (July – August)</div>
-            <div class="legend-item"><div class="legend-color" style="background: #8b5cf6;"></div>Phase 3: Intelligent Engine (August – September)</div>
-            <div class="legend-item"><div class="legend-color" style="background: #f59e0b;"></div>Phase 4: Polish & Integration (October)</div>
-            <div class="legend-item"><div class="legend-color" style="background: #ef4444;"></div>Phase 5: Testing & Evaluation (November)</div>
-            <div class="legend-item"><div class="legend-color" style="background: #14b8a6;"></div>Phase 6: Finalization (December)</div>
-        </div>
+    <!-- Month headers -->
+    <div class="month-header">
+        <div class="month-label">June</div>
+        <div class="month-label">July</div>
+        <div class="month-label">August</div>
+        <div class="month-label">September</div>
+        <div class="month-label">October</div>
+        <div class="month-label">November</div>
+        <div class="month-label">December</div>
     </div>
+
+    <!-- ── Phase 1: Foundation  (June) ───────────────────────── -->
+    <div class="gantt-row phase-row">
+        <div class="task-name">Phase 1 · Foundation</div>
+        <div class="bar-area"><div class="bar c1" style="left:0;width:100px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Requirements Gathering &amp; Analysis</div>
+        <div class="bar-area"><div class="bar c1" style="left:0;width:55px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">UI/UX Wireframes &amp; Prototyping</div>
+        <div class="bar-area"><div class="bar c1" style="left:20px;width:60px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Database Design (MongoDB)</div>
+        <div class="bar-area"><div class="bar c1" style="left:15px;width:55px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">System Architecture Setup (MERN Stack)</div>
+        <div class="bar-area"><div class="bar c1" style="left:30px;width:50px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Authentication Module (JWT, bcrypt, RBAC)</div>
+        <div class="bar-area"><div class="bar c1" style="left:50px;width:50px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Literature Review</div>
+        <div class="bar-area"><div class="bar c1" style="left:0;width:100px;"></div></div>
+    </div>
+
+    <!-- ── Phase 2: Core Features  (July – mid-August) ───────── -->
+    <div class="gantt-row phase-row">
+        <div class="task-name">Phase 2 · Core Features</div>
+        <div class="bar-area"><div class="bar c2" style="left:100px;width:150px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">User Management &amp; Bulk CSV Import</div>
+        <div class="bar-area"><div class="bar c2" style="left:100px;width:60px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Course &amp; Department Management</div>
+        <div class="bar-area"><div class="bar c2" style="left:110px;width:55px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Global Settings &amp; Super Admin Controls</div>
+        <div class="bar-area"><div class="bar c2" style="left:120px;width:45px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Availability Management (Weekly Calendar)</div>
+        <div class="bar-area"><div class="bar c2" style="left:130px;width:60px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Class Schedule Upload &amp; OCR (File Deleted After)</div>
+        <div class="bar-area"><div class="bar c2" style="left:140px;width:65px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Tutor Application + Recommendation Letter Upload</div>
+        <div class="bar-area"><div class="bar c2" style="left:150px;width:70px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">AES-256-CBC File Encryption + Document Expiry</div>
+        <div class="bar-area"><div class="bar c2" style="left:170px;width:55px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Curriculum Filter (Year + Semester Eligibility)</div>
+        <div class="bar-area"><div class="bar c2" style="left:160px;width:55px;"></div></div>
+    </div>
+
+    <!-- ── Phase 3: Intelligent Engine  (mid-August – September) -->
+    <div class="gantt-row phase-row">
+        <div class="task-name">Phase 3 · Intelligent Engine &amp; ML</div>
+        <div class="bar-area"><div class="bar c3" style="left:225px;width:175px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">ML Rec. Letter Analysis (TF-IDF + SVM + LR)</div>
+        <div class="bar-area"><div class="bar c3" style="left:225px;width:100px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">3-Tier Fallback (ML → LLM → Rule-Based)</div>
+        <div class="bar-area"><div class="bar c3" style="left:250px;width:75px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Confidence Score + Subject Alignment + PII Redaction</div>
+        <div class="bar-area"><div class="bar c3" style="left:260px;width:80px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Constraint-Based Scheduling Engine (Holiday-Aware)</div>
+        <div class="bar-area"><div class="bar c3" style="left:250px;width:90px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Competency Scoring Algorithm (Weighted Formula)</div>
+        <div class="bar-area"><div class="bar c3" style="left:300px;width:70px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Session Lifecycle Management (6 Statuses)</div>
+        <div class="bar-area"><div class="bar c3" style="left:310px;width:65px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">ML Feedback Analysis Service (Sentiment + Insights)</div>
+        <div class="bar-area"><div class="bar c3" style="left:320px;width:80px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Admin ML Correction &amp; Training Data Export</div>
+        <div class="bar-area"><div class="bar c3" style="left:350px;width:50px;"></div></div>
+    </div>
+
+    <!-- ── Phase 4: Polish & Integration  (October) ──────────── -->
+    <div class="gantt-row phase-row">
+        <div class="task-name">Phase 4 · Polish &amp; Integration</div>
+        <div class="bar-area"><div class="bar c4" style="left:400px;width:100px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">In-App Messaging (Socket.io) + Chat Auto-Lock</div>
+        <div class="bar-area"><div class="bar c4" style="left:400px;width:60px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Jitsi Meet Video Integration + Recording Link Sharing</div>
+        <div class="bar-area"><div class="bar c4" style="left:410px;width:55px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Rating &amp; Feedback System</div>
+        <div class="bar-area"><div class="bar c4" style="left:400px;width:50px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Learning Materials Module (7 Resource Types)</div>
+        <div class="bar-area"><div class="bar c4" style="left:420px;width:55px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Notifications System (9 Types) + Announcements</div>
+        <div class="bar-area"><div class="bar c4" style="left:430px;width:50px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Admin &amp; Student Analytics Dashboards</div>
+        <div class="bar-area"><div class="bar c4" style="left:440px;width:50px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Document Audit Log + Re-Auth Gate (3-hr Lockout)</div>
+        <div class="bar-area"><div class="bar c4" style="left:450px;width:50px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">UI/UX Refinements &amp; Responsive Design</div>
+        <div class="bar-area"><div class="bar c4" style="left:450px;width:50px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Research Instrument Development &amp; Pilot Testing</div>
+        <div class="bar-area"><div class="bar c4" style="left:400px;width:100px;"></div></div>
+    </div>
+
+    <!-- ── Phase 5: Testing & Evaluation  (November) ─────────── -->
+    <div class="gantt-row phase-row">
+        <div class="task-name">Phase 5 · Testing &amp; Evaluation</div>
+        <div class="bar-area"><div class="bar c5" style="left:500px;width:100px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">System &amp; Integration Testing / Bug Fixes</div>
+        <div class="bar-area"><div class="bar c5" style="left:500px;width:50px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Alpha Deployment to CCS (Controlled Environment)</div>
+        <div class="bar-area"><div class="bar c5" style="left:535px;width:40px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Participant Recruitment, Orientation &amp; Consent</div>
+        <div class="bar-area"><div class="bar c5" style="left:500px;width:45px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Platform Testing with Participants + Direct Observation</div>
+        <div class="bar-area"><div class="bar c5" style="left:535px;width:65px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">User Feedback Collection (Open-Ended + Google Forms)</div>
+        <div class="bar-area"><div class="bar c5" style="left:560px;width:40px;"></div></div>
+    </div>
+
+    <!-- ── Phase 6: Analysis & Finalization  (December) ──────── -->
+    <div class="gantt-row phase-row">
+        <div class="task-name">Phase 6 · Analysis &amp; Finalization</div>
+        <div class="bar-area"><div class="bar c6" style="left:600px;width:100px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Thematic Analysis — 6 Phases (Braun &amp; Clarke, 2006)</div>
+        <div class="bar-area"><div class="bar c6" style="left:600px;width:65px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Member Checking with Selected Participants</div>
+        <div class="bar-area"><div class="bar c6" style="left:640px;width:40px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Report Preparation, Write-Up &amp; Final Revisions</div>
+        <div class="bar-area"><div class="bar c6" style="left:600px;width:100px;"></div></div>
+    </div>
+    <div class="gantt-row">
+        <div class="task-name ind">Documentation &amp; Study Submission</div>
+        <div class="bar-area"><div class="bar c6" style="left:640px;width:60px;"></div></div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#3b82f6;"></div>Phase 1: Foundation (June)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#1e3a5f;"></div>Phase 2: Core Features (July – mid-August)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6;"></div>Phase 3: Intelligent Engine &amp; ML (mid-August – September)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f59e0b;"></div>Phase 4: Polish &amp; Integration (October)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ef4444;"></div>Phase 5: Testing &amp; Evaluation (November)</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#14b8a6;"></div>Phase 6: Analysis &amp; Finalization (December)</div>
+    </div>
+
+</div>
 </body>
 </html>

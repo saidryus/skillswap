@@ -9,290 +9,363 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: white;
-            padding: 40px 20px;
+            padding: 28px 16px 48px;
         }
         .page-title {
             font-size: 20px;
             font-weight: 800;
             color: #1e293b;
-            margin-bottom: 50px;
-        }
-        .diagram {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .root {
-            background: #1e3a5f;
-            color: white;
-            padding: 14px 40px;
-            border-radius: 6px;
-            font-weight: 800;
-            font-size: 17px;
+            margin-bottom: 44px;
             text-align: center;
         }
-        .root-stem {
-            width: 2px;
-            height: 30px;
-            background: #475569;
+        .diagram { display: flex; flex-direction: column; align-items: center; }
+        .root {
+            background: #1e3a5f; color: white;
+            padding: 12px 40px; border-radius: 6px;
+            font-weight: 800; font-size: 16px; text-align: center;
         }
-        .rail {
-            position: relative;
-            width: 100%;
-            max-width: 1360px;
-            height: 2px;
-            background: #475569;
-        }
+        .root-stem { width: 2px; height: 26px; background: #475569; }
+        .rail { width: 100%; max-width: 1700px; height: 2px; background: #475569; }
         .modules {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            max-width: 1360px;
-            margin-top: 0;
+            display: flex; justify-content: space-between;
+            width: 100%; max-width: 1700px;
         }
         .module {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 120px;
+            display: flex; flex-direction: column; align-items: center;
+            flex: 1; padding: 0 3px;
         }
-        .module-stem {
-            width: 2px;
-            height: 24px;
-            background: #475569;
-        }
+        .module-stem { width: 2px; height: 20px; background: #475569; }
         .module-header {
-            background: #1e3a5f;
-            color: white;
-            padding: 8px 6px;
-            border-radius: 5px;
-            font-size: 11px;
-            font-weight: 700;
-            text-align: center;
-            width: 114px;
-            min-height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1.3;
+            background: #1e3a5f; color: white;
+            padding: 6px 4px; border-radius: 5px;
+            font-size: 9.5px; font-weight: 700;
+            text-align: center; width: 100%;
+            min-height: 32px; display: flex;
+            align-items: center; justify-content: center; line-height: 1.3;
         }
-        /* Stem from module header down to sub-functions */
-        .sub-stem {
-            width: 2px;
-            height: 14px;
-            background: #475569;
-        }
-        .sub-functions {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0;
-            width: 114px;
-        }
-        /* Each sub-function has a tiny connector + the box */
-        .sub-fn-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-        }
-        .sub-fn-connector {
-            width: 2px;
-            height: 6px;
-            background: #94a3b8;
-        }
-        .sub-fn {
-            background: white;
-            border: 1.5px solid #94a3b8;
-            padding: 5px 5px;
-            border-radius: 4px;
-            font-size: 10px;
-            font-weight: 600;
-            color: #1e293b;
-            text-align: center;
-            line-height: 1.3;
-            width: 100%;
+        .sub-stem { width: 2px; height: 10px; background: #475569; }
+        .sub-functions { display: flex; flex-direction: column; align-items: center; width: 100%; }
+        .sf { display: flex; flex-direction: column; align-items: center; width: 100%; }
+        .sc { width: 2px; height: 5px; background: #94a3b8; }
+        .sb {
+            background: white; border: 1.5px solid #94a3b8;
+            padding: 3px 4px; border-radius: 4px;
+            font-size: 9px; font-weight: 600;
+            color: #1e293b; text-align: center;
+            line-height: 1.3; width: 100%;
         }
     </style>
 </head>
 <body>
-    <div class="page-title">Functional Decomposition Diagram</div>
+<div class="page-title">Functional Decomposition Diagram</div>
+<div class="diagram">
+  <div class="root">Acadia — Peer Tutoring Platform</div>
+  <div class="root-stem"></div>
+  <div class="rail"></div>
+  <div class="modules">
 
-    <div class="diagram">
-        <div class="root">Acadia System</div>
-        <div class="root-stem"></div>
-        <div class="rail"></div>
-
-        <div class="modules">
-            <!-- 1. Authentication -->
-            <div class="module">
-                <div class="module-stem"></div>
-                <div class="module-header">Authentication</div>
-                <div class="sub-stem"></div>
-                <div class="sub-functions">
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Login (Student ID + Password)</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Forced Password Change</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">JWT Token Generation</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Token Validation</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Role-Based Access Control</div></div>
-                </div>
-            </div>
-
-            <!-- 2. User Management -->
-            <div class="module">
-                <div class="module-stem"></div>
-                <div class="module-header">User Management</div>
-                <div class="sub-stem"></div>
-                <div class="sub-functions">
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Create Student Account</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Edit Student Account</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Bulk Import (CSV)</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Activate / Deactivate</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Assign Permissions</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Set Availability Cap</div></div>
-                </div>
-            </div>
-
-            <!-- 3. Course Management -->
-            <div class="module">
-                <div class="module-stem"></div>
-                <div class="module-header">Course Management</div>
-                <div class="sub-stem"></div>
-                <div class="sub-functions">
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Add Course</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Edit Course</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Delete Course</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Bulk Import (CSV)</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Assign Year Level</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Assign Semester</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Toggle Active Status</div></div>
-                </div>
-            </div>
-
-            <!-- 4. Schedule Management -->
-            <div class="module">
-                <div class="module-stem"></div>
-                <div class="module-header">Schedule Management</div>
-                <div class="sub-stem"></div>
-                <div class="sub-functions">
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Input Weekly Schedule</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Study Load Upload (OCR)</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Semester Detection</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Course Linking</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Bulk Enroll</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Edit Schedule Entry</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Delete Schedule Entry</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">View Personal Timetable</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Conflict Detection</div></div>
-                </div>
-            </div>
-
-            <!-- 5. Tutor Application -->
-            <div class="module">
-                <div class="module-stem"></div>
-                <div class="module-header">Tutor Application</div>
-                <div class="sub-stem"></div>
-                <div class="sub-functions">
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Schedule Required Check</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Select Course to Tutor</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Upload Grade Slip (PDF)</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">OCR Grade Extraction</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Confidence Flagging</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Admin Review</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Approve / Reject</div></div>
-                </div>
-            </div>
-
-            <!-- 6. Tutor Matching -->
-            <div class="module">
-                <div class="module-stem"></div>
-                <div class="module-header">Tutor Matching</div>
-                <div class="sub-stem"></div>
-                <div class="sub-functions">
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Competency Score Calc</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Ratings Weight (35%)</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Grade Weight (25%)</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Completion Rate (20%)</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Sessions Count (20%)</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Course-Based Search</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Availability Cap Check</div></div>
-                </div>
-            </div>
-
-            <!-- 7. Session Scheduling -->
-            <div class="module">
-                <div class="module-stem"></div>
-                <div class="module-header">Session Scheduling</div>
-                <div class="sub-stem"></div>
-                <div class="sub-functions">
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Schedule Required Check</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Constraint Engine</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Free Slot Detection</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Timetable Comparison</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Submit Session Request</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Tutor Accept / Reject</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Mark as Completed</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Cancel Session</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Venue Selection</div></div>
-                </div>
-            </div>
-
-            <!-- 8. Rating & Feedback -->
-            <div class="module">
-                <div class="module-stem"></div>
-                <div class="module-header">Rating &amp; Feedback</div>
-                <div class="sub-stem"></div>
-                <div class="sub-functions">
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Star Rating (1–5)</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Comment Submission</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">One Rating Per Session</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Score Aggregation</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">View Tutor Ratings</div></div>
-                </div>
-            </div>
-
-            <!-- 9. Notifications -->
-            <div class="module">
-                <div class="module-stem"></div>
-                <div class="module-header">Notifications</div>
-                <div class="sub-stem"></div>
-                <div class="sub-functions">
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">In-App Alerts</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Event-Driven Triggers</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Read / Unread Status</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Link Navigation</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">9 Notification Types</div></div>
-                </div>
-            </div>
-
-            <!-- 10. Announcements -->
-            <div class="module">
-                <div class="module-stem"></div>
-                <div class="module-header">Announcements</div>
-                <div class="sub-stem"></div>
-                <div class="sub-functions">
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Create Announcement</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Edit Announcement</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Pin / Unpin</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Role-Based Targeting</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Activate / Deactivate</div></div>
-                </div>
-            </div>
-
-            <!-- 11. Dashboard & Analytics -->
-            <div class="module">
-                <div class="module-stem"></div>
-                <div class="module-header">Dashboard &amp; Analytics</div>
-                <div class="sub-stem"></div>
-                <div class="sub-functions">
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Admin Overview Stats</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Student Dashboard</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Session Frequency</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Active Tutors Count</div></div>
-                    <div class="sub-fn-wrapper"><div class="sub-fn-connector"></div><div class="sub-fn">Pending Applications</div></div>
-                </div>
-            </div>
-        </div>
+    <!-- 1. Authentication & Security -->
+    <div class="module">
+      <div class="module-stem"></div>
+      <div class="module-header">Authentication &amp; Security</div>
+      <div class="sub-stem"></div>
+      <div class="sub-functions">
+        <div class="sf"><div class="sc"></div><div class="sb">Login with Student ID or Email + Password</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Forced Password Change on First Login</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">JWT Token Generation &amp; Validation</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Role-Based Access Control (Admin / Student)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Progressive Login Lockout (3 fails → 30 / 60 / 180 s)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Per-IP Rate Limiting (Login + Doc Auth + API)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Login Audit Log (last 20 entries per user)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Change Own Password</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Account Deactivation Gate</div></div>
+      </div>
     </div>
+
+    <!-- 2. User Management -->
+    <div class="module">
+      <div class="module-stem"></div>
+      <div class="module-header">User Management</div>
+      <div class="sub-stem"></div>
+      <div class="sub-functions">
+        <div class="sf"><div class="sc"></div><div class="sb">Create Student Account (Admin Only)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Default Password = Last 3 Digits of Student ID</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Edit Student Account</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Bulk Import Students via CSV</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Activate / Deactivate Account</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Create / Edit / Delete Admin Accounts (Super Admin)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Assign Admin Permissions &amp; Departments</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Set Weekly Session Cap per Tutor</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Manage Academic Progression (Year Level + Semester)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Department Scope for Sub-Admins</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Get Available Permissions List</div></div>
+      </div>
+    </div>
+
+    <!-- 3. Global Settings -->
+    <div class="module">
+      <div class="module-stem"></div>
+      <div class="module-header">Global Settings</div>
+      <div class="sub-stem"></div>
+      <div class="sub-functions">
+        <div class="sf"><div class="sc"></div><div class="sb">View Global Settings (Admin)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Update Student ID Prefix (Super Admin)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Singleton Settings Document (auto-created)</div></div>
+      </div>
+    </div>
+
+    <!-- 4. Course & Department Management -->
+    <div class="module">
+      <div class="module-stem"></div>
+      <div class="module-header">Course &amp; Department Management</div>
+      <div class="sub-stem"></div>
+      <div class="sub-functions">
+        <div class="sf"><div class="sc"></div><div class="sb">Add / Edit / Delete Course</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Assign Year Level, Semester &amp; Units</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Toggle Course Active Status</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Bulk Course Import via CSV</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Filter Courses by Year Level / Department</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Add / Edit / Delete Department</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Bulk Department Import via CSV</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Block Delete if Courses Attached</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Curriculum Filter (Eligible Courses by Year + Semester)</div></div>
+      </div>
+    </div>
+
+    <!-- 5. Availability Management -->
+    <div class="module">
+      <div class="module-stem"></div>
+      <div class="module-header">Availability Management</div>
+      <div class="sub-stem"></div>
+      <div class="sub-functions">
+        <div class="sf"><div class="sc"></div><div class="sb">Set Weekly Availability (Full Replace)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Add Single Availability Slot</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Remove Availability Slot</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">View Own Availability</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">View Any User's Availability (Private)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Has-Availability Gate Check</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Availability Required Before Booking or Applying</div></div>
+      </div>
+    </div>
+
+    <!-- 6. Student Schedule (Admin Tool) -->
+    <div class="module">
+      <div class="module-stem"></div>
+      <div class="module-header">Student Class Schedule</div>
+      <div class="sub-stem"></div>
+      <div class="sub-functions">
+        <div class="sf"><div class="sc"></div><div class="sb">Upload Class Schedule PDF (Student)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">OCR Text Extraction (Study Load)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Student ID Match Verification</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Auto-Detect Year Level &amp; Semester</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Link EDP Codes to Course Records</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">File Deleted Immediately After Processing</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Admin: Bulk Enroll Students with Schedule Template</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Admin: Set / Add / Delete Schedule Entry</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Admin: Clear Entire Student Schedule</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Has-Schedule Gate Check</div></div>
+      </div>
+    </div>
+
+    <!-- 7. Tutor Application -->
+    <div class="module">
+      <div class="module-stem"></div>
+      <div class="module-header">Tutor Application</div>
+      <div class="sub-stem"></div>
+      <div class="sub-functions">
+        <div class="sf"><div class="sc"></div><div class="sb">Select Curriculum-Eligible Course(s)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Upload Faculty Recommendation Letter (PDF)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">AES-256-CBC Encryption at Rest</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Run ML/OCR Analysis Pipeline</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Admin Reviews Application + ML Report</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Approve / Reject / Request Resubmission</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">File Deleted After Admin Decision</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Document Expiry Scheduler (30-day default)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Document Access Re-Auth Gate (3 attempts → 3 h lockout)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Document View + Delete Audit Log</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">isTutor Flag Set on Approval</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">View Own Applications</div></div>
+      </div>
+    </div>
+
+    <!-- 8. ML Document Analysis -->
+    <div class="module">
+      <div class="module-stem"></div>
+      <div class="module-header">ML Document Analysis</div>
+      <div class="sub-stem"></div>
+      <div class="sub-functions">
+        <div class="sf"><div class="sc"></div><div class="sb">OCR Text Extraction (Tesseract.js)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">PII Redaction Before DB Storage</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Recommendation Strength Classification (Linear SVM)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Tutoring Subject Prediction (Multi-Label SVM)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Soft Skills Extraction (Logistic Regression)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Subject Alignment Score (Deterministic %)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Confidence Score (OCR Quality + Identity + Signature + Alignment)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Signature Detection</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">3-Tier Fallback: ML Service → LLM → Rule-Based</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Admin ML Correction Submission</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Export Corrections as Training Data (JSON)</div></div>
+      </div>
+    </div>
+
+    <!-- 9. Tutor Matching -->
+    <div class="module">
+      <div class="module-stem"></div>
+      <div class="module-header">Tutor Matching</div>
+      <div class="sub-stem"></div>
+      <div class="sub-functions">
+        <div class="sf"><div class="sc"></div><div class="sb">Browse Tutors by Curriculum-Eligible Course</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Competency Score Calculation</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Ratings Component (45%)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Faculty Recommendation Score (15%)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Session Completion Rate (20%)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Tutoring Experience / Sessions Count (20%)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Subject-Specific Metrics with Overall Fallback</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Weekly Session Cap Availability Check</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Rank Tutors by Competency Score (Descending)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">AI Teaching Insights Displayed on Tutor Profile</div></div>
+      </div>
+    </div>
+
+    <!-- 10. Session Scheduling -->
+    <div class="module">
+      <div class="module-stem"></div>
+      <div class="module-header">Session Scheduling</div>
+      <div class="sub-stem"></div>
+      <div class="sub-functions">
+        <div class="sf"><div class="sc"></div><div class="sb">Conflict-Free Slot Suggestion (Interval Scheduling)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Philippine Holiday Awareness (Fixed + Variable)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Sunday Blocking</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Past-Time Slot Filtering (30-min buffer for today)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Weekly Session Cap Enforcement</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Availability Required Gate</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Submit Session Request (Status: Pending)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Tutor Accept Session (Status: Scheduled)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Tutor Reject Session (Status: Rejected)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Mark Completed (After Scheduled End Time)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Cancel Session (Tutor, Tutee, or Admin)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">On-Campus / Online Venue Selection</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">View Own Sessions (My Sessions)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">View User Scheduled Sessions (Timetable)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Admin: View &amp; Filter All Sessions</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Admin: View Session History by Student</div></div>
+      </div>
+    </div>
+
+    <!-- 11. Messaging & Video -->
+    <div class="module">
+      <div class="module-stem"></div>
+      <div class="module-header">Messaging &amp; Video</div>
+      <div class="sub-stem"></div>
+      <div class="sub-functions">
+        <div class="sf"><div class="sc"></div><div class="sb">Send Message in Session Chat</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Get Messages for a Session</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Get All Conversations for User</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Participant-Only Access Enforcement</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Auto-Lock Chat After Session Ends (Completed / Cancelled / Rejected)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Share Recording Link in Chat</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Message Types: text, recording</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Jitsi Meet Video Room (Deterministic Room Name)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Get Video Room Details for Session</div></div>
+      </div>
+    </div>
+
+    <!-- 12. Rating & ML Feedback Analysis -->
+    <div class="module">
+      <div class="module-stem"></div>
+      <div class="module-header">Rating &amp; ML Feedback Analysis</div>
+      <div class="sub-stem"></div>
+      <div class="sub-functions">
+        <div class="sf"><div class="sc"></div><div class="sb">Submit Star Rating (1–5) + Written Comment</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">One Rating Per Completed Session (Tutee Only)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Check If Session Already Rated</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">View Tutor Ratings (Avg + Total)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Tutor Dashboard Stats (Completion Rate, Distribution, Per-Course)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">ML Feedback Insights: Sentiment Analysis</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">ML Feedback Insights: Teaching Strengths</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">ML Feedback Insights: Areas for Improvement</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">ML Feedback Insights: Topics Covered</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Aggregated Insights on Tutor Profile</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">ML Feedback Service Health Check + Graceful Unavailability</div></div>
+      </div>
+    </div>
+
+    <!-- 13. Learning Materials -->
+    <div class="module">
+      <div class="module-stem"></div>
+      <div class="module-header">Learning Materials</div>
+      <div class="sub-stem"></div>
+      <div class="sub-functions">
+        <div class="sf"><div class="sc"></div><div class="sb">Upload Material (Approved Tutor for That Course)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Resource Types: PDF, PPT, Word, Image, ZIP, Link, Recording</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">External URL Support (Links + Recordings)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Visibility: Public / Enrolled / Private</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Browse &amp; Filter Materials (Course, Type, Uploader, Sort)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Download / Access Material (Increments Count)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Edit Own Material (Title, Description, Visibility)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Delete Own Material + File Cleanup</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Admin: Moderate / Toggle Active Status</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">View Materials by Tutor</div></div>
+      </div>
+    </div>
+
+    <!-- 14. Notifications -->
+    <div class="module">
+      <div class="module-stem"></div>
+      <div class="module-header">Notifications</div>
+      <div class="sub-stem"></div>
+      <div class="sub-functions">
+        <div class="sf"><div class="sc"></div><div class="sb">In-App Notifications (Event-Driven)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">9 Types: Application, Approval, Rejection, Request, Accepted, Rejected, Cancelled, Completed, Announcement</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Get Notifications (Latest 50)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Unread Count</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Unread Count Grouped by Type</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Mark Single Notification as Read</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Mark All Notifications as Read</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Delete Notification</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Link Navigation (Deep-Link to Relevant Page)</div></div>
+      </div>
+    </div>
+
+    <!-- 15. Announcements -->
+    <div class="module">
+      <div class="module-stem"></div>
+      <div class="module-header">Announcements</div>
+      <div class="sub-stem"></div>
+      <div class="sub-functions">
+        <div class="sf"><div class="sc"></div><div class="sb">Create Announcement (Admin)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Edit Announcement</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Delete Announcement</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Pin / Unpin</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Target by Role (Admin / Student)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Activate / Deactivate</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Notify All Targeted Users In-App</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">View Announcements (Role-Filtered)</div></div>
+      </div>
+    </div>
+
+    <!-- 16. Analytics & Dashboard -->
+    <div class="module">
+      <div class="module-stem"></div>
+      <div class="module-header">Analytics &amp; Dashboard</div>
+      <div class="sub-stem"></div>
+      <div class="sub-functions">
+        <div class="sf"><div class="sc"></div><div class="sb">Admin: Total Sessions by Status (Pending / Scheduled / Completed / Cancelled / Rejected)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Admin: Weekly Session Frequency (Last 8 Weeks)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Admin: Top 5 Tutors by Completed Sessions</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Admin: Top 5 Courses by Session Count</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Student (Tutee): Session Overview Stats</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Student (Tutee): Attendance Rate</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Student (Tutee): Monthly Trend (Last 6 Months)</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Student (Tutee): Per-Course Breakdown</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Student (Tutee): Tutor Diversity + Venue Preference</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Student (Tutee): Upcoming &amp; Recent Sessions</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Tutor Dashboard: Rating Distribution + Per-Course Stats</div></div>
+        <div class="sf"><div class="sc"></div><div class="sb">Tutor Dashboard: Completion Rate + This Week's Sessions</div></div>
+      </div>
+    </div>
+
+  </div><!-- end .modules -->
+</div><!-- end .diagram -->
 </body>
 </html>

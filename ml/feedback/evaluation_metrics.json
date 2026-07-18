@@ -1,0 +1,15 @@
+{
+  "sentiment": {
+    "accuracy": 0.925,
+    "f1": 0.9312
+  },
+  "strengths": {
+    "f1": 0.9968
+  },
+  "improvements": {
+    "f1": 0.9934
+  },
+  "topics": {
+    "f1": 0.978
+  }
+}

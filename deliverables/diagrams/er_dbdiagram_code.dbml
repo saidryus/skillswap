@@ -1,141 +1,254 @@
-// SkillSwap ER Diagram — dbdiagram.io code
-// Updated to include: semester (Course), currentSemester (User), course ref (StudentSchedule), Department collection
-
-Table User {
-  _id ObjectId [pk]
-  studentIdNumber String
-  firstName String [not null]
-  lastName String [not null]
-  email String [not null, unique]
-  password String [not null]
-  role Enum [not null, note: 'admin | student']
-  yearLevel Number [note: '1-4']
-  currentSemester Number [note: '1 | 2']
-  phone String
-  department String [note: 'e.g. Information Technology']
-  isActive Boolean [default: true]
-  isTutor Boolean [default: false]
-  maxSessionsPerWeek Number [default: 5]
-  mustChangePassword Boolean [default: false]
-  isSuperAdmin Boolean [default: false]
-  permissions Array
-  assignedDepartments Array
-  createdAt DateTime
-  updatedAt DateTime
+Table users {
+  _id                  varchar   [pk]
+  studentIdNumber      varchar
+  firstName            varchar   [not null]
+  lastName             varchar   [not null]
+  email                varchar   [not null, unique]
+  password             varchar   [not null]
+  role                 varchar   [not null, note: "admin | student"]
+  yearLevel            int
+  currentSemester      int       [note: "1 | 2"]
+  phone                varchar
+  department           varchar
+  isActive             boolean   [default: true]
+  isTutor              boolean   [default: false]
+  maxSessionsPerWeek   int       [default: 5]
+  mustChangePassword   boolean   [default: false]
+  isSuperAdmin         boolean   [default: false]
+  permissions          varchar   [note: "JSON array: users|courses|tutor-applications|sessions|announcements"]
+  assignedDepartments  varchar   [note: "JSON array of dept names"]
+  loginAttempts        int       [default: 0]
+  lockUntil            timestamp
+  lockCount            int       [default: 0]
+  docAccessLockedUntil timestamp
+  docAccessAttempts    int       [default: 0]
+  loginAuditLog        varchar   [note: "JSON array - last 20 login events"]
+  createdAt            timestamp
+  updatedAt            timestamp
 }
 
-Table Course {
-  _id ObjectId [pk]
-  courseCode String [not null, unique]
-  courseName String [not null]
-  description String
-  units Number [not null, note: '1-12']
-  yearLevel Number [note: '1-4']
-  semester Number [note: '1 | 2']
-  department String [note: 'e.g. Information Technology']
-  isActive Boolean [default: true]
-  createdAt DateTime
-  updatedAt DateTime
+Table departments {
+  _id         varchar   [pk]
+  name        varchar   [not null, unique]
+  code        varchar   [not null, unique]
+  description text
+  isActive    boolean   [default: true]
+  createdAt   timestamp
+  updatedAt   timestamp
 }
 
-Table TutorProfile {
-  _id ObjectId [pk]
-  tutor ObjectId [not null, ref: > User._id]
-  course ObjectId [not null, ref: > Course._id]
-  status Enum [not null, note: 'pending | approved | rejected']
-  grade Number [note: '1.0-5.0']
-  detectedGrade Number
-  gradeDetectionConfidence Enum [note: 'none | low | medium | high | error']
-  gradeDetectionMessage String
-  gradeDocument String
-  gradeDocumentName String
-  adminNotes String
-  reviewedBy ObjectId [ref: > User._id]
-  reviewedAt DateTime
-  createdAt DateTime
-  updatedAt DateTime
+Table settings {
+  _id              varchar   [pk]
+  key              varchar   [unique, note: "Singleton: always 'global'"]
+  studentIdPrefix  varchar   [default: "SS"]
+  studentIdCounter int       [default: 0]
+  createdAt        timestamp
+  updatedAt        timestamp
 }
 
-Table StudentSchedule {
-  _id ObjectId [pk]
-  student ObjectId [not null, ref: > User._id]
-  course ObjectId [ref: > Course._id]
-  day Enum [not null, note: 'Monday-Saturday']
-  startTime String [not null, note: 'HH:MM']
-  endTime String [not null, note: 'HH:MM']
-  label String
-  createdAt DateTime
-  updatedAt DateTime
+Table courses {
+  _id         varchar   [pk]
+  courseCode  varchar   [not null, unique]
+  courseName  varchar   [not null]
+  description text
+  units       int       [not null, note: "1-12"]
+  yearLevel   int       [note: "1 | 2 | 3 | 4"]
+  semester    int       [note: "1 | 2"]
+  department  varchar
+  isActive    boolean   [default: true]
+  createdAt   timestamp
+  updatedAt   timestamp
 }
 
-Table Session {
-  _id ObjectId [pk]
-  tutor ObjectId [not null, ref: > User._id]
-  tutees Array [not null, note: 'Array of User ObjectIds']
-  course ObjectId [not null, ref: > Course._id]
-  date Date [not null]
-  startTime String [not null]
-  endTime String [not null]
-  venue String
-  venueType Enum [note: 'on-campus | online']
-  status Enum [not null, note: 'pending | scheduled | completed | cancelled | rejected']
-  notes String
-  createdAt DateTime
-  updatedAt DateTime
+Table student_schedules {
+  _id       varchar   [pk]
+  student   varchar   [not null]
+  course    varchar   [note: "Optional ref to courses"]
+  day       varchar   [not null, note: "Monday-Saturday"]
+  startTime varchar   [not null, note: "HH:MM"]
+  endTime   varchar   [not null, note: "HH:MM"]
+  label     varchar
+  createdAt timestamp
+  updatedAt timestamp
 }
 
-Table Rating {
-  _id ObjectId [pk]
-  session ObjectId [not null, ref: > Session._id]
-  tutor ObjectId [not null, ref: > User._id]
-  ratedBy ObjectId [not null, ref: > User._id]
-  course ObjectId [ref: > Course._id]
-  score Number [not null, note: '1-5']
-  comment String
-  createdAt DateTime
-  updatedAt DateTime
+Table availability {
+  _id       varchar   [pk]
+  user      varchar   [not null]
+  day       varchar   [not null, note: "Monday-Saturday"]
+  startTime varchar   [not null, note: "HH:MM"]
+  endTime   varchar   [not null, note: "HH:MM"]
+  createdAt timestamp
+  updatedAt timestamp
 }
 
-Table Notification {
-  _id ObjectId [pk]
-  recipient ObjectId [not null, ref: > User._id]
-  type Enum [not null, note: '9 notification types']
-  title String [not null]
-  message String [not null]
-  isRead Boolean [default: false]
-  link String
-  meta Mixed
-  createdAt DateTime
-  updatedAt DateTime
+Table tutor_profiles {
+  _id                              varchar   [pk]
+  tutor                            varchar   [not null]
+  course                           varchar   [not null]
+  selectedCourses                  varchar   [note: "JSON array of course ids"]
+  status                           varchar   [not null, note: "pending|approved|rejected|resubmit"]
+  grade                            varchar   [note: "Admin-entered grade 1.0-5.0"]
+  recommendationDocument           varchar   [note: "Encrypted file path"]
+  recommendationDocumentName       varchar
+  extractedText                    text      [note: "PII-redacted OCR text"]
+  ocrConfidence                    int
+  aiAnalysis_facultyName           varchar
+  aiAnalysis_facultyPosition       varchar
+  aiAnalysis_department            varchar
+  aiAnalysis_recommendationStrength varchar  [note: "none|weak|moderate|strong"]
+  aiAnalysis_signatureDetected     boolean
+  aiAnalysis_letterheadDetected    boolean
+  aiAnalysis_softSkills            varchar   [note: "JSON array"]
+  aiAnalysis_subjectsMentioned     varchar   [note: "JSON array"]
+  aiAnalysis_summary               text
+  aiAnalysis_anomalies             varchar   [note: "JSON array"]
+  aiAnalysis_wordCount             int
+  aiAnalysis_analysisMethod        varchar   [note: "ml|llm|rule-based"]
+  subjectAlignment_percentage      int
+  subjectAlignment_matchedCount    int
+  subjectAlignment_totalSubjects   int
+  confidenceScore                  int       [note: "0-100"]
+  confidenceLevel                  varchar   [note: "low|medium|high"]
+  adminNotes                       text
+  reviewedBy                       varchar   [note: "Ref to users"]
+  reviewedAt                       timestamp
+  mlCorrection_strength            varchar
+  mlCorrection_subjects            varchar   [note: "JSON array"]
+  mlCorrection_softSkills          varchar   [note: "JSON array"]
+  mlCorrection_notes               text
+  mlCorrection_correctedBy         varchar   [note: "Ref to users"]
+  mlCorrection_correctedAt         timestamp
+  documentExpiresAt                timestamp
+  documentExpired                  boolean   [default: false]
+  documentAuditLog                 varchar   [note: "JSON array of audit events"]
+  createdAt                        timestamp
+  updatedAt                        timestamp
 }
 
-Table Announcement {
-  _id ObjectId [pk]
-  author ObjectId [not null, ref: > User._id]
-  title String [not null]
-  content String [not null]
-  targetRoles Array
-  isPinned Boolean [default: false]
-  isActive Boolean [default: true]
-  createdAt DateTime
-  updatedAt DateTime
+Table sessions {
+  _id       varchar   [pk]
+  tutor     varchar   [not null]
+  tutees    varchar   [not null, note: "JSON array of user ids"]
+  course    varchar   [not null]
+  date      date      [not null]
+  startTime varchar   [not null, note: "HH:MM"]
+  endTime   varchar   [not null, note: "HH:MM"]
+  venue     varchar
+  venueType varchar   [note: "on-campus|online"]
+  status    varchar   [not null, note: "pending|scheduled|completed|cancelled|rejected"]
+  notes     text
+  createdAt timestamp
+  updatedAt timestamp
 }
 
-Table Department {
-  _id ObjectId [pk]
-  name String [not null, unique]
-  code String [not null, unique]
-  description String
-  isActive Boolean [default: true]
-  createdAt DateTime
-  updatedAt DateTime
+Table ratings {
+  _id       varchar   [pk]
+  session   varchar   [not null]
+  tutor     varchar   [not null]
+  ratedBy   varchar   [not null, note: "Tutee who rated"]
+  course    varchar   [not null]
+  score     int       [not null, note: "1-5 stars"]
+  comment   text
+  createdAt timestamp
+  updatedAt timestamp
 }
 
-Table Settings {
-  _id ObjectId [pk]
-  key String [unique]
-  studentIdPrefix String
-  studentIdCounter Number
-  createdAt DateTime
-  updatedAt DateTime
+Table messages {
+  _id       varchar   [pk]
+  session   varchar   [not null]
+  sender    varchar   [not null]
+  content   text      [not null]
+  type      varchar   [note: "text|system|recording"]
+  metadata  varchar   [note: "JSON: recordingUrl + title for recording type"]
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table materials {
+  _id           varchar   [pk]
+  title         varchar   [not null]
+  description   text
+  course        varchar   [not null]
+  uploader      varchar   [not null]
+  resourceType  varchar   [not null, note: "pdf|powerpoint|word|image|zip|link|recording"]
+  fileUrl       varchar
+  fileName      varchar
+  fileSize      int
+  isExternal    boolean   [default: false]
+  visibility    varchar   [note: "public|enrolled|private"]
+  downloadCount int       [default: 0]
+  isActive      boolean   [default: true]
+  createdAt     timestamp
+  updatedAt     timestamp
+}
+
+Table notifications {
+  _id       varchar   [pk]
+  recipient varchar   [not null]
+  type      varchar   [not null, note: "tutor_application|tutor_approved|tutor_rejected|session_request|session_accepted|session_rejected|session_cancelled|session_completed|announcement"]
+  title     varchar   [not null]
+  message   text      [not null]
+  isRead    boolean   [default: false]
+  link      varchar
+  meta      varchar   [note: "JSON context data"]
+  createdAt timestamp
+  updatedAt timestamp
+}
+
+Table announcements {
+  _id         varchar   [pk]
+  author      varchar   [not null]
+  title       varchar   [not null]
+  content     text      [not null]
+  targetRoles varchar   [note: "JSON array: admin|student"]
+  isPinned    boolean   [default: false]
+  isActive    boolean   [default: true]
+  createdAt   timestamp
+  updatedAt   timestamp
+}
+
+Ref: student_schedules.student > users._id
+Ref: student_schedules.course > courses._id
+Ref: availability.user > users._id
+Ref: tutor_profiles.tutor > users._id
+Ref: tutor_profiles.course > courses._id
+Ref: sessions.tutor > users._id
+Ref: sessions.course > courses._id
+Ref: ratings.session > sessions._id
+Ref: ratings.tutor > users._id
+Ref: ratings.ratedBy > users._id
+Ref: ratings.course > courses._id
+Ref: messages.session > sessions._id
+Ref: messages.sender > users._id
+Ref: materials.course > courses._id
+Ref: materials.uploader > users._id
+Ref: notifications.recipient > users._id
+Ref: announcements.author > users._id
+Ref: courses.department > departments.name
+Ref: users.department > departments.name
+
+TableGroup identity {
+  users
+  departments
+  settings
+}
+
+TableGroup academic {
+  courses
+  student_schedules
+  availability
+}
+
+TableGroup tutoring {
+  tutor_profiles
+  sessions
+  ratings
+}
+
+TableGroup communication {
+  messages
+  materials
+  notifications
+  announcements
 }

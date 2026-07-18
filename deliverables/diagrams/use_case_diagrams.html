@@ -8,207 +8,332 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: white;
-            padding: 40px;
+            background: white; padding: 32px 40px 48px;
         }
-        .page-title {
-            font-size: 22px;
-            font-weight: 800;
-            color: #1e293b;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-        .diagram-wrapper {
-            position: relative;
-            width: 1000px;
-            height: 940px;
-            margin: 0 auto;
-        }
-        .system-box {
-            position: absolute;
-            top: 0;
-            left: 105px;
-            right: 105px;
-            bottom: 0;
-            border: 2px solid #1e293b;
-            border-radius: 4px;
-        }
-        .system-label {
-            position: absolute;
-            top: 14px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 18px;
-            font-weight: 800;
-            color: #1e293b;
-        }
-        .actor {
-            position: absolute;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            z-index: 2;
-        }
-        .actor-icon {
-            width: 36px; height: 55px; position: relative;
-        }
-        .actor-icon .head { width: 16px; height: 16px; border-radius: 50%; background: #1e293b; position: absolute; top: 0; left: 50%; transform: translateX(-50%); }
-        .actor-icon .torso { width: 2px; height: 18px; background: #1e293b; position: absolute; top: 16px; left: 50%; transform: translateX(-50%); }
-        .actor-icon .arms { width: 24px; height: 2px; background: #1e293b; position: absolute; top: 24px; left: 50%; transform: translateX(-50%); }
-        .actor-icon .l-leg { width: 2px; height: 16px; background: #1e293b; position: absolute; top: 34px; left: 10px; transform: rotate(12deg); }
-        .actor-icon .r-leg { width: 2px; height: 16px; background: #1e293b; position: absolute; top: 34px; right: 10px; transform: rotate(-12deg); }
-        .actor-label { font-size: 13px; font-weight: 800; color: #1e293b; margin-top: 2px; text-align: center; }
+        .page-title { font-size: 22px; font-weight: 800; color: #1e293b; margin-bottom: 6px; text-align: center; }
+        .caption    { font-size: 13px; font-weight: 500; color: #64748b; text-align: center; margin-bottom: 28px; }
+        svg { display: block; margin: 0 auto; overflow: visible; }
 
-        .uc {
-            position: absolute;
-            border-radius: 50px;
-            padding: 9px 16px;
-            font-size: 13px;
-            font-weight: 600;
-            text-align: center;
-            color: #1e293b;
-            white-space: nowrap;
-            z-index: 1;
-        }
-        .uc-student { background: #c7d2fe; border: 1.5px solid #818cf8; }
-        .uc-tutor { background: #a7f3d0; border: 1.5px solid #34d399; }
-        .uc-admin { background: #fed7aa; border: 1.5px solid #fb923c; }
-        .uc-shared { background: #fbcfe8; border: 1.5px solid #f472b6; }
-
-        svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
-        .ln-s { stroke: #818cf8; stroke-width: 1.2; opacity: 0.55; }
-        .ln-t { stroke: #34d399; stroke-width: 1.2; opacity: 0.55; }
-        .ln-a { stroke: #fb923c; stroke-width: 1.2; opacity: 0.55; }
-
-        .shared-note {
-            position: absolute;
-            font-size: 12px;
-            font-weight: 600;
-            color: #9f1239;
-            font-style: italic;
-            text-align: center;
-        }
-
-        .legend {
-            display: flex; gap: 24px; margin-top: 24px;
-            flex-wrap: wrap; justify-content: center;
-        }
-        .legend-item {
-            display: flex; align-items: center; gap: 6px;
-            font-size: 13px; font-weight: 500; color: #475569;
-        }
-        .legend-swatch { width: 18px; height: 12px; border-radius: 50px; border: 1.5px solid; }
+        /* Legend */
+        .legend { display: flex; flex-wrap: wrap; gap: 8px 28px; justify-content: center; margin-top: 20px; }
+        .li { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 500; color: #475569; }
+        .ls { width: 16px; height: 10px; border-radius: 20px; border: 1.5px solid; }
     </style>
 </head>
 <body>
-    <div class="page-title">Use Case Diagram</div>
+<div class="page-title">Use Case Diagram</div>
+<div class="caption">Acadia — Peer-to-Peer Academic Tutoring Platform</div>
 
-    <div class="diagram-wrapper">
-        <svg>
-            <!-- Tutee lines -->
-            <line class="ln-s" x1="72" y1="250" x2="175" y2="80"/>
-            <line class="ln-s" x1="72" y1="250" x2="175" y2="125"/>
-            <line class="ln-s" x1="72" y1="250" x2="175" y2="170"/>
-            <line class="ln-s" x1="72" y1="250" x2="175" y2="215"/>
-            <line class="ln-s" x1="72" y1="250" x2="175" y2="260"/>
-            <line class="ln-s" x1="72" y1="250" x2="175" y2="305"/>
-            <line class="ln-s" x1="72" y1="250" x2="175" y2="350"/>
-            <line class="ln-s" x1="72" y1="250" x2="175" y2="395"/>
-            <line class="ln-s" x1="72" y1="250" x2="175" y2="440"/>
+<svg id="ucd" width="1140" height="1120" viewBox="0 0 1140 1120">
+<defs>
+    <!-- Arrow marker -->
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="8" refY="3" orient="auto">
+        <path d="M0,0 L0,6 L8,3 z" fill="#94a3b8"/>
+    </marker>
+</defs>
 
-            <!-- Tutor lines -->
-            <line class="ln-t" x1="72" y1="640" x2="175" y2="530"/>
-            <line class="ln-t" x1="72" y1="640" x2="175" y2="575"/>
-            <line class="ln-t" x1="72" y1="640" x2="175" y2="620"/>
-            <line class="ln-t" x1="72" y1="640" x2="175" y2="665"/>
-            <line class="ln-t" x1="72" y1="640" x2="175" y2="710"/>
-            <line class="ln-t" x1="72" y1="640" x2="175" y2="755"/>
+<!-- ═══════════════════════════ SYSTEM BOUNDARY ══════════════════════════ -->
+<rect x="135" y="10" width="870" height="1090" rx="6"
+      fill="none" stroke="#1e293b" stroke-width="2"/>
+<text x="570" y="36" text-anchor="middle" font-size="17" font-weight="800" fill="#1e293b">Acadia System</text>
 
-            <!-- Admin lines -->
-            <line class="ln-a" x1="940" y1="350" x2="820" y2="80"/>
-            <line class="ln-a" x1="940" y1="350" x2="820" y2="125"/>
-            <line class="ln-a" x1="940" y1="350" x2="820" y2="170"/>
-            <line class="ln-a" x1="940" y1="350" x2="820" y2="215"/>
-            <line class="ln-a" x1="940" y1="350" x2="820" y2="260"/>
-            <line class="ln-a" x1="940" y1="350" x2="820" y2="305"/>
-            <line class="ln-a" x1="940" y1="350" x2="820" y2="350"/>
-            <line class="ln-a" x1="940" y1="350" x2="820" y2="395"/>
-            <line class="ln-a" x1="940" y1="350" x2="820" y2="440"/>
-            <line class="ln-a" x1="940" y1="350" x2="820" y2="485"/>
-            <line class="ln-a" x1="940" y1="350" x2="820" y2="530"/>
-        </svg>
+<!-- ════════════════════════════ ACTOR MACRO ═════════════════════════════
+     Stick figure centred at (cx, cy), label below
+-->
+<g id="act-tutee" transform="translate(58,320)">
+    <circle cx="0" cy="-52" r="10" fill="none" stroke="#1e293b" stroke-width="1.8"/>
+    <line x1="0" y1="-42" x2="0" y2="-18" stroke="#1e293b" stroke-width="1.8"/>
+    <line x1="-14" y1="-34" x2="14" y2="-34" stroke="#1e293b" stroke-width="1.8"/>
+    <line x1="0" y1="-18" x2="-10" y2="0" stroke="#1e293b" stroke-width="1.8"/>
+    <line x1="0" y1="-18" x2="10" y2="0" stroke="#1e293b" stroke-width="1.8"/>
+    <text x="0" y="14" text-anchor="middle" font-size="12" font-weight="800" fill="#1e293b">Student</text>
+    <text x="0" y="28" text-anchor="middle" font-size="12" font-weight="800" fill="#1e293b">(Tutee)</text>
+</g>
 
-        <div class="system-box"><div class="system-label">Acadia System</div></div>
+<g id="act-tutor" transform="translate(58,760)">
+    <circle cx="0" cy="-52" r="10" fill="none" stroke="#1e293b" stroke-width="1.8"/>
+    <line x1="0" y1="-42" x2="0" y2="-18" stroke="#1e293b" stroke-width="1.8"/>
+    <line x1="-14" y1="-34" x2="14" y2="-34" stroke="#1e293b" stroke-width="1.8"/>
+    <line x1="0" y1="-18" x2="-10" y2="0" stroke="#1e293b" stroke-width="1.8"/>
+    <line x1="0" y1="-18" x2="10" y2="0" stroke="#1e293b" stroke-width="1.8"/>
+    <text x="0" y="14" text-anchor="middle" font-size="12" font-weight="800" fill="#1e293b">Student</text>
+    <text x="0" y="28" text-anchor="middle" font-size="12" font-weight="800" fill="#1e293b">(Tutor)</text>
+</g>
 
-        <!-- Actors -->
-        <div class="actor" style="left: 28px; top: 205px;">
-            <div class="actor-icon"><div class="head"></div><div class="torso"></div><div class="arms"></div><div class="l-leg"></div><div class="r-leg"></div></div>
-            <div class="actor-label">Student<br>(Tutee)</div>
-        </div>
-        <div class="actor" style="left: 28px; top: 595px;">
-            <div class="actor-icon"><div class="head"></div><div class="torso"></div><div class="arms"></div><div class="l-leg"></div><div class="r-leg"></div></div>
-            <div class="actor-label">Student<br>(Tutor)</div>
-        </div>
-        <div class="actor" style="right: 22px; top: 305px;">
-            <div class="actor-icon"><div class="head"></div><div class="torso"></div><div class="arms"></div><div class="l-leg"></div><div class="r-leg"></div></div>
-            <div class="actor-label">Admin</div>
-        </div>
+<g id="act-admin" transform="translate(1082,530)">
+    <circle cx="0" cy="-52" r="10" fill="none" stroke="#1e293b" stroke-width="1.8"/>
+    <line x1="0" y1="-42" x2="0" y2="-18" stroke="#1e293b" stroke-width="1.8"/>
+    <line x1="-14" y1="-34" x2="14" y2="-34" stroke="#1e293b" stroke-width="1.8"/>
+    <line x1="0" y1="-18" x2="-10" y2="0" stroke="#1e293b" stroke-width="1.8"/>
+    <line x1="0" y1="-18" x2="10" y2="0" stroke="#1e293b" stroke-width="1.8"/>
+    <text x="0" y="14" text-anchor="middle" font-size="12" font-weight="800" fill="#1e293b">Admin</text>
+</g>
 
-        <!-- TUTEE USE CASES -->
-        <div class="uc uc-student" style="left: 145px; top: 70px;">Find Tutor</div>
-        <div class="uc uc-student" style="left: 145px; top: 115px;">View Tutor Profile</div>
-        <div class="uc uc-student" style="left: 145px; top: 160px;">Book Session</div>
-        <div class="uc uc-student" style="left: 145px; top: 205px;">View Timetable Comparison</div>
-        <div class="uc uc-student" style="left: 145px; top: 250px;">Cancel Session</div>
-        <div class="uc uc-student" style="left: 145px; top: 295px;">Rate Tutor</div>
-        <div class="uc uc-student" style="left: 145px; top: 340px;">View My Sessions</div>
-        <div class="uc uc-student" style="left: 145px; top: 385px;">View My Schedule</div>
-        <div class="uc uc-student" style="left: 145px; top: 430px;">Upload Study Load</div>
+<!-- ════════════════════════════ USE CASE HELPER
+     Ellipse + text. We'll position them absolutely in SVG.
+     Tutee  = indigo  fill #e0e7ff  stroke #6366f1
+     Tutor  = green   fill #d1fae5  stroke #10b981
+     Admin  = orange  fill #ffedd5  stroke #f97316
+     Shared = pink    fill #fce7f3  stroke #ec4899
+-->
 
-        <!-- Precondition note -->
-        <div style="position: absolute; left: 145px; top: 470px; font-size: 9px; color: #6366f1; font-style: italic; max-width: 220px;">
-            ⚠ «precondition» Book Session &amp; Apply as Tutor require schedule to be uploaded first
-        </div>
+<!-- ══════════════════ SHARED USE CASES (bottom centre) ══════════════════ -->
+<!-- cx=570, spread evenly, y around 1020-1070 -->
+<g><!-- Login -->
+  <ellipse cx="250" cy="1040" rx="72" ry="18" fill="#fce7f3" stroke="#ec4899" stroke-width="1.5"/>
+  <text x="250" y="1044" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Login</text>
+</g>
+<g><!-- Change Password -->
+  <ellipse cx="410" cy="1040" rx="88" ry="18" fill="#fce7f3" stroke="#ec4899" stroke-width="1.5"/>
+  <text x="410" y="1044" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Change Password</text>
+</g>
+<g><!-- View Dashboard -->
+  <ellipse cx="570" cy="1040" rx="82" ry="18" fill="#fce7f3" stroke="#ec4899" stroke-width="1.5"/>
+  <text x="570" y="1044" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">View Dashboard</text>
+</g>
+<g><!-- View Announcements -->
+  <ellipse cx="748" cy="1040" rx="96" ry="18" fill="#fce7f3" stroke="#ec4899" stroke-width="1.5"/>
+  <text x="748" y="1044" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">View Announcements</text>
+</g>
+<g><!-- View Notifications -->
+  <ellipse cx="920" cy="1040" rx="92" ry="18" fill="#fce7f3" stroke="#ec4899" stroke-width="1.5"/>
+  <text x="920" y="1044" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">View Notifications</text>
+</g>
+<!-- Shared label -->
+<text x="570" y="1082" text-anchor="middle" font-size="10.5" font-style="italic" fill="#9d174d">«shared by all actors»</text>
 
-        <!-- TUTOR USE CASES -->
-        <div class="uc uc-tutor" style="left: 145px; top: 520px;">Apply as Tutor</div>
-        <div class="uc uc-tutor" style="left: 145px; top: 565px;">Upload Grade Slip</div>
-        <div class="uc uc-tutor" style="left: 145px; top: 610px;">View Application Status</div>
-        <div class="uc uc-tutor" style="left: 145px; top: 655px;">Accept / Reject Session</div>
-        <div class="uc uc-tutor" style="left: 145px; top: 700px;">Mark Session Complete</div>
-        <div class="uc uc-tutor" style="left: 145px; top: 745px;">Set Availability Cap</div>
+<!-- Lines: actors to shared -->
+<line x1="58" y1="320" x2="250" y2="1022" stroke="#ec4899" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.45"/>
+<line x1="58" y1="320" x2="410" y2="1022" stroke="#ec4899" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.45"/>
+<line x1="58" y1="320" x2="570" y2="1022" stroke="#ec4899" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.45"/>
+<line x1="58" y1="320" x2="748" y2="1022" stroke="#ec4899" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.45"/>
+<line x1="58" y1="320" x2="920" y2="1022" stroke="#ec4899" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.45"/>
+<line x1="58" y1="760" x2="250" y2="1022" stroke="#ec4899" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.45"/>
+<line x1="58" y1="760" x2="570" y2="1022" stroke="#ec4899" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.45"/>
+<line x1="58" y1="760" x2="748" y2="1022" stroke="#ec4899" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.45"/>
+<line x1="58" y1="760" x2="920" y2="1022" stroke="#ec4899" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.45"/>
+<line x1="1082" y1="530" x2="570" y2="1022" stroke="#ec4899" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.45"/>
+<line x1="1082" y1="530" x2="748" y2="1022" stroke="#ec4899" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.45"/>
+<line x1="1082" y1="530" x2="920" y2="1022" stroke="#ec4899" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.45"/>
 
-        <!-- ADMIN USE CASES -->
-        <div class="uc uc-admin" style="right: 140px; top: 70px;">Manage Students</div>
-        <div class="uc uc-admin" style="right: 140px; top: 115px;">Bulk Import Students (CSV)</div>
-        <div class="uc uc-admin" style="right: 140px; top: 160px;">Manage Courses</div>
-        <div class="uc uc-admin" style="right: 140px; top: 205px;">Input Student Schedule</div>
-        <div class="uc uc-admin" style="right: 140px; top: 250px;">Review Tutor Application</div>
-        <div class="uc uc-admin" style="right: 140px; top: 295px;">Approve / Reject Tutor</div>
-        <div class="uc uc-admin" style="right: 140px; top: 340px;">Manage Announcements</div>
-        <div class="uc uc-admin" style="right: 140px; top: 385px;">Monitor Sessions</div>
-        <div class="uc uc-admin" style="right: 140px; top: 430px;">View Analytics Dashboard</div>
-        <div class="uc uc-admin" style="right: 140px; top: 475px;">Manage Permissions</div>
-        <div class="uc uc-admin" style="right: 140px; top: 520px;">Manage Departments</div>
+<!-- ══════════════════════ TUTEE USE CASES (left column) ══════════════════ -->
+<!-- x=265, y steps of 52 starting at 70 -->
+<g>
+  <ellipse cx="305" cy="80"  rx="110" ry="18" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="305" y="84" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Set Weekly Availability</text>
+</g>
+<g>
+  <ellipse cx="305" cy="132" rx="110" ry="18" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="305" y="136" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Upload Class Schedule (Optional)</text>
+</g>
+<g>
+  <ellipse cx="305" cy="184" rx="110" ry="18" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="305" y="188" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Browse Curriculum-Eligible Courses</text>
+</g>
+<g>
+  <ellipse cx="305" cy="236" rx="110" ry="18" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="305" y="240" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Find &amp; View Tutor Profile</text>
+</g>
+<g>
+  <ellipse cx="305" cy="288" rx="110" ry="18" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="305" y="292" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">View AI Teaching Insights</text>
+</g>
+<g>
+  <ellipse cx="305" cy="340" rx="110" ry="18" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="305" y="344" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Select Conflict-Free Slot</text>
+</g>
+<g>
+  <ellipse cx="305" cy="392" rx="110" ry="18" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="305" y="396" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Submit Session Request</text>
+</g>
+<g>
+  <ellipse cx="305" cy="444" rx="110" ry="18" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="305" y="448" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Cancel Session</text>
+</g>
+<g>
+  <ellipse cx="305" cy="496" rx="110" ry="18" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="305" y="500" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">View My Sessions</text>
+</g>
+<g>
+  <ellipse cx="305" cy="548" rx="110" ry="18" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="305" y="552" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Rate Tutor (1–5 Stars + Comment)</text>
+</g>
+<g>
+  <ellipse cx="305" cy="600" rx="110" ry="18" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="305" y="604" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Browse &amp; Download Learning Materials</text>
+</g>
+<g>
+  <ellipse cx="305" cy="652" rx="110" ry="18" fill="#e0e7ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="305" y="656" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">View Student Analytics Dashboard</text>
+</g>
 
-        <!-- SHARED USE CASES (center bottom, no connecting lines — labeled instead) -->
-        <div class="uc uc-shared" style="left: 280px; top: 820px;">Login</div>
-        <div class="uc uc-shared" style="left: 380px; top: 820px;">Change Password</div>
-        <div class="uc uc-shared" style="left: 540px; top: 820px;">View Dashboard</div>
-        <div class="uc uc-shared" style="left: 260px; top: 870px;">View Announcements</div>
-        <div class="uc uc-shared" style="left: 450px; top: 870px;">View Notifications</div>
+<!-- Tutee lines -->
+<line x1="58" y1="320" x2="195" y2="80"  stroke="#6366f1" stroke-width="1" opacity="0.5"/>
+<line x1="58" y1="320" x2="195" y2="132" stroke="#6366f1" stroke-width="1" opacity="0.5"/>
+<line x1="58" y1="320" x2="195" y2="184" stroke="#6366f1" stroke-width="1" opacity="0.5"/>
+<line x1="58" y1="320" x2="195" y2="236" stroke="#6366f1" stroke-width="1" opacity="0.5"/>
+<line x1="58" y1="320" x2="195" y2="288" stroke="#6366f1" stroke-width="1" opacity="0.5"/>
+<line x1="58" y1="320" x2="195" y2="340" stroke="#6366f1" stroke-width="1" opacity="0.5"/>
+<line x1="58" y1="320" x2="195" y2="392" stroke="#6366f1" stroke-width="1" opacity="0.5"/>
+<line x1="58" y1="320" x2="195" y2="444" stroke="#6366f1" stroke-width="1" opacity="0.5"/>
+<line x1="58" y1="320" x2="195" y2="496" stroke="#6366f1" stroke-width="1" opacity="0.5"/>
+<line x1="58" y1="320" x2="195" y2="548" stroke="#6366f1" stroke-width="1" opacity="0.5"/>
+<line x1="58" y1="320" x2="195" y2="600" stroke="#6366f1" stroke-width="1" opacity="0.5"/>
+<line x1="58" y1="320" x2="195" y2="652" stroke="#6366f1" stroke-width="1" opacity="0.5"/>
 
-        <div class="shared-note" style="left: 350px; top: 795px;">↕ Shared by all actors (Tutee, Tutor, Admin)</div>
-    </div>
+<!-- ══════════════════════ TUTOR USE CASES (left column, lower) ═══════════ -->
+<!-- x=305, y starting at 704 -->
+<g>
+  <ellipse cx="305" cy="704" rx="110" ry="18" fill="#d1fae5" stroke="#10b981" stroke-width="1.5"/>
+  <text x="305" y="708" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Apply as Tutor (Rec. Letter Upload)</text>
+</g>
+<g>
+  <ellipse cx="305" cy="756" rx="110" ry="18" fill="#d1fae5" stroke="#10b981" stroke-width="1.5"/>
+  <text x="305" y="760" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">View Application Status</text>
+</g>
+<g>
+  <ellipse cx="305" cy="808" rx="110" ry="18" fill="#d1fae5" stroke="#10b981" stroke-width="1.5"/>
+  <text x="305" y="812" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Accept / Reject Session Request</text>
+</g>
+<g>
+  <ellipse cx="305" cy="860" rx="110" ry="18" fill="#d1fae5" stroke="#10b981" stroke-width="1.5"/>
+  <text x="305" y="864" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Mark Session as Completed</text>
+</g>
+<g>
+  <ellipse cx="305" cy="912" rx="110" ry="18" fill="#d1fae5" stroke="#10b981" stroke-width="1.5"/>
+  <text x="305" y="916" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Upload Learning Materials</text>
+</g>
+<g>
+  <ellipse cx="305" cy="964" rx="110" ry="18" fill="#d1fae5" stroke="#10b981" stroke-width="1.5"/>
+  <text x="305" y="968" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">View Tutor Dashboard Stats</text>
+</g>
 
-    <!-- Legend -->
-    <div class="legend">
-        <div class="legend-item"><div class="legend-swatch" style="background: #c7d2fe; border-color: #818cf8;"></div>Tutee Use Cases (9)</div>
-        <div class="legend-item"><div class="legend-swatch" style="background: #a7f3d0; border-color: #34d399;"></div>Tutor Use Cases (6)</div>
-        <div class="legend-item"><div class="legend-swatch" style="background: #fed7aa; border-color: #fb923c;"></div>Admin Use Cases (11)</div>
-        <div class="legend-item"><div class="legend-swatch" style="background: #fbcfe8; border-color: #f472b6;"></div>Shared Use Cases — All Actors (5)</div>
-    </div>
+<!-- Tutor lines -->
+<line x1="58" y1="760" x2="195" y2="704" stroke="#10b981" stroke-width="1" opacity="0.5"/>
+<line x1="58" y1="760" x2="195" y2="756" stroke="#10b981" stroke-width="1" opacity="0.5"/>
+<line x1="58" y1="760" x2="195" y2="808" stroke="#10b981" stroke-width="1" opacity="0.5"/>
+<line x1="58" y1="760" x2="195" y2="860" stroke="#10b981" stroke-width="1" opacity="0.5"/>
+<line x1="58" y1="760" x2="195" y2="912" stroke="#10b981" stroke-width="1" opacity="0.5"/>
+<line x1="58" y1="760" x2="195" y2="964" stroke="#10b981" stroke-width="1" opacity="0.5"/>
 
-    <p style="text-align: center; margin-top: 20px; font-size: 14px; font-weight: 500; font-style: italic; color: #64748b;">Figure: Acadia Use Case Diagram</p>
+<!-- Shared by both students: In-App Messaging & Jitsi -->
+<g>
+  <ellipse cx="490" cy="704" rx="110" ry="18" fill="#d1fae5" stroke="#10b981" stroke-width="1.5"/>
+  <text x="490" y="708" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Send / Receive In-App Messages</text>
+</g>
+<g>
+  <ellipse cx="490" cy="756" rx="110" ry="18" fill="#d1fae5" stroke="#10b981" stroke-width="1.5"/>
+  <text x="490" y="760" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Join Video Session (Jitsi Meet)</text>
+</g>
+<g>
+  <ellipse cx="490" cy="808" rx="110" ry="18" fill="#d1fae5" stroke="#10b981" stroke-width="1.5"/>
+  <text x="490" y="812" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Share Recording Link in Chat</text>
+</g>
+<text x="490" y="840" text-anchor="middle" font-size="9.5" font-style="italic" fill="#065f46">«shared: Tutee + Tutor»</text>
+
+<!-- Lines tutee → shared session features -->
+<line x1="58" y1="320" x2="380" y2="704" stroke="#10b981" stroke-width="1" stroke-dasharray="3,3" opacity="0.4"/>
+<line x1="58" y1="320" x2="380" y2="756" stroke="#10b981" stroke-width="1" stroke-dasharray="3,3" opacity="0.4"/>
+<line x1="58" y1="320" x2="380" y2="808" stroke="#10b981" stroke-width="1" stroke-dasharray="3,3" opacity="0.4"/>
+<!-- Lines tutor → shared session features -->
+<line x1="58" y1="760" x2="380" y2="704" stroke="#10b981" stroke-width="1" opacity="0.5"/>
+<line x1="58" y1="760" x2="380" y2="756" stroke="#10b981" stroke-width="1" opacity="0.5"/>
+<line x1="58" y1="760" x2="380" y2="808" stroke="#10b981" stroke-width="1" opacity="0.5"/>
+
+<!-- ══════════════════════ ADMIN USE CASES (right column) ═════════════════ -->
+<!-- cx=840, y steps of 48 starting at 70 -->
+<g>
+  <ellipse cx="840" cy="80"  rx="110" ry="18" fill="#ffedd5" stroke="#f97316" stroke-width="1.5"/>
+  <text x="840" y="84"  text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Manage User Accounts</text>
+</g>
+<g>
+  <ellipse cx="840" cy="132" rx="110" ry="18" fill="#ffedd5" stroke="#f97316" stroke-width="1.5"/>
+  <text x="840" y="136" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Bulk Import Students (CSV)</text>
+</g>
+<g>
+  <ellipse cx="840" cy="184" rx="110" ry="18" fill="#ffedd5" stroke="#f97316" stroke-width="1.5"/>
+  <text x="840" y="188" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Manage Academic Progression</text>
+</g>
+<g>
+  <ellipse cx="840" cy="236" rx="110" ry="18" fill="#ffedd5" stroke="#f97316" stroke-width="1.5"/>
+  <text x="840" y="240" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Manage Courses &amp; Departments</text>
+</g>
+<g>
+  <ellipse cx="840" cy="288" rx="110" ry="18" fill="#ffedd5" stroke="#f97316" stroke-width="1.5"/>
+  <text x="840" y="292" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Manage Admin Permissions</text>
+</g>
+<g>
+  <ellipse cx="840" cy="340" rx="110" ry="18" fill="#ffedd5" stroke="#f97316" stroke-width="1.5"/>
+  <text x="840" y="344" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Update Global Settings</text>
+</g>
+<g>
+  <ellipse cx="840" cy="392" rx="110" ry="18" fill="#ffedd5" stroke="#f97316" stroke-width="1.5"/>
+  <text x="840" y="396" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Review Tutor Application</text>
+</g>
+<g>
+  <ellipse cx="840" cy="444" rx="110" ry="18" fill="#ffedd5" stroke="#f97316" stroke-width="1.5"/>
+  <text x="840" y="448" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">View Rec. Letter (Re-Auth Gate)</text>
+</g>
+<g>
+  <ellipse cx="840" cy="496" rx="110" ry="18" fill="#ffedd5" stroke="#f97316" stroke-width="1.5"/>
+  <text x="840" y="500" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Approve / Reject / Request Resubmission</text>
+</g>
+<g>
+  <ellipse cx="840" cy="548" rx="110" ry="18" fill="#ffedd5" stroke="#f97316" stroke-width="1.5"/>
+  <text x="840" y="552" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Submit ML Correction (Retraining)</text>
+</g>
+<g>
+  <ellipse cx="840" cy="600" rx="110" ry="18" fill="#ffedd5" stroke="#f97316" stroke-width="1.5"/>
+  <text x="840" y="604" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Monitor &amp; Manage All Sessions</text>
+</g>
+<g>
+  <ellipse cx="840" cy="652" rx="110" ry="18" fill="#ffedd5" stroke="#f97316" stroke-width="1.5"/>
+  <text x="840" y="656" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Manage Announcements</text>
+</g>
+<g>
+  <ellipse cx="840" cy="704" rx="110" ry="18" fill="#ffedd5" stroke="#f97316" stroke-width="1.5"/>
+  <text x="840" y="708" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Moderate Learning Materials</text>
+</g>
+<g>
+  <ellipse cx="840" cy="756" rx="110" ry="18" fill="#ffedd5" stroke="#f97316" stroke-width="1.5"/>
+  <text x="840" y="760" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">View Admin Analytics Dashboard</text>
+</g>
+<g>
+  <ellipse cx="840" cy="808" rx="110" ry="18" fill="#ffedd5" stroke="#f97316" stroke-width="1.5"/>
+  <text x="840" y="812" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Set Student Class Schedule</text>
+</g>
+<g>
+  <ellipse cx="840" cy="860" rx="110" ry="18" fill="#ffedd5" stroke="#f97316" stroke-width="1.5"/>
+  <text x="840" y="864" text-anchor="middle" font-size="11" font-weight="600" fill="#1e293b">Bulk Enroll Students (Schedule Template)</text>
+</g>
+
+<!-- Admin lines -->
+<line x1="1082" y1="530" x2="950" y2="80"  stroke="#f97316" stroke-width="1" opacity="0.45"/>
+<line x1="1082" y1="530" x2="950" y2="132" stroke="#f97316" stroke-width="1" opacity="0.45"/>
+<line x1="1082" y1="530" x2="950" y2="184" stroke="#f97316" stroke-width="1" opacity="0.45"/>
+<line x1="1082" y1="530" x2="950" y2="236" stroke="#f97316" stroke-width="1" opacity="0.45"/>
+<line x1="1082" y1="530" x2="950" y2="288" stroke="#f97316" stroke-width="1" opacity="0.45"/>
+<line x1="1082" y1="530" x2="950" y2="340" stroke="#f97316" stroke-width="1" opacity="0.45"/>
+<line x1="1082" y1="530" x2="950" y2="392" stroke="#f97316" stroke-width="1" opacity="0.45"/>
+<line x1="1082" y1="530" x2="950" y2="444" stroke="#f97316" stroke-width="1" opacity="0.45"/>
+<line x1="1082" y1="530" x2="950" y2="496" stroke="#f97316" stroke-width="1" opacity="0.45"/>
+<line x1="1082" y1="530" x2="950" y2="548" stroke="#f97316" stroke-width="1" opacity="0.45"/>
+<line x1="1082" y1="530" x2="950" y2="600" stroke="#f97316" stroke-width="1" opacity="0.45"/>
+<line x1="1082" y1="530" x2="950" y2="652" stroke="#f97316" stroke-width="1" opacity="0.45"/>
+<line x1="1082" y1="530" x2="950" y2="704" stroke="#f97316" stroke-width="1" opacity="0.45"/>
+<line x1="1082" y1="530" x2="950" y2="756" stroke="#f97316" stroke-width="1" opacity="0.45"/>
+<line x1="1082" y1="530" x2="950" y2="808" stroke="#f97316" stroke-width="1" opacity="0.45"/>
+<line x1="1082" y1="530" x2="950" y2="860" stroke="#f97316" stroke-width="1" opacity="0.45"/>
+
+</svg><!-- end SVG -->
+
+<!-- Legend -->
+<div class="legend">
+    <div class="li"><div class="ls" style="background:#e0e7ff;border-color:#6366f1;"></div>Student (Tutee) — 12 use cases</div>
+    <div class="li"><div class="ls" style="background:#d1fae5;border-color:#10b981;"></div>Student (Tutor) — 9 use cases (incl. 3 shared with Tutee)</div>
+    <div class="li"><div class="ls" style="background:#ffedd5;border-color:#f97316;"></div>Admin — 16 use cases</div>
+    <div class="li"><div class="ls" style="background:#fce7f3;border-color:#ec4899;"></div>Shared by All Actors — 5 use cases</div>
+</div>
+<p style="text-align:center;margin-top:16px;font-size:13px;font-style:italic;color:#64748b;">Figure: Acadia Use Case Diagram</p>
 </body>
 </html>

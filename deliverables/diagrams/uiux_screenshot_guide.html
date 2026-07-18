@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acadia — UI/UX Screenshot Guide</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8fafc; padding: 40px 44px 64px; color: #1e293b;
+        }
+        h1 { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+        .subtitle { font-size: 13px; color: #64748b; margin-bottom: 36px; }
+
+        .section { margin-bottom: 40px; }
+        .section-title {
+            font-size: 14px; font-weight: 800; color: white;
+            background: #1e3a5f; padding: 7px 16px; border-radius: 5px;
+            margin-bottom: 14px; display: inline-block;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 12px;
+        }
+        .card {
+            background: white; border: 1.5px solid #e2e8f0;
+            border-radius: 8px; overflow: hidden;
+        }
+        .card-header {
+            display: flex; align-items: center; gap: 8px;
+            padding: 9px 13px; border-bottom: 1px solid #f1f5f9;
+        }
+        .num {
+            background: #1e3a5f; color: white; font-size: 10px;
+            font-weight: 800; border-radius: 4px; padding: 2px 7px; flex-shrink: 0;
+        }
+        .sname { font-size: 12.5px; font-weight: 700; color: #1e293b; }
+        .rb {
+            margin-left: auto; flex-shrink: 0; font-size: 10px; font-weight: 700;
+            padding: 2px 8px; border-radius: 20px;
+        }
+        .rb-s { background: #e0e7ff; color: #3730a3; }
+        .rb-t { background: #d1fae5; color: #065f46; }
+        .rb-a { background: #ffedd5; color: #9a3412; }
+        .rb-sh{ background: #fce7f3; color: #9d174d; }
+
+        .ph {
+            width: 100%; height: 130px; background: #f1f5f9;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; gap: 5px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .ph-icon { font-size: 26px; opacity: 0.3; }
+        .ph-text { font-size: 9.5px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .route { font-size: 9px; color: #6366f1; font-family: monospace; background: #eef2ff; padding: 1px 6px; border-radius: 3px; }
+
+        .cb { padding: 9px 13px 11px; }
+        .desc { font-size: 11px; color: #475569; line-height: 1.5; margin-bottom: 7px; }
+        .el-label { font-size: 9.5px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+        .els { display: flex; flex-wrap: wrap; gap: 3px; }
+        .el { font-size: 9.5px; font-weight: 600; color: #334155; background: #f8fafc; border: 1px solid #e2e8f0; padding: 2px 6px; border-radius: 20px; }
+        .note { font-size: 10px; color: #7c3aed; background: #f5f3ff; border-left: 3px solid #7c3aed; padding: 4px 8px; border-radius: 0 4px 4px 0; margin-top: 7px; line-height: 1.4; }
+
+        /* checklist */
+        .checklist {
+            background: white; border: 1.5px solid #e2e8f0; border-radius: 8px;
+            padding: 18px 22px;
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px 20px;
+            font-size: 11.5px; font-weight: 500; color: #334155;
+        }
+        .cl-section {
+            grid-column: 1 / -1; font-size: 11px; font-weight: 800;
+            color: #1e3a5f; margin-top: 10px; padding-top: 8px;
+            border-top: 1px solid #f1f5f9;
+        }
+        .cl-section:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+    </style>
+</head>
+<body>
+<h1>Acadia — UI/UX Screenshot Guide</h1>
+<div class="subtitle">Complete reference for all screens, modals, tabs, and UI states. 42 screenshot entries across all roles.</div>
+
+<!-- ═══ SECTION 1: AUTH ═══ -->
+<div class="section">
+<div class="section-title">1 · Authentication</div>
+<div class="card-grid">
+
+<div class="card">
+  <div class="card-header"><span class="num">01</span><span class="sname">Login Page — Full View</span><span class="rb rb-sh">All Users</span></div>
+  <div class="ph"><div class="ph-icon">🔐</div><div class="ph-text">Screenshot here</div><div class="route">/login</div></div>
+  <div class="cb">
+    <div class="desc">Full-screen split layout. Left: 3D cinematic background, rotating tagline, 4 feature cards, animated stat counters (200+ students, 50+ tutors, 500+ sessions). Right: login form.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">3D cinematic background</span><span class="el">Rotating tagline</span><span class="el">Feature cards</span><span class="el">Animated counters</span><span class="el">Student ID / Email input</span><span class="el">Password + show/hide toggle</span><span class="el">Sign In button</span></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">02</span><span class="sname">Login — Demo Credentials Dropdown</span><span class="rb rb-sh">All Users</span></div>
+  <div class="ph"><div class="ph-icon">🔽</div><div class="ph-text">Screenshot here</div><div class="route">/login → Demo dropdown open</div></div>
+  <div class="cb">
+    <div class="desc">Demo credentials dropdown showing grouped accounts by role (Admin, 1st Year Student, Tutor, etc.) that auto-fill the login form on selection.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Dropdown open state</span><span class="el">Role groups</span><span class="el">Account entries</span></div>
+    <div class="note">📸 Expand the dropdown so all demo account groups are visible.</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">03</span><span class="sname">Login — Error / Lockout State</span><span class="rb rb-sh">All Users</span></div>
+  <div class="ph"><div class="ph-icon">⚠️</div><div class="ph-text">Screenshot here</div><div class="route">/login → failed attempt</div></div>
+  <div class="cb">
+    <div class="desc">Red error banner with shake animation showing "Invalid ID or password. X attempt(s) remaining." or lockout countdown timer when rate-limited.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Red error banner</span><span class="el">Attempts remaining</span><span class="el">Countdown timer (lockout)</span></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">04</span><span class="sname">Change Password Page</span><span class="rb rb-sh">All Users</span></div>
+  <div class="ph"><div class="ph-icon">🔑</div><div class="ph-text">Screenshot here</div><div class="route">/change-password</div></div>
+  <div class="cb">
+    <div class="desc">Forced on first login. Student must change default password (last 3 digits of Student ID) before accessing any other page.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Current password</span><span class="el">New password</span><span class="el">Confirm password</span><span class="el">Submit button</span><span class="el">Validation error state</span></div>
+  </div>
+</div>
+
+</div></div>
+
+<!-- ═══ SECTION 2: PERSISTENT UI ═══ -->
+<div class="section">
+<div class="section-title">2 · Persistent UI (All Authenticated Pages)</div>
+<div class="card-grid">
+
+<div class="card">
+  <div class="card-header"><span class="num">05</span><span class="sname">Sidebar — Expanded &amp; Collapsed</span><span class="rb rb-sh">All Users</span></div>
+  <div class="ph"><div class="ph-icon">☰</div><div class="ph-text">Screenshot here</div><div class="route">All pages — sidebar</div></div>
+  <div class="cb">
+    <div class="desc">Collapsible sidebar. Expanded: full labels + icons + red count badges. Collapsed (icon-only): just icons. Mobile: overlay drawer.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Expanded state</span><span class="el">Collapsed state</span><span class="el">Red badge counts</span><span class="el">User avatar + name + role</span><span class="el">Sign Out button</span></div>
+    <div class="note">📸 Show both expanded and collapsed side by side or as two separate shots.</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">06</span><span class="sname">Topbar + Notification Bell</span><span class="rb rb-sh">All Users</span></div>
+  <div class="ph"><div class="ph-icon">🔔</div><div class="ph-text">Screenshot here</div><div class="route">All pages — topbar</div></div>
+  <div class="cb">
+    <div class="desc">Top bar with live clock, sound toggle, dark/light theme toggle, and notification bell with unread count. Bell dropdown shows recent notifications with emoji icons, timestamps, mark-read and delete actions.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Bell with unread badge</span><span class="el">Notification dropdown open</span><span class="el">Mark all read button</span><span class="el">Per-notification actions</span><span class="el">Dark mode toggle</span><span class="el">Sound toggle</span></div>
+    <div class="note">📸 Show bell with unread count AND the dropdown panel open with several notification types visible.</div>
+  </div>
+</div>
+
+</div></div>
+
+<!-- ═══ SECTION 3: STUDENT DASHBOARD & SETUP ═══ -->
+<div class="section">
+<div class="section-title">3 · Student — Dashboard &amp; Setup</div>
+<div class="card-grid">
+
+<div class="card">
+  <div class="card-header"><span class="num">07</span><span class="sname">Student Dashboard</span><span class="rb rb-s">Student</span></div>
+  <div class="ph"><div class="ph-icon">🏠</div><div class="ph-text">Screenshot here</div><div class="route">/student</div></div>
+  <div class="cb">
+    <div class="desc">Main landing page. Shows 4 stat cards, quick action cards (Find a Tutor, Become a Tutor), upcoming sessions list, and announcements preview.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">4 stat cards</span><span class="el">Quick action cards</span><span class="el">Upcoming sessions list</span><span class="el">Announcements preview</span></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">08</span><span class="sname">Availability — Interactive Grid</span><span class="rb rb-s">Student</span></div>
+  <div class="ph"><div class="ph-icon">📅</div><div class="ph-text">Screenshot here</div><div class="route">/student/my-availability</div></div>
+  <div class="cb">
+    <div class="desc">Click-and-drag weekly availability grid (Mon–Sat, 7AM–9PM, 30-min slots). Green = available. Left-click adds, right-click removes. Summary bar shows days set.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Drag grid with green slots filled</span><span class="el">Save Availability button (unsaved state)</span><span class="el">Clear All button</span><span class="el">Per-day clear buttons</span><span class="el">Summary bar (X days set)</span><span class="el">Color legend</span></div>
+    <div class="note">📸 Show grid with several availability slots already set so the green cells are clearly visible.</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">09</span><span class="sname">Availability — Schedule Upload Panel</span><span class="rb rb-s">Student</span></div>
+  <div class="ph"><div class="ph-icon">📤</div><div class="ph-text">Screenshot here</div><div class="route">/student/my-availability → import panel open</div></div>
+  <div class="cb">
+    <div class="desc">Collapsible import panel. Student uploads a class schedule PDF to generate suggested free slots. File is deleted immediately after processing — privacy note shown.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Upload Schedule PDF button</span><span class="el">Processing spinner state</span><span class="el">Suggested availability preview (Apply / Discard)</span><span class="el">Privacy confirmation text</span></div>
+    <div class="note">📸 Capture both: (a) the import panel open before upload, and (b) the suggested availability preview after processing.</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">10</span><span class="sname">Student Analytics</span><span class="rb rb-s">Student</span></div>
+  <div class="ph"><div class="ph-icon">📊</div><div class="ph-text">Screenshot here</div><div class="route">/student/my-analytics</div></div>
+  <div class="cb">
+    <div class="desc">Personal tutoring stats for the tutee: session counts, attendance rate ring gauge, monthly trend chart, venue preference bars, status breakdown, sessions by course, recent sessions.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Stat cards</span><span class="el">Monthly bar chart (6 months)</span><span class="el">Attendance ring gauge (SVG)</span><span class="el">Venue preference bars</span><span class="el">Status breakdown boxes</span><span class="el">Sessions by course (progress bars)</span><span class="el">Recent completed sessions</span></div>
+  </div>
+</div>
+
+</div></div>
+
+<!-- ═══ SECTION 4: FIND TUTOR & BOOKING ═══ -->
+<div class="section">
+<div class="section-title">4 · Student — Find Tutor &amp; Book Session</div>
+<div class="card-grid">
+
+<div class="card">
+  <div class="card-header"><span class="num">11</span><span class="sname">Find Tutor — Course Selection</span><span class="rb rb-s">Student</span></div>
+  <div class="ph"><div class="ph-icon">🔍</div><div class="ph-text">Screenshot here</div><div class="route">/student/find-tutor</div></div>
+  <div class="cb">
+    <div class="desc">Course browser showing curriculum-eligible courses grouped by year level in accordion sections. Search filters by course name/code.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Course search input</span><span class="el">Year-level accordions (open/closed)</span><span class="el">Course count badges</span><span class="el">Selected course (green highlight)</span><span class="el">No course selected empty state</span></div>
+    <div class="note">📸 Show at least one accordion open with course cards visible and one course selected.</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">12</span><span class="sname">Find Tutor — Tutor Cards + AI Insights</span><span class="rb rb-s">Student</span></div>
+  <div class="ph"><div class="ph-icon">👨‍🏫</div><div class="ph-text">Screenshot here</div><div class="route">/student/find-tutor → course selected</div></div>
+  <div class="cb">
+    <div class="desc">Ranked tutor cards showing competency score, avg rating, recommendation %, sessions count, reliability %, available slots, and ML teaching insights (strengths/improvement tags).</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Competency score badge</span><span class="el">Star rating display</span><span class="el">Recommendation % bar</span><span class="el">Reliability %</span><span class="el">Available slots count</span><span class="el">AI Insights section (strength tags)</span><span class="el">Book a Session button</span><span class="el">Unavailable badge (capped tutor)</span></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">13</span><span class="sname">Booking Panel — Date Picker</span><span class="rb rb-s">Student</span></div>
+  <div class="ph"><div class="ph-icon">📆</div><div class="ph-text">Screenshot here</div><div class="route">/student/find-tutor → Book → Date step</div></div>
+  <div class="cb">
+    <div class="desc">Right-edge slide-out booking drawer. Mini calendar with month navigation; Sundays and Philippine holidays disabled/greyed with holiday dot indicators and name tooltip.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Slide-out drawer panel</span><span class="el">Mini calendar</span><span class="el">Month prev/next navigation</span><span class="el">Holiday dots + tooltip</span><span class="el">Sunday / holiday disabled state</span><span class="el">Holiday legend</span></div>
+    <div class="note">📸 Try to show a month that has a Philippine holiday so the disabled holiday date is visible.</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">14</span><span class="sname">Booking Panel — Conflict-Free Slots</span><span class="rb rb-s">Student</span></div>
+  <div class="ph"><div class="ph-icon">⏰</div><div class="ph-text">Screenshot here</div><div class="route">/student/find-tutor → Book → Slot step</div></div>
+  <div class="cb">
+    <div class="desc">After a date is selected, the system generates and displays only conflict-free time slots for both the student and the tutor. 3-column button grid.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Date selected header</span><span class="el">Time slot buttons grid</span><span class="el">Selected slot highlight</span><span class="el">Loading state (generating slots)</span><span class="el">Empty state (no slots available)</span></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">15</span><span class="sname">Booking Panel — Venue &amp; Confirm</span><span class="rb rb-s">Student</span></div>
+  <div class="ph"><div class="ph-icon">📋</div><div class="ph-text">Screenshot here</div><div class="route">/student/find-tutor → Book → Confirm step</div></div>
+  <div class="cb">
+    <div class="desc">After slot selection, venue form animates in. On Campus / Online toggle, venue/link input, notes textarea, and final Confirm Session button.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">On Campus / Online toggle</span><span class="el">Venue / link input</span><span class="el">Notes textarea</span><span class="el">Confirm Session button + loading state</span><span class="el">Success / error toast</span></div>
+  </div>
+</div>
+
+</div></div>
+
+<!-- ═══ SECTION 5: MY SESSIONS ═══ -->
+<div class="section">
+<div class="section-title">5 · Student — My Sessions</div>
+<div class="card-grid">
+
+<div class="card">
+  <div class="card-header"><span class="num">16</span><span class="sname">My Sessions — Pending Tab</span><span class="rb rb-s">Student</span></div>
+  <div class="ph"><div class="ph-icon">⏳</div><div class="ph-text">Screenshot here</div><div class="route">/student/my-sessions → Pending</div></div>
+  <div class="cb">
+    <div class="desc">Pending sessions. Tutee sees "Awaiting tutor" label + Cancel button. Tutor sees Accept ✓ and Decline ✗ buttons.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Pending session card</span><span class="el">Accept / Decline buttons (tutor view)</span><span class="el">Awaiting label (tutee view)</span><span class="el">Cancel button</span><span class="el">Tab count badge</span></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">17</span><span class="sname">My Sessions — Scheduled Tab</span><span class="rb rb-s">Student</span></div>
+  <div class="ph"><div class="ph-icon">✅</div><div class="ph-text">Screenshot here</div><div class="route">/student/my-sessions → Upcoming</div></div>
+  <div class="cb">
+    <div class="desc">Accepted/scheduled sessions. Shows Chat, Video (online only), Complete (tutor), and Cancel buttons. Role badge ("You're the tutor") shown for tutor view.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Scheduled session card</span><span class="el">Chat 💬 button</span><span class="el">Video 📹 button (online)</span><span class="el">Complete ✓ button (tutor)</span><span class="el">Cancel ✗ button</span><span class="el">"You're the tutor" badge</span></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">18</span><span class="sname">My Sessions — Completed Tab + Rate Tutor</span><span class="rb rb-s">Student</span></div>
+  <div class="ph"><div class="ph-icon">⭐</div><div class="ph-text">Screenshot here</div><div class="route">/student/my-sessions → Completed → Rate modal</div></div>
+  <div class="cb">
+    <div class="desc">Completed sessions with Rate Tutor button (unrated) or ✓ Rated label (already rated). Rate Tutor modal: session summary, 5-star interactive picker, comment textarea.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Rate Tutor ⭐ button</span><span class="el">✓ Rated label</span><span class="el">Rating modal — star picker</span><span class="el">Comment textarea</span><span class="el">Submit Rating button</span></div>
+    <div class="note">📸 Capture with the rate modal open and stars partially selected.</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">19</span><span class="sname">Decline / Cancel Session Modal</span><span class="rb rb-s">Student</span></div>
+  <div class="ph"><div class="ph-icon">❌</div><div class="ph-text">Screenshot here</div><div class="route">/student/my-sessions → Decline or Cancel</div></div>
+  <div class="cb">
+    <div class="desc">Confirmation modal for declining (tutor) or cancelling (either party) a session. Shows session summary and requires a reason textarea before confirming.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Session summary card in modal</span><span class="el">Reason textarea</span><span class="el">Decline / Cancel confirm button</span></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">20</span><span class="sname">Session Chat</span><span class="rb rb-sh">Tutee + Tutor</span></div>
+  <div class="ph"><div class="ph-icon">💬</div><div class="ph-text">Screenshot here</div><div class="route">/student/my-sessions → Chat panel</div></div>
+  <div class="cb">
+    <div class="desc">In-app messaging modal scoped to one session. Shows chat bubbles (mine right/theirs left), recording link messages (purple style), input bar. Auto-locks when session ends.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Message thread with bubbles</span><span class="el">Recording link message (purple)</span><span class="el">Message input + send button</span><span class="el">Locked state banner (session ended)</span><span class="el">Participant header</span></div>
+    <div class="note">📸 Capture: (a) active chat with messages, and (b) locked state banner after session ended.</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">21</span><span class="sname">Video Session Room (Jitsi)</span><span class="rb rb-sh">Tutee + Tutor</span></div>
+  <div class="ph"><div class="ph-icon">📹</div><div class="ph-text">Screenshot here</div><div class="route">/student/my-sessions → Video overlay</div></div>
+  <div class="cb">
+    <div class="desc">Full-screen portal overlay. Auto-opens Jitsi in a new tab. Shows room name, "Video session opened" banner, Rejoin, Copy Link, Share Recording Link section, and End Session button.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Room display name + code</span><span class="el">Video opened success banner</span><span class="el">Rejoin button</span><span class="el">Copy Link button</span><span class="el">Share Recording Link input + Share button</span><span class="el">End Session button</span></div>
+  </div>
+</div>
+
+</div></div>
+
+<!-- ═══ SECTION 6: TUTOR ROLE ═══ -->
+<div class="section">
+<div class="section-title">6 · Student — Tutor Role</div>
+<div class="card-grid">
+
+<div class="card">
+  <div class="card-header"><span class="num">22</span><span class="sname">Become a Tutor — Blocked (No Availability)</span><span class="rb rb-t">Tutor</span></div>
+  <div class="ph"><div class="ph-icon">⚠️</div><div class="ph-text">Screenshot here</div><div class="route">/student/become-tutor (no availability set)</div></div>
+  <div class="cb">
+    <div class="desc">When student has no availability set, the application form is hidden and an amber warning banner blocks the page with a link to set availability first.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Amber "Availability Required" banner</span><span class="el">Set availability link</span><span class="el">Hidden form state</span></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">23</span><span class="sname">Become a Tutor — Application Form</span><span class="rb rb-t">Tutor</span></div>
+  <div class="ph"><div class="ph-icon">🎓</div><div class="ph-text">Screenshot here</div><div class="route">/student/become-tutor (availability set)</div></div>
+  <div class="cb">
+    <div class="desc">Two-column layout. Left: course selector (grouped by year), requirement guidelines card, PDF upload dropzone. Right: submitted applications list with status badges and PipelineTracker.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Course dropdown (grouped)</span><span class="el">Requirement guidelines card</span><span class="el">PDF dropzone (default + file selected)</span><span class="el">Submit Application button</span><span class="el">Application cards with status badges</span><span class="el">PipelineTracker steps</span><span class="el">ConfidenceBadge</span></div>
+    <div class="note">📸 Capture: (a) form with file selected in dropzone, (b) applications list showing different statuses (pending, approved, rejected).</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">24</span><span class="sname">Tutor Dashboard</span><span class="rb rb-t">Tutor</span></div>
+  <div class="ph"><div class="ph-icon">📈</div><div class="ph-text">Screenshot here</div><div class="route">/student/tutor-dashboard</div></div>
+  <div class="cb">
+    <div class="desc">Tutor-only stats: avg rating, completed sessions, completion rate, available this week. Rating star distribution bars, per-course breakdown, session summary, and recent feedback cards.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">4 stat cards</span><span class="el">Rating distribution bars (5→1 stars)</span><span class="el">Per-course breakdown table</span><span class="el">Session summary breakdown</span><span class="el">Recent feedback cards with stars + comments</span></div>
+  </div>
+</div>
+
+</div></div>
+
+<!-- ═══ SECTION 7: SHARED PAGES ═══ -->
+<div class="section">
+<div class="section-title">7 · Shared — Resources &amp; Announcements</div>
+<div class="card-grid">
+
+<div class="card">
+  <div class="card-header"><span class="num">25</span><span class="sname">Learning Resources — Browse View</span><span class="rb rb-sh">All Users</span></div>
+  <div class="ph"><div class="ph-icon">📁</div><div class="ph-text">Screenshot here</div><div class="route">/student/resources</div></div>
+  <div class="cb">
+    <div class="desc">Course-based materials grid with search, course filter, type filter (PDF/PPT/Word/Image/Link/Recording), and sort options. Material cards show type icon (color-coded), title, course, uploader, download count.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Search + filters + sort bar</span><span class="el">Material cards grid</span><span class="el">Type color-coded icons</span><span class="el">Download count</span><span class="el">Download / Open button</span><span class="el">Delete button (owner/admin)</span><span class="el">Upload button (tutor/admin)</span></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">26</span><span class="sname">Learning Resources — Upload Modal</span><span class="rb rb-t">Tutor / Admin</span></div>
+  <div class="ph"><div class="ph-icon">⬆️</div><div class="ph-text">Screenshot here</div><div class="route">/student/resources → Upload modal</div></div>
+  <div class="cb">
+    <div class="desc">Upload modal with Title, Course (approved courses only for tutors), Type, Visibility dropdowns. Link/Recording shows URL input. File types show drag-area dropzone (max 10MB).</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Title input</span><span class="el">Course dropdown</span><span class="el">Type selector</span><span class="el">Visibility selector</span><span class="el">File dropzone (file types)</span><span class="el">URL input (link/recording)</span><span class="el">Upload button</span></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">27</span><span class="sname">Announcements Page</span><span class="rb rb-sh">All Users</span></div>
+  <div class="ph"><div class="ph-icon">📢</div><div class="ph-text">Screenshot here</div><div class="route">/student/announcements or /admin/announcements</div></div>
+  <div class="cb">
+    <div class="desc">Announcements with amber pinned styling for pinned posts. Admin sees Edit/Delete buttons per card. Students see only announcements targeted to their role.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Pinned announcement (amber border)</span><span class="el">Regular announcement card</span><span class="el">Author + timestamp</span><span class="el">Role target badges</span><span class="el">Edit / Delete (admin only)</span></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">28</span><span class="sname">Announcements — Post/Edit Modal</span><span class="rb rb-a">Admin</span></div>
+  <div class="ph"><div class="ph-icon">✏️</div><div class="ph-text">Screenshot here</div><div class="route">/admin/announcements → Post modal</div></div>
+  <div class="cb">
+    <div class="desc">Admin-only modal. Title input, content textarea, Visible To checkboxes (admin/student), Pin toggle, Post/Update button.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Title input</span><span class="el">Content textarea</span><span class="el">Visible To checkboxes</span><span class="el">Pin checkbox</span><span class="el">Post / Update button</span></div>
+  </div>
+</div>
+
+</div></div>
+
+<!-- ═══ SECTION 8: ADMIN DASHBOARD & USERS ═══ -->
+<div class="section">
+<div class="section-title">8 · Admin — Dashboard &amp; User Management</div>
+<div class="card-grid">
+
+<div class="card">
+  <div class="card-header"><span class="num">29</span><span class="sname">Admin Dashboard</span><span class="rb rb-a">Admin</span></div>
+  <div class="ph"><div class="ph-icon">🛠️</div><div class="ph-text">Screenshot here</div><div class="route">/admin</div></div>
+  <div class="cb">
+    <div class="desc">Overview with stat cards (Students, Courses, Pending Applications, Sessions This Week), weekly session frequency bar chart (8 weeks), top 5 tutors, top 5 courses, pending applications and upcoming sessions previews.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">4 stat cards</span><span class="el">Weekly bar chart</span><span class="el">Top Tutors list</span><span class="el">Top Courses list</span><span class="el">Pending Applications preview</span><span class="el">Upcoming Sessions preview</span></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">30</span><span class="sname">Users Page — Table + Filters</span><span class="rb rb-a">Admin</span></div>
+  <div class="ph"><div class="ph-icon">👥</div><div class="ph-text">Screenshot here</div><div class="route">/admin/users</div></div>
+  <div class="cb">
+    <div class="desc">Users table with role tabs (All Students / Tutors / Sub-Admin), year level filter tabs, department dropdown, and text search. Rows show active/inactive badge, edit/delete actions.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Role tabs</span><span class="el">Year level tabs</span><span class="el">Department dropdown</span><span class="el">Search input</span><span class="el">User table rows</span><span class="el">Active/Inactive badge</span><span class="el">Edit / Delete buttons</span><span class="el">Create User + Bulk Import buttons</span></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">31</span><span class="sname">Add/Edit User Modal — Student Fields</span><span class="rb rb-a">Admin</span></div>
+  <div class="ph"><div class="ph-icon">➕</div><div class="ph-text">Screenshot here</div><div class="route">/admin/users → Add/Edit modal (Student)</div></div>
+  <div class="cb">
+    <div class="desc">Create/edit modal adapted by account type. Student fields: First/Last Name, Email, Password, Student ID, Year Level, Semester, Phone, Department. Account type toggle (Student / Sub-Admin) shown for Super Admin.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Account type toggle cards</span><span class="el">All student input fields</span><span class="el">Year level + semester selectors</span><span class="el">Save button + loading state</span></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">32</span><span class="sname">Add/Edit User Modal — Admin Permissions</span><span class="rb rb-a">Super Admin</span></div>
+  <div class="ph"><div class="ph-icon">🔐</div><div class="ph-text">Screenshot here</div><div class="route">/admin/users → Add/Edit modal (Sub-Admin)</div></div>
+  <div class="cb">
+    <div class="desc">Sub-admin variant. Module Permissions checkbox grid (Student Mgmt, Courses, Tutor Applications, Sessions, Announcements) + Department Scope checkbox grid with Select All/Deselect All for each.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Module Permissions checkboxes</span><span class="el">Department Scope checkboxes</span><span class="el">Select All / Deselect All</span><span class="el">No-permissions warning</span></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">33</span><span class="sname">Bulk Import CSV Modal</span><span class="rb rb-a">Admin</span></div>
+  <div class="ph"><div class="ph-icon">📥</div><div class="ph-text">Screenshot here</div><div class="route">/admin/users (or courses/departments) → Bulk Import</div></div>
+  <div class="cb">
+    <div class="desc">CSV import modal shared by Users, Courses, and Departments pages. Download Template button, file chooser, paste textarea, and Import button. Shows created/skipped/errors summary after import.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Download Template button</span><span class="el">Choose CSV file button</span><span class="el">Paste textarea</span><span class="el">Import button + loading</span><span class="el">Results summary (created/skipped/errors)</span></div>
+  </div>
+</div>
+
+</div></div>
+
+<!-- ═══ SECTION 9: ADMIN COURSES, DEPTS, SCHEDULES, SESSIONS ═══ -->
+<div class="section">
+<div class="section-title">9 · Admin — Courses, Departments, Schedules &amp; Sessions</div>
+<div class="card-grid">
+
+<div class="card">
+  <div class="card-header"><span class="num">34</span><span class="sname">Courses Page</span><span class="rb rb-a">Admin</span></div>
+  <div class="ph"><div class="ph-icon">📖</div><div class="ph-text">Screenshot here</div><div class="route">/admin/courses</div></div>
+  <div class="cb">
+    <div class="desc">Course table with year level tabs, semester + department filters, search. Add/Edit Course modal (Code, Units, Name, Description, Year Level, Semester, Department, Active toggle).</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Year level tabs</span><span class="el">Semester + department filters</span><span class="el">Course table</span><span class="el">Add course modal</span><span class="el">Bulk import button</span><span class="el">Active toggle per row</span></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">35</span><span class="sname">Departments Page</span><span class="rb rb-a">Admin</span></div>
+  <div class="ph"><div class="ph-icon">🏫</div><div class="ph-text">Screenshot here</div><div class="route">/admin/departments</div></div>
+  <div class="cb">
+    <div class="desc">Department management with Add/Edit/Delete modals. Block-delete shown when courses are attached. Bulk CSV import available.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Departments table/cards</span><span class="el">Department code badge</span><span class="el">Add/Edit modal</span><span class="el">Delete blocked error</span><span class="el">Bulk import button</span></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">36</span><span class="sname">Student Schedules — Timetable View</span><span class="rb rb-a">Admin</span></div>
+  <div class="ph"><div class="ph-icon">🗓️</div><div class="ph-text">Screenshot here</div><div class="route">/admin/student-schedules</div></div>
+  <div class="cb">
+    <div class="desc">Two-column layout. Left: searchable student list. Right: timetable grid (Mon–Sat, 7AM–9PM) showing colour-coded class blocks. Hover reveals delete button per block.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Student list (left panel)</span><span class="el">Timetable grid (right panel)</span><span class="el">Colour-coded class blocks</span><span class="el">Add entry button</span><span class="el">Clear schedule button</span><span class="el">Bulk Enroll button</span></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">37</span><span class="sname">Bulk Enroll Students Modal</span><span class="rb rb-a">Admin</span></div>
+  <div class="ph"><div class="ph-icon">📋</div><div class="ph-text">Screenshot here</div><div class="route">/admin/student-schedules → Bulk Enroll modal</div></div>
+  <div class="cb">
+    <div class="desc">Two-step modal. Step 1: student selector with search, year filter, Select All Filtered, checkbox list. Step 2: schedule entries editor with day/time/label rows + Replace Existing option.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Step 1 — student checkbox list</span><span class="el">Year level filter</span><span class="el">Select All Filtered button</span><span class="el">Step 2 — schedule rows editor</span><span class="el">Add row + remove row buttons</span><span class="el">Replace existing checkbox</span><span class="el">Enroll X Students button</span></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">38</span><span class="sname">Sessions Page (Admin Monitor)</span><span class="rb rb-a">Admin</span></div>
+  <div class="ph"><div class="ph-icon">🧾</div><div class="ph-text">Screenshot here</div><div class="route">/admin/sessions</div></div>
+  <div class="cb">
+    <div class="desc">Read-only session monitor. Status tabs (All / Scheduled / Completed / Cancelled), text search by tutor name or course code. Table shows all session details.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Status filter tabs</span><span class="el">Search input</span><span class="el">Sessions table (tutor, tutee, course, date, venue, status)</span></div>
+  </div>
+</div>
+
+</div></div>
+
+<!-- ═══ SECTION 10: TUTOR APPLICATIONS ═══ -->
+<div class="section">
+<div class="section-title">10 · Admin — Tutor Application Review</div>
+<div class="card-grid">
+
+<div class="card">
+  <div class="card-header"><span class="num">39</span><span class="sname">Tutor Applications — List + Session Lock Bar</span><span class="rb rb-a">Admin</span></div>
+  <div class="ph"><div class="ph-icon">📨</div><div class="ph-text">Screenshot here</div><div class="route">/admin/tutor-applications</div></div>
+  <div class="cb">
+    <div class="desc">Application list with status tabs (Pending/Approved/Rejected/All) and search. Top bar shows session lock status: "Actions are locked" (red) or "Session active — unlocked" (green) with countdown timer.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Status tabs + counts</span><span class="el">Session lock bar (locked state)</span><span class="el">Session lock bar (active + countdown)</span><span class="el">Application rows with confidence score badge</span><span class="el">Document expiry indicator</span><span class="el">Per-row action buttons (gated)</span></div>
+    <div class="note">📸 Capture both: (a) locked state (red bar), and (b) unlocked state with countdown timer.</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">40</span><span class="sname">Session Auth Modal (Re-Auth Gate)</span><span class="rb rb-a">Admin</span></div>
+  <div class="ph"><div class="ph-icon">🔒</div><div class="ph-text">Screenshot here</div><div class="route">/admin/tutor-applications → action without session</div></div>
+  <div class="cb">
+    <div class="desc">Triggered when any action is clicked without an active 5-minute session. Warning banner, password input, attempts remaining counter. 3 failures triggers forced logout.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Warning banner</span><span class="el">Password input</span><span class="el">Authenticate button</span><span class="el">Attempts remaining / lockout message</span><span class="el">Force logout state</span></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">41</span><span class="sname">AI Analysis Modal + Document Viewer</span><span class="rb rb-a">Admin</span></div>
+  <div class="ph"><div class="ph-icon">🔬</div><div class="ph-text">Screenshot here</div><div class="route">/admin/tutor-applications → View AI Analysis / View Document</div></div>
+  <div class="cb">
+    <div class="desc">AI Analysis modal: confidence score breakdown, ML method indicator (ML/LLM/Rules), recommendation strength, predicted subjects, soft skills, subject alignment %. Document Viewer: PDF iframe or extracted-text fallback with amber warning.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Confidence score % + level badge</span><span class="el">ML/LLM/Rule-based method tag</span><span class="el">Recommendation strength</span><span class="el">Predicted subjects + alignment %</span><span class="el">Soft skills tags</span><span class="el">PDF iframe (document viewer)</span><span class="el">Text fallback + amber warning</span></div>
+    <div class="note">📸 Capture the AI Analysis modal — this is the core ML feature showcase.</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="num">42</span><span class="sname">Approve / Reject / ML Correction Modals</span><span class="rb rb-a">Admin</span></div>
+  <div class="ph"><div class="ph-icon">✅</div><div class="ph-text">Screenshot here</div><div class="route">/admin/tutor-applications → Approve or Reject</div></div>
+  <div class="cb">
+    <div class="desc">Approve modal: applicant summary, confidence score, optional Grade input, optional Admin Notes, session timer inside modal. Reject modal: required Reason textarea. ML Correction modal: Strength, Subjects, Soft Skills correction fields.</div>
+    <div class="el-label">Key Elements</div>
+    <div class="els"><span class="el">Approve modal — Grade + Notes fields</span><span class="el">Session timer badge inside modal</span><span class="el">Approve button</span><span class="el">Reject modal — Reason textarea</span><span class="el">ML Correction form — Strength selector</span><span class="el">ML Correction — Subjects + Soft Skills inputs</span></div>
+  </div>
+</div>
+
+</div></div>
+
+<!-- ═══ CHECKLIST ═══ -->
+<div class="section">
+<div class="section-title">Complete Checklist — 42 Screenshots</div>
+<div class="checklist">
+  <div class="cl-section">Authentication (4)</div>
+  <div>☐ 01 Login — Full view</div>
+  <div>☐ 02 Login — Demo credentials dropdown</div>
+  <div>☐ 03 Login — Error / lockout state</div>
+  <div>☐ 04 Change Password page</div>
+
+  <div class="cl-section">Persistent UI (2)</div>
+  <div>☐ 05 Sidebar — expanded &amp; collapsed</div>
+  <div>☐ 06 Topbar + Notification Bell dropdown</div>
+  <div style="visibility:hidden"></div>
+
+  <div class="cl-section">Student Dashboard &amp; Setup (4)</div>
+  <div>☐ 07 Student Dashboard</div>
+  <div>☐ 08 Availability — interactive grid</div>
+  <div>☐ 09 Availability — schedule upload panel</div>
+  <div>☐ 10 Student Analytics</div>
+  <div style="visibility:hidden"></div>
+  <div style="visibility:hidden"></div>
+
+  <div class="cl-section">Find Tutor &amp; Book (5)</div>
+  <div>☐ 11 Find Tutor — course selection</div>
+  <div>☐ 12 Find Tutor — tutor cards + AI insights</div>
+  <div>☐ 13 Booking panel — date picker (holiday)</div>
+  <div>☐ 14 Booking panel — conflict-free slots</div>
+  <div>☐ 15 Booking panel — venue &amp; confirm</div>
+  <div style="visibility:hidden"></div>
+
+  <div class="cl-section">My Sessions (6)</div>
+  <div>☐ 16 My Sessions — Pending tab</div>
+  <div>☐ 17 My Sessions — Scheduled tab</div>
+  <div>☐ 18 My Sessions — Completed + Rate modal</div>
+  <div>☐ 19 Decline / Cancel session modal</div>
+  <div>☐ 20 Session Chat</div>
+  <div>☐ 21 Video Session Room (Jitsi)</div>
+
+  <div class="cl-section">Tutor Role (3)</div>
+  <div>☐ 22 Become a Tutor — blocked (no availability)</div>
+  <div>☐ 23 Become a Tutor — application form + statuses</div>
+  <div>☐ 24 Tutor Dashboard</div>
+
+  <div class="cl-section">Shared Pages (4)</div>
+  <div>☐ 25 Learning Resources — browse</div>
+  <div>☐ 26 Learning Resources — upload modal</div>
+  <div>☐ 27 Announcements page</div>
+  <div>☐ 28 Announcements — post/edit modal (admin)</div>
+  <div style="visibility:hidden"></div>
+  <div style="visibility:hidden"></div>
+
+  <div class="cl-section">Admin Dashboard &amp; Users (5)</div>
+  <div>☐ 29 Admin Dashboard</div>
+  <div>☐ 30 Users page — table + filters</div>
+  <div>☐ 31 Add/Edit User — student fields</div>
+  <div>☐ 32 Add/Edit User — admin permissions</div>
+  <div>☐ 33 Bulk Import CSV modal</div>
+  <div style="visibility:hidden"></div>
+
+  <div class="cl-section">Admin Courses, Depts, Schedules &amp; Sessions (5)</div>
+  <div>☐ 34 Courses page</div>
+  <div>☐ 35 Departments page</div>
+  <div>☐ 36 Student Schedules — timetable</div>
+  <div>☐ 37 Bulk Enroll Students modal</div>
+  <div>☐ 38 Sessions page (admin monitor)</div>
+  <div style="visibility:hidden"></div>
+
+  <div class="cl-section">Tutor Application Review (4)</div>
+  <div>☐ 39 Applications list + session lock bar</div>
+  <div>☐ 40 Session auth modal (re-auth gate)</div>
+  <div>☐ 41 AI Analysis modal + document viewer</div>
+  <div>☐ 42 Approve / Reject / ML Correction modals</div>
+</div>
+</div>
+
+</body>
+</html>

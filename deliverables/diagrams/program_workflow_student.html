@@ -9,8 +9,8 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: white;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
+            overflow-y: auto;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -23,8 +23,8 @@
             margin-bottom: 8px;
         }
         #canvas {
-            flex: 1;
             width: 100%;
+            height: 900px;
             position: relative;
         }
     </style>
@@ -41,12 +41,12 @@
         const H = canvas.offsetHeight;
 
         const COL_COUNT = 3;
-        const COL_W = Math.min(W / COL_COUNT, 300);
+        const COL_W = Math.min(W / COL_COUNT, 320);
         const totalFlowW = COL_W * COL_COUNT;
         const offsetX = (W - totalFlowW) / 2;
-        const BOX_W = Math.min(190, COL_W * 0.8);
-        const FONT = Math.max(9, Math.min(12, H / 60));
-        const DIAMOND_SIZE = Math.max(44, Math.min(54, H / 14));
+        const BOX_W = Math.min(210, COL_W * 0.82);
+        const FONT = 10;
+        const DIAMOND_SIZE = 50;
         const GREEN = '#1e3a5f';
         const DARK = '#1e293b';
         const RED = '#ef4444';
@@ -54,40 +54,48 @@
 
         const columns = [
             {
-                label: 'Login & Discovery',
+                label: 'Login & Setup',
                 items: [
                     { type: 'terminal', text: 'Start' },
                     { type: 'process', text: 'Student logs in with Student ID and password' },
                     { type: 'process', text: 'System forces password change on first login' },
-                    { type: 'process', text: 'Student uploads class schedule (study load)' },
-                    { type: 'process', text: 'Student views dashboard and personal class schedule' },
-                    { type: 'process', text: 'Student searches for a tutor by selecting a course' },
-                    { type: 'process', text: 'System displays ranked tutor list based on competency score' },
-                    { type: 'process', text: 'Student selects a tutor' },
-                    { type: 'process', text: 'System cross-references both schedules and sessions' },
-                    { type: 'process', text: 'System displays mutual free slots with timetable comparison' },
-                    { type: 'process', text: 'Student selects time slot, chooses venue, enters details' },
+                    { type: 'process', text: 'Student uploads class schedule — file deleted after processing' },
+                    { type: 'process', text: 'Student sets weekly availability via interactive calendar' },
+                    { type: 'process', text: 'Student views dashboard' },
+                    { type: 'decision', text: 'Apply as\ntutor?', no: 'Skip to\nFind Tutor' },
+                    { type: 'process', text: 'Student selects eligible subject + uploads faculty recommendation letter' },
+                    { type: 'process', text: 'ML analyzes letter: strength, subjects, soft skills' },
+                    { type: 'process', text: 'Admin reviews application + ML analysis report' },
+                    { type: 'decision', text: 'Admin\napproves?', no: 'Notified;\nmay resubmit' },
+                    { type: 'process', text: 'Student becomes a verified tutor' },
+                ]
+            },
+            {
+                label: 'Find Tutor & Book',
+                items: [
+                    { type: 'process', text: 'Student selects a curriculum-eligible course' },
+                    { type: 'process', text: 'System displays tutors ranked by competency score' },
+                    { type: 'process', text: 'Student selects tutor — views AI teaching insights' },
+                    { type: 'process', text: 'System shows tutor\'s conflict-free available slots' },
+                    { type: 'process', text: 'Student picks slot, sets on-campus or online venue' },
                     { type: 'process', text: 'Student submits session request' },
+                    { type: 'process', text: 'System creates session (pending) — tutor notified' },
+                    { type: 'decision', text: 'Tutor\naccepts?', no: 'Rejected;\nstudent notified' },
+                    { type: 'process', text: 'Session scheduled — both parties notified' },
                 ]
             },
             {
-                label: 'Booking & Session',
+                label: 'Session & Feedback',
                 items: [
-                    { type: 'process', text: 'System creates session (pending) and notifies tutor' },
-                    { type: 'process', text: 'Tutor receives notification and reviews request' },
-                    { type: 'decision', text: 'Tutor\naccepts?', no: 'Session rejected;\nstudent notified' },
-                    { type: 'process', text: 'Session scheduled; student receives confirmation' },
-                    { type: 'process', text: 'Both parties attend session at agreed time and venue' },
-                    { type: 'process', text: 'Tutor marks session as completed' },
-                ]
-            },
-            {
-                label: 'Feedback & Loop',
-                items: [
-                    { type: 'process', text: 'Student receives prompt to rate the tutor' },
-                    { type: 'process', text: 'Student submits rating (1–5 stars) and optional comment' },
-                    { type: 'process', text: "System updates tutor's competency score" },
-                    { type: 'decision', text: 'Exit?', no: 'Return to dashboard\nor search for tutor' },
+                    { type: 'process', text: 'Both attend session — online: Jitsi Meet video call' },
+                    { type: 'process', text: 'In-app chat available; recording link can be shared in chat' },
+                    { type: 'process', text: 'Tutor marks session as completed (after scheduled end time)' },
+                    { type: 'process', text: 'Student submits rating (1–5 stars) and written comment' },
+                    { type: 'process', text: 'ML feedback model analyzes comment (sentiment, strengths, improvements)' },
+                    { type: 'process', text: 'Competency score and feedback insights updated' },
+                    { type: 'process', text: 'Student browses course learning materials shared by tutors' },
+                    { type: 'decision', text: 'Book\nanother?', no: 'Exit' },
+                    { type: 'process', text: 'Return to Find Tutor' },
                     { type: 'terminal', text: 'End' },
                 ]
             }
@@ -97,7 +105,7 @@
         const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         svg.setAttribute('width', W);
         svg.setAttribute('height', H);
-        svg.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;';
+        svg.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none;overflow:visible;';
         canvas.appendChild(svg);
 
         const positions = [];
@@ -114,10 +122,10 @@
             col.items.forEach(item => {
                 if (item.type === 'terminal') contentH += 20;
                 else if (item.type === 'decision') contentH += DIAMOND_SIZE + 8;
-                else contentH += 24;
+                else contentH += 28;
             });
             const availH = H - START_Y - 8;
-            const gap = Math.max(8, (availH - contentH) / col.items.length);
+            const gap = Math.max(6, Math.min(12, (availH - contentH) / col.items.length));
 
             // Phase label
             const label = document.createElement('div');
@@ -138,9 +146,9 @@
                     y += h + gap;
                 }
                 else if (item.type === 'process') {
-                    const h = 24;
+                    const h = 28;
                     const el = document.createElement('div');
-                    el.style.cssText = `position:absolute;left:${colX - BOX_W/2}px;top:${y}px;width:${BOX_W}px;min-height:${h}px;background:${GREEN};color:white;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:${FONT}px;font-weight:600;text-align:center;padding:3px 5px;line-height:1.2;`;
+                    el.style.cssText = `position:absolute;left:${colX - BOX_W/2}px;top:${y}px;width:${BOX_W}px;min-height:${h}px;background:${GREEN};color:white;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:${FONT}px;font-weight:600;text-align:center;padding:4px 6px;line-height:1.25;`;
                     el.textContent = item.text;
                     canvas.appendChild(el);
                     positions[ci][ri] = { cx: colX, top: y, bottom: y + h };
@@ -148,10 +156,11 @@
                 }
                 else if (item.type === 'decision') {
                     const s = DIAMOND_SIZE;
-                    const cx = colX, cy = y + s/2;
+                    const DIAMOND_OFFSET = 10;
+                    const cx = colX, cy = y + DIAMOND_OFFSET + s/2;
 
                     const el = document.createElement('div');
-                    el.style.cssText = `position:absolute;left:${cx - s/2}px;top:${y}px;width:${s}px;height:${s}px;background:${GREEN};transform:rotate(45deg);`;
+                    el.style.cssText = `position:absolute;left:${cx - s/2}px;top:${y + DIAMOND_OFFSET}px;width:${s}px;height:${s}px;background:${GREEN};transform:rotate(45deg);`;
                     canvas.appendChild(el);
 
                     const txt = document.createElement('div');
@@ -161,11 +170,7 @@
 
                     // "no" line going left — longer to avoid overlap
                     const noLineEnd = cx - s/2 - 30;
-                    const noLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                    noLine.setAttribute('x1', cx - s/2); noLine.setAttribute('y1', cy);
-                    noLine.setAttribute('x2', noLineEnd); noLine.setAttribute('y2', cy);
-                    noLine.setAttribute('stroke', DARK); noLine.setAttribute('stroke-width', '1');
-                    svg.appendChild(noLine);
+                    drawArrow(svg, cx - s/2, cy, noLineEnd, cy, DARK);
 
                     // "no" label — positioned above the line
                     const noLbl = document.createElement('div');
@@ -179,14 +184,23 @@
                     noBox.innerHTML = item.no.replace('\n', '<br>');
                     canvas.appendChild(noBox);
 
-                    // "yes" label — centered below diamond
+                    // "yes" label — centered below diamond with explicit line segment
+                    const yesLineY1 = y + DIAMOND_OFFSET + s;
+                    const yesLineY2 = y + DIAMOND_OFFSET + s + 10;
+                    const yesLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    yesLine.setAttribute('x1', cx); yesLine.setAttribute('y1', yesLineY1);
+                    yesLine.setAttribute('x2', cx); yesLine.setAttribute('y2', yesLineY2);
+                    yesLine.setAttribute('stroke', DARK); yesLine.setAttribute('stroke-width', '1.2');
+                    svg.appendChild(yesLine);
+
                     const yesLbl = document.createElement('div');
-                    yesLbl.style.cssText = `position:absolute;left:${cx - 6}px;top:${y + s + 2}px;font-size:${FONT - 1}px;font-weight:800;color:${DARK};`;
+                    yesLbl.style.cssText = `position:absolute;left:${cx + 3}px;top:${y + DIAMOND_OFFSET + s + 1}px;font-size:${FONT - 1}px;font-weight:800;color:${DARK};`;
                     yesLbl.textContent = 'yes';
                     canvas.appendChild(yesLbl);
 
-                    positions[ci][ri] = { cx, top: y, bottom: y + s + 14 };
-                    y += s + 14 + gap;
+                    // top: stop arrow a few px before the diamond tip so arrowhead is visible
+                    positions[ci][ri] = { cx, top: y, bottom: y + DIAMOND_OFFSET + s + 18 };
+                    y += s + DIAMOND_OFFSET + 18 + gap;
                 }
             });
         });
