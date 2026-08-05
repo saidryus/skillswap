@@ -62,6 +62,7 @@ app.use('/api/materials',        require('./routes/material.routes'));
 app.use('/api/messages',         require('./routes/message.routes'));
 app.use('/api/availability',     require('./routes/availability.routes'));
 app.use('/api/curriculum',       require('./routes/curriculum.routes'));
+app.use('/api/ml',               require('./routes/mlStatus.routes'));
 
 // ── Error handling ─────────────────────────────────────────────
 app.use((err, req, res, next) => {

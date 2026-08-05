@@ -4,17 +4,25 @@ Tutor Feedback ML Inference Service
 Analyzes written tutor reviews and extracts structured insights.
 Does NOT modify ratings, competency scores, or tutor rankings.
 
+Auto-retraining: POST /retrain appends new labelled review samples and
+retrains the model in the background once the threshold is reached.
+
 Endpoints:
-  GET  /health       — Health check
-  GET  /model-info   — Model metadata
-  POST /analyze      — Analyze a single review
-  POST /insights     — Aggregate insights from multiple reviews
+  GET  /health          — Health check
+  GET  /model-info      — Model metadata
+  POST /analyze         — Analyze a single review
+  POST /insights        — Aggregate insights from multiple reviews
+  POST /retrain         — Append new samples and trigger background retraining
+  GET  /retrain/status  — Check retraining status
 
 Port: 5003
 """
 
 import os
 import sys
+import json
+import threading
+import time
 import numpy as np
 from flask import Flask, request, jsonify
 import joblib
@@ -23,6 +31,23 @@ app = Flask(__name__)
 
 model_data = None
 MODEL_PATH = os.path.join(os.path.dirname(__file__), 'feedback_model.pkl')
+
+# ── Retraining state ────────────────────────────────────────────
+_retrain_lock = threading.Lock()
+_retrain_status = {
+    'running': False,
+    'lastRun': None,
+    'lastResult': None,
+    'lastError': None,
+    'samplesUsed': 0,
+    'pendingCount': 0,
+}
+
+DATA_PATH    = os.path.join(os.path.dirname(__file__), 'training_data.json')
+PENDING_PATH = os.path.join(os.path.dirname(__file__), 'pending_reviews.json')
+
+# Accumulate this many new reviews before retraining
+MIN_NEW_SAMPLES = int(os.environ.get('FB_MIN_NEW_SAMPLES', '10'))
 
 
 def load_model():
@@ -48,6 +73,8 @@ def health():
         'status': 'ok' if loaded else 'unavailable',
         'modelLoaded': loaded,
         'service': 'feedback-ml',
+        'retraining': _retrain_status['running'],
+        'pendingReviews': _retrain_status['pendingCount'],
     }), 200 if loaded else 503
 
 
@@ -59,6 +86,170 @@ def model_info():
         'trainingSamples': model_data['training_samples'],
         'metrics': model_data['metrics'],
     })
+
+
+# ═══════════════════════════════════════════════════════════════
+# AUTO-RETRAINING
+# ═══════════════════════════════════════════════════════════════
+
+VALID_SENTIMENTS = {'Positive', 'Neutral', 'Negative'}
+
+
+def _load_pending():
+    if not os.path.exists(PENDING_PATH):
+        return []
+    with open(PENDING_PATH) as f:
+        return json.load(f)
+
+
+def _save_pending(samples):
+    with open(PENDING_PATH, 'w') as f:
+        json.dump(samples, f, indent=2)
+
+
+def _retrain_background(all_samples):
+    global model_data
+
+    try:
+        print(f'[AutoRetrain-Feedback] Starting with {len(all_samples)} new sample(s)...')
+
+        # Load base training data
+        if not os.path.exists(DATA_PATH):
+            raise FileNotFoundError(f'{DATA_PATH} not found')
+        with open(DATA_PATH) as f:
+            base = json.load(f)
+
+        # Filter valid samples
+        valid = []
+        for s in all_samples:
+            text = (s.get('text') or '').strip()
+            sentiment = s.get('sentiment', '').title()
+            if len(text) >= 5 and sentiment in VALID_SENTIMENTS:
+                valid.append({
+                    'text': text,
+                    'sentiment': sentiment,
+                    'strengths': s.get('strengths') or [],
+                    'improvements': s.get('improvements') or [],
+                    'topics': s.get('topics') or [],
+                })
+
+        if not valid:
+            raise ValueError('No usable samples after validation')
+
+        # New reviews get a 3x weight so they influence the model despite the smaller count
+        merged = base + (valid * 3)
+
+        import random
+        random.seed(int(time.time()))
+        random.shuffle(merged)
+
+        # Write a temp merged file and retrain
+        merged_path = os.path.join(os.path.dirname(__file__), 'training_data_merged.json')
+        with open(merged_path, 'w') as f:
+            json.dump(merged, f)
+
+        import importlib
+        import train_model as trainer
+        importlib.reload(trainer)
+        trainer.DATA_PATH = merged_path
+        trainer.train()
+
+        # Hot-swap model
+        new_model = joblib.load(MODEL_PATH)
+        model_data = new_model
+
+        # Clear pending queue after successful retrain
+        _save_pending([])
+
+        with _retrain_lock:
+            _retrain_status['lastResult'] = 'success'
+            _retrain_status['samplesUsed'] = len(merged)
+            _retrain_status['lastError'] = None
+            _retrain_status['pendingCount'] = 0
+        print(f'[AutoRetrain-Feedback] ✅ Complete. Hot-swapped ({len(merged)} samples).')
+
+    except Exception as e:
+        with _retrain_lock:
+            _retrain_status['lastResult'] = 'failed'
+            _retrain_status['lastError'] = str(e)
+        print(f'[AutoRetrain-Feedback] ❌ Failed: {e}', file=sys.stderr)
+
+    finally:
+        with _retrain_lock:
+            _retrain_status['running'] = False
+
+
+@app.route('/retrain', methods=['POST'])
+def retrain():
+    """
+    Append new labelled review samples and trigger retraining once the
+    threshold (FB_MIN_NEW_SAMPLES, default 10) is reached.
+
+    Called automatically by the Node.js backend after a rating with a
+    comment is saved (POST /api/ratings).
+
+    Request body:
+    {
+        "samples": [
+            {
+                "text": "Great tutor, very patient",
+                "sentiment": "Positive",
+                "strengths": ["Patience"],
+                "improvements": [],
+                "topics": ["Recursion"]
+            }
+        ]
+    }
+    """
+    data = request.get_json()
+    if not data or 'samples' not in data:
+        return jsonify({'error': 'Missing "samples" array'}), 400
+
+    incoming = data['samples']
+    if not isinstance(incoming, list) or len(incoming) == 0:
+        return jsonify({'error': '"samples" must be a non-empty array'}), 400
+
+    # Append to pending queue (persisted to disk so it survives restarts)
+    pending = _load_pending()
+    pending.extend(incoming)
+    _save_pending(pending)
+
+    with _retrain_lock:
+        _retrain_status['pendingCount'] = len(pending)
+
+    if len(pending) < MIN_NEW_SAMPLES:
+        return jsonify({
+            'queued': False,
+            'reason': f'Accumulating samples: {len(pending)}/{MIN_NEW_SAMPLES} needed.',
+            'pending': len(pending),
+            'threshold': MIN_NEW_SAMPLES,
+        }), 200
+
+    if _retrain_status['running']:
+        return jsonify({
+            'queued': False,
+            'reason': 'Retraining already in progress.',
+            'pending': len(pending),
+        }), 200
+
+    # Mark running before spawning the thread
+    with _retrain_lock:
+        _retrain_status['running'] = True
+        _retrain_status['lastRun'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+
+    t = threading.Thread(target=_retrain_background, args=(pending,), daemon=True)
+    t.start()
+
+    return jsonify({
+        'queued': True,
+        'samplesReceived': len(pending),
+        'message': f'Retraining started ({len(pending)} new samples). Current model stays live until complete.',
+    }), 202
+
+
+@app.route('/retrain/status', methods=['GET'])
+def retrain_status():
+    return jsonify(_retrain_status)
 
 
 @app.route('/analyze', methods=['POST'])

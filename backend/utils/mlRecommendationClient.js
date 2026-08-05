@@ -82,4 +82,42 @@ async function predictFromText(text) {
   }
 }
 
-module.exports = { isMLServiceAvailable, getModelInfo, predictFromText };
+/**
+ * Trigger background retraining with new admin correction samples.
+ * Called automatically after an admin submits an ML correction.
+ *
+ * @param {Array} samples - Array of { text, strength, subjects, softSkills }
+ * @returns {Promise<Object>}
+ */
+async function triggerRetrain(samples) {
+  try {
+    const response = await fetch(`${ML_SERVICE_URL}/retrain`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ samples }),
+      signal: AbortSignal.timeout(10000),
+    });
+    const data = await response.json();
+    return { success: response.ok, ...data };
+  } catch (err) {
+    return { success: false, error: `Retrain trigger failed: ${err.message}` };
+  }
+}
+
+/**
+ * Get current retraining status from the ML service.
+ * @returns {Promise<Object|null>}
+ */
+async function getRetrainStatus() {
+  try {
+    const response = await fetch(`${ML_SERVICE_URL}/retrain/status`, {
+      signal: AbortSignal.timeout(3000),
+    });
+    if (!response.ok) return null;
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+module.exports = { isMLServiceAvailable, getModelInfo, predictFromText, triggerRetrain, getRetrainStatus };

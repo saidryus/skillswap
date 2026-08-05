@@ -45,6 +45,42 @@ const createRating = async (req, res) => {
     });
 
     res.status(201).json(rating);
+
+    // ── Auto-retrain: if the rating has a comment, run ML analysis on it
+    // and submit the labelled result to the feedback service for incremental
+    // retraining. Fire-and-forget — never blocks the response.
+    if (comment && comment.trim().length >= 5) {
+      setImmediate(async () => {
+        try {
+          const {
+            isFeedbackServiceAvailable,
+            analyzeReview,
+            submitRetrainSamples,
+          } = require('../utils/feedbackAnalyzer');
+
+          const available = await isFeedbackServiceAvailable();
+          if (!available) return;
+
+          // Use the current model to label this review — the label becomes
+          // training data for the next model version.
+          const analysis = await analyzeReview(comment.trim());
+          if (!analysis) return;
+
+          const sample = {
+            text: comment.trim(),
+            sentiment: analysis.sentiment || 'Neutral',
+            strengths: analysis.strengths || [],
+            improvements: analysis.improvements || [],
+            topics: analysis.topics || [],
+          };
+
+          const result = await submitRetrainSamples([sample]);
+          console.log(`[AutoRetrain] Feedback sample submitted: ${result.queued ? 'retrain started' : (result.reason || result.message || 'accumulated')}`);
+        } catch (err) {
+          console.error('[AutoRetrain] Feedback retrain trigger failed:', err.message);
+        }
+      });
+    }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

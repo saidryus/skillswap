@@ -2,12 +2,16 @@
 Recommendation Letter ML Inference Service
 
 Flask API that serves predictions from the trained recommendation model.
-Loaded at startup — no retraining during runtime.
+Auto-retraining: POST /retrain triggers background retraining when new
+admin corrections arrive. The service keeps serving the old model while
+retraining runs, then hot-swaps to the new model when done.
 
 Endpoints:
   GET  /health          — Service health check
   GET  /model-info      — Model metadata and metrics
   POST /predict         — Predict subjects and strength from text
+  POST /retrain         — Trigger background retraining with new samples
+  GET  /retrain/status  — Check current retraining status
 
 Run: python app.py
 Port: 5002
@@ -15,6 +19,9 @@ Port: 5002
 
 import os
 import sys
+import json
+import threading
+import time
 import numpy as np
 from flask import Flask, request, jsonify
 import joblib
@@ -27,6 +34,19 @@ app = Flask(__name__)
 
 model_data = None
 MODEL_PATH = os.path.join(os.path.dirname(__file__), 'recommendation_model.pkl')
+
+# ── Retraining state (thread-safe via lock) ──────────────────
+_retrain_lock = threading.Lock()
+_retrain_status = {
+    'running': False,
+    'lastRun': None,
+    'lastResult': None,   # 'success' | 'failed'
+    'lastError': None,
+    'samplesUsed': 0,
+}
+
+# Minimum new corrections needed to trigger a retrain
+MIN_NEW_SAMPLES = int(os.environ.get('REC_MIN_NEW_SAMPLES', '3'))
 
 
 def load_model():
@@ -59,6 +79,7 @@ def health():
         'status': 'ok' if loaded else 'unavailable',
         'modelLoaded': loaded,
         'service': 'recommendation-ml',
+        'retraining': _retrain_status['running'],
     }), 200 if loaded else 503
 
 
@@ -72,6 +93,164 @@ def model_info():
         'strengthClasses': model_data['strength_classes'],
         'metrics': model_data['metrics'],
     })
+
+
+# ═══════════════════════════════════════════════════════════════
+# AUTO-RETRAINING
+# ═══════════════════════════════════════════════════════════════
+
+DATA_PATH        = os.path.join(os.path.dirname(__file__), 'training_data.json')
+MERGED_PATH      = os.path.join(os.path.dirname(__file__), 'training_data_merged.json')
+CORRECTIONS_PATH = os.path.join(os.path.dirname(__file__), 'corrections_cache.json')
+
+REAL_SAMPLE_WEIGHT = 5  # each real correction counts as this many synthetic samples
+
+VALID_STRENGTHS = {'None', 'Weak', 'Moderate', 'Strong'}
+KNOWN_SOFT_SKILLS = {
+    "Communication", "Leadership", "Patience", "Problem Solving",
+    "Teamwork", "Teaching Ability", "Critical Thinking",
+    "Adaptability", "Professionalism", "Dedication",
+}
+
+
+def _normalise(sample):
+    text = (sample.get('text') or '').strip()
+    if len(text) < 20:
+        return None
+    raw_strength = (sample.get('strength') or 'none').strip().title()
+    strength = raw_strength if raw_strength in VALID_STRENGTHS else 'None'
+    subjects = sample.get('subjects') or []
+    raw_skills = sample.get('softSkills') or []
+    soft_skills = [s for s in raw_skills if s in KNOWN_SOFT_SKILLS]
+    return {'text': text, 'strength': strength, 'subjects': subjects,
+            'softSkills': soft_skills, 'source': 'admin_correction'}
+
+
+def _retrain_background(new_samples):
+    """Runs in a daemon thread. Retrains the model and hot-swaps it."""
+    global model_data
+
+    try:
+        print(f'[AutoRetrain] Starting with {len(new_samples)} new correction(s)...')
+
+        # Load synthetic base
+        if not os.path.exists(DATA_PATH):
+            raise FileNotFoundError(f'{DATA_PATH} not found')
+        with open(DATA_PATH) as f:
+            synthetic = json.load(f)
+
+        # Normalise and weight new samples
+        normalised = [_normalise(s) for s in new_samples]
+        normalised = [s for s in normalised if s is not None]
+        if not normalised:
+            raise ValueError('No usable samples after normalisation')
+
+        weighted = normalised * REAL_SAMPLE_WEIGHT
+
+        import random
+        merged = synthetic + weighted
+        random.seed(42)
+        random.shuffle(merged)
+
+        # Persist merged data
+        with open(MERGED_PATH, 'w') as f:
+            json.dump(merged, f)
+        print(f'[AutoRetrain] Merged dataset: {len(merged)} samples')
+
+        # Import trainer and point it at the merged file
+        import importlib
+        import train_model as trainer
+        importlib.reload(trainer)
+        trainer.DATA_PATH = MERGED_PATH
+        trainer.train()
+
+        # Hot-swap — load the freshly written .pkl without restarting
+        new_model = joblib.load(MODEL_PATH)
+        model_data = new_model
+
+        with _retrain_lock:
+            _retrain_status['lastResult'] = 'success'
+            _retrain_status['samplesUsed'] = len(merged)
+            _retrain_status['lastError'] = None
+        print(f'[AutoRetrain] ✅ Complete. Model hot-swapped ({len(merged)} samples).')
+
+    except Exception as e:
+        with _retrain_lock:
+            _retrain_status['lastResult'] = 'failed'
+            _retrain_status['lastError'] = str(e)
+        print(f'[AutoRetrain] ❌ Failed: {e}', file=sys.stderr)
+
+    finally:
+        with _retrain_lock:
+            _retrain_status['running'] = False
+
+
+@app.route('/retrain', methods=['POST'])
+def retrain():
+    """
+    Trigger background retraining with new correction samples.
+
+    Called automatically by the Node.js backend whenever an admin
+    submits an ML correction (POST /api/tutor-profiles/:id/ml-correction).
+
+    Request body:
+    {
+        "samples": [
+            {
+                "text": "...",
+                "strength": "Strong",
+                "subjects": ["Web Development"],
+                "softSkills": ["Patience"]
+            },
+            ...
+        ]
+    }
+    """
+    data = request.get_json()
+    if not data or 'samples' not in data:
+        return jsonify({'error': 'Missing "samples" array'}), 400
+
+    samples = data['samples']
+    if not isinstance(samples, list) or len(samples) == 0:
+        return jsonify({'error': '"samples" must be a non-empty array'}), 400
+
+    if len(samples) < MIN_NEW_SAMPLES:
+        return jsonify({
+            'queued': False,
+            'reason': f'Need at least {MIN_NEW_SAMPLES} samples to retrain (got {len(samples)}). Corrections saved — will retrain when threshold is reached.',
+            'received': len(samples),
+            'threshold': MIN_NEW_SAMPLES,
+        }), 200
+
+    if _retrain_status['running']:
+        return jsonify({
+            'queued': False,
+            'reason': 'Retraining already in progress. New corrections will be included next time.',
+        }), 200
+
+    # Persist corrections locally for audit / restart recovery
+    with open(CORRECTIONS_PATH, 'w') as f:
+        json.dump(samples, f, indent=2)
+
+    # Mark as running before spawning — prevents double-trigger between
+    # the thread start and the thread acquiring the lock internally.
+    with _retrain_lock:
+        _retrain_status['running'] = True
+        _retrain_status['lastRun'] = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+
+    t = threading.Thread(target=_retrain_background, args=(samples,), daemon=True)
+    t.start()
+
+    return jsonify({
+        'queued': True,
+        'samplesReceived': len(samples),
+        'message': 'Retraining started in background. Predictions continue from current model until complete.',
+    }), 202
+
+
+@app.route('/retrain/status', methods=['GET'])
+def retrain_status():
+    return jsonify(_retrain_status)
 
 
 @app.route('/predict', methods=['POST'])

@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acadia - Network Topology</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8fafc;
+            padding: 40px;
+        }
+        .title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #1e293b;
+        }
+        .subtitle {
+            text-align: center;
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 40px;
+        }
+        .diagram-container {
+            background: white;
+            border-radius: 12px;
+            padding: 48px 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        /* ── SVG canvas ── */
+        .topology-canvas {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 32px;
+        }
+
+        /* ── Node styles ── */
+        .node-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        .node-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            border: 2.5px solid;
+            flex-shrink: 0;
+        }
+        .node-name {
+            font-size: 11px;
+            font-weight: 700;
+            text-align: center;
+            color: #1e293b;
+            max-width: 90px;
+        }
+        .node-sub {
+            font-size: 10px;
+            color: #64748b;
+            text-align: center;
+            max-width: 90px;
+        }
+
+        /* Node color variants */
+        .nc-hub    { background: #f0fdf4; border-color: #22c55e; }
+        .nc-client { background: #eff6ff; border-color: #3b82f6; }
+        .nc-db     { background: #faf5ff; border-color: #a855f7; }
+        .nc-ml     { background: #fff7ed; border-color: #f97316; }
+        .nc-ext    { background: #fef2f2; border-color: #ef4444; }
+
+        /* ── Star layout using CSS grid ── */
+        .star-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: auto auto auto;
+            gap: 0;
+            width: 100%;
+            max-width: 720px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .cell {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 12px;
+        }
+
+        /* ── SVG connector lines ── */
+        .connector-svg {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: visible;
+        }
+
+        /* ── Legend ── */
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            justify-content: center;
+            margin-bottom: 24px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: #475569;
+        }
+        .legend-box {
+            width: 28px;
+            height: 16px;
+            border-radius: 3px;
+            border: 2px solid;
+        }
+
+        /* ── Description ── */
+        .desc-section {
+            margin-top: 24px;
+        }
+        .desc-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 12px;
+        }
+        .desc-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        .desc-table th {
+            background: #f1f5f9;
+            padding: 8px 12px;
+            text-align: left;
+            font-weight: 700;
+            color: #1e293b;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .desc-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+            vertical-align: top;
+        }
+        .desc-table tr:last-child td { border-bottom: none; }
+
+        .badge {
+            display: inline-block;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+        .b-green  { background: #dcfce7; color: #166534; }
+        .b-blue   { background: #dbeafe; color: #1e40af; }
+        .b-purple { background: #ede9fe; color: #5b21b6; }
+        .b-orange { background: #ffedd5; color: #9a3412; }
+        .b-red    { background: #fee2e2; color: #991b1b; }
+
+        /* note box */
+        .note-box {
+            background: #fffbeb;
+            border: 1.5px solid #fbbf24;
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 12px;
+            color: #78350f;
+            margin-top: 20px;
+            line-height: 1.6;
+        }
+        .note-box strong { color: #92400e; }
+    </style>
+</head>
+<body>
+
+<div class="title">Network Topology — Acadia</div>
+<div class="subtitle">Star Topology — Express.js Backend as Central Hub · On-Premise Deployment</div>
+
+<div class="diagram-container">
+
+    <!-- Star Topology Diagram (SVG-based) -->
+    <div class="topology-canvas">
+        <svg viewBox="0 0 720 600" width="720" height="600" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;">
+
+            <!-- ── Background zones ── -->
+            <!-- Institutional network boundary -->
+            <rect x="60" y="30" width="600" height="510" rx="16"
+                  fill="none" stroke="#86efac" stroke-width="2" stroke-dasharray="8,4"/>
+            <text x="340" y="56" text-anchor="middle" font-family="Segoe UI,sans-serif"
+                  font-size="11" font-weight="700" fill="#16a34a" letter-spacing="1">
+                INSTITUTIONAL NETWORK (ON-PREMISE)
+            </text>
+
+            <!-- External zone -->
+            <rect x="200" y="530" width="320" height="58" rx="10"
+                  fill="#fef2f2" stroke="#fca5a5" stroke-width="2" stroke-dasharray="6,3"/>
+            <text x="360" y="548" text-anchor="middle" font-family="Segoe UI,sans-serif"
+                  font-size="10" font-weight="700" fill="#b91c1c" letter-spacing="1">
+                EXTERNAL (INTERNET)
+            </text>
+
+            <!-- ── Spoke lines: hub → nodes ── -->
+            <!-- Hub is at center ~(360, 290) -->
+
+            <!-- Hub → Client Browsers (top) -->
+            <line x1="360" y1="248" x2="360" y2="148" stroke="#94a3b8" stroke-width="2"/>
+            <line x1="220" y1="248" x2="220" y2="148" stroke="#94a3b8" stroke-width="2"/>
+            <line x1="500" y1="248" x2="500" y2="148" stroke="#94a3b8" stroke-width="2"/>
+            <!-- horizontal bus at top -->
+            <line x1="180" y1="148" x2="540" y2="148" stroke="#94a3b8" stroke-width="2"/>
+
+            <!-- Hub → MongoDB (left) -->
+            <line x1="296" y1="290" x2="170" y2="290" stroke="#94a3b8" stroke-width="2"/>
+
+            <!-- Hub → ML Service 1 (bottom-left) -->
+            <line x1="322" y1="332" x2="210" y2="430" stroke="#94a3b8" stroke-width="2"/>
+
+            <!-- Hub → ML Service 2 (bottom-right) -->
+            <line x1="398" y1="332" x2="510" y2="430" stroke="#94a3b8" stroke-width="2"/>
+
+            <!-- Hub → Jitsi (external, dashed red) -->
+            <line x1="360" y1="332" x2="360" y2="528" stroke="#ef4444" stroke-width="2" stroke-dasharray="6,3"/>
+
+            <!-- ── Arrow heads ── -->
+            <!-- Down to clients (bidirectional tick marks) -->
+            <!-- Left to MongoDB -->
+            <polygon points="170,284 158,290 170,296" fill="#94a3b8"/>
+            <!-- Down-left to ML 1 -->
+            <polygon points="214,422 204,432 218,434" fill="#94a3b8"/>
+            <!-- Down-right to ML 2 -->
+            <polygon points="506,422 502,434 516,430" fill="#94a3b8"/>
+            <!-- Down to Jitsi (red) -->
+            <polygon points="354,522 360,534 366,522" fill="#ef4444"/>
+
+            <!-- Bidirectional marks on hub-client lines -->
+            <polygon points="354,154 360,142 366,154" fill="#94a3b8"/>
+            <polygon points="214,154 220,142 226,154" fill="#94a3b8"/>
+            <polygon points="494,154 500,142 506,154" fill="#94a3b8"/>
+
+            <!-- ── Protocol labels ── -->
+            <!-- Client lines -->
+            <rect x="366" y="186" width="80" height="16" rx="4" fill="#dbeafe"/>
+            <text x="406" y="197" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" font-weight="700" fill="#1e40af">HTTPS / REST</text>
+
+            <rect x="226" y="186" width="74" height="16" rx="4" fill="#d1fae5"/>
+            <text x="263" y="197" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" font-weight="700" fill="#065f46">WebSocket</text>
+
+            <rect x="506" y="186" width="68" height="16" rx="4" fill="#dbeafe"/>
+            <text x="540" y="197" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" font-weight="700" fill="#1e40af">HTTPS / REST</text>
+
+            <!-- MongoDB label -->
+            <rect x="170" y="272" width="72" height="16" rx="4" fill="#ede9fe"/>
+            <text x="206" y="283" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" font-weight="700" fill="#5b21b6">TCP / Mongoose</text>
+
+            <!-- ML 1 label -->
+            <rect x="212" y="366" width="66" height="16" rx="4" fill="#ffedd5"/>
+            <text x="245" y="377" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" font-weight="700" fill="#9a3412">HTTP :5002</text>
+
+            <!-- ML 2 label -->
+            <rect x="432" y="366" width="66" height="16" rx="4" fill="#ffedd5"/>
+            <text x="465" y="377" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" font-weight="700" fill="#9a3412">HTTP :5003</text>
+
+            <!-- Jitsi label -->
+            <rect x="370" y="424" width="68" height="16" rx="4" fill="#fee2e2"/>
+            <text x="404" y="435" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" font-weight="700" fill="#991b1b">HTTPS (Direct)</text>
+
+            <!-- ── Hub node (center) ── -->
+            <rect x="296" y="248" width="128" height="84" rx="12"
+                  fill="#f0fdf4" stroke="#22c55e" stroke-width="3"/>
+            <text x="360" y="272" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="13" font-weight="700" fill="#15803d">⚙</text>
+            <text x="360" y="290" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="11" font-weight="700" fill="#15803d">Express.js</text>
+            <text x="360" y="305" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" fill="#16a34a">Backend — HUB</text>
+            <text x="360" y="320" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" fill="#16a34a">Node.js · Socket.io</text>
+
+            <!-- ── Client nodes (top) ── -->
+            <!-- Student Browser -->
+            <rect x="172" y="90" width="96" height="58" rx="10"
+                  fill="#eff6ff" stroke="#3b82f6" stroke-width="2.5"/>
+            <text x="220" y="116" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="18">🎓</text>
+            <text x="220" y="132" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="10" font-weight="700" fill="#1e40af">Student</text>
+            <text x="220" y="144" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" fill="#3b82f6">Browser (React)</text>
+
+            <!-- Admin Browser -->
+            <rect x="312" y="90" width="96" height="58" rx="10"
+                  fill="#eff6ff" stroke="#3b82f6" stroke-width="2.5"/>
+            <text x="360" y="116" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="18">🛡</text>
+            <text x="360" y="132" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="10" font-weight="700" fill="#1e40af">Admin</text>
+            <text x="360" y="144" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" fill="#3b82f6">Browser (React)</text>
+
+            <!-- Tutor Browser -->
+            <rect x="452" y="90" width="96" height="58" rx="10"
+                  fill="#eff6ff" stroke="#3b82f6" stroke-width="2.5"/>
+            <text x="500" y="116" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="18">📚</text>
+            <text x="500" y="132" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="10" font-weight="700" fill="#1e40af">Tutor</text>
+            <text x="500" y="144" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" fill="#3b82f6">Browser (React)</text>
+
+            <!-- ── MongoDB (left) ── -->
+            <rect x="70" y="262" width="100" height="56" rx="10"
+                  fill="#faf5ff" stroke="#a855f7" stroke-width="2.5"/>
+            <text x="120" y="286" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="18">🗄</text>
+            <text x="120" y="302" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="10" font-weight="700" fill="#7e22ce">MongoDB</text>
+            <text x="120" y="314" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" fill="#9333ea">Database</text>
+
+            <!-- ── ML Service 1 (bottom-left) ── -->
+            <rect x="152" y="400" width="116" height="58" rx="10"
+                  fill="#fff7ed" stroke="#f97316" stroke-width="2.5"/>
+            <text x="210" y="424" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="18">🤖</text>
+            <text x="210" y="440" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="10" font-weight="700" fill="#c2410c">ML Service 1</text>
+            <text x="210" y="452" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" fill="#ea580c">Rec. Letter · :5002</text>
+
+            <!-- ── ML Service 2 (bottom-right) ── -->
+            <rect x="452" y="400" width="116" height="58" rx="10"
+                  fill="#fff7ed" stroke="#f97316" stroke-width="2.5"/>
+            <text x="510" y="424" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="18">🤖</text>
+            <text x="510" y="440" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="10" font-weight="700" fill="#c2410c">ML Service 2</text>
+            <text x="510" y="452" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" fill="#ea580c">Feedback · :5003</text>
+
+            <!-- ── Jitsi Meet (external, bottom center) ── -->
+            <rect x="286" y="538" width="148" height="42" rx="10"
+                  fill="#fef2f2" stroke="#ef4444" stroke-width="2" stroke-dasharray="5,3"/>
+            <text x="360" y="556" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="11" font-weight="700" fill="#b91c1c">📹 Jitsi Meet</text>
+            <text x="360" y="570" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="9" fill="#dc2626">External · meet.jit.si</text>
+
+        </svg>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-box" style="background:#eff6ff;border-color:#3b82f6;"></div>
+            Client Nodes (Browsers)
+        </div>
+        <div class="legend-item">
+            <div class="legend-box" style="background:#f0fdf4;border-color:#22c55e;"></div>
+            Central Hub (Express.js)
+        </div>
+        <div class="legend-item">
+            <div class="legend-box" style="background:#faf5ff;border-color:#a855f7;"></div>
+            Database (MongoDB)
+        </div>
+        <div class="legend-item">
+            <div class="legend-box" style="background:#fff7ed;border-color:#f97316;"></div>
+            ML Microservices (Flask)
+        </div>
+        <div class="legend-item">
+            <div class="legend-box" style="background:#fef2f2;border-color:#ef4444;border-style:dashed;"></div>
+            External Service (Jitsi)
+        </div>
+        <div class="legend-item">
+            <div style="width:28px;height:2px;background:#94a3b8;margin:7px 0;"></div>
+            Internal Connection
+        </div>
+        <div class="legend-item">
+            <div style="width:28px;height:0;border-top:2px dashed #ef4444;margin:7px 0;"></div>
+            External Connection (bypasses backend)
+        </div>
+    </div>
+
+    <!-- Topology description table -->
+    <div class="desc-section">
+        <div class="desc-title">Topology Characteristics</div>
+        <table class="desc-table">
+            <thead>
+                <tr>
+                    <th>Characteristic</th>
+                    <th>Value</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Topology Type</strong></td>
+                    <td><span class="badge b-green">Star</span></td>
+                    <td>All internal nodes communicate exclusively through the Express.js backend hub. No direct node-to-node connections exist within the system.</td>
+                </tr>
+                <tr>
+                    <td><strong>Central Hub</strong></td>
+                    <td>Express.js Backend (Node.js)</td>
+                    <td>Routes all requests, handles authentication, controls access to the database and ML services.</td>
+                </tr>
+                <tr>
+                    <td><strong>Client Nodes</strong></td>
+                    <td>3 browser roles (Student, Tutor, Admin)</td>
+                    <td>All run the same React SPA. Role-based access controls differentiate capabilities.</td>
+                </tr>
+                <tr>
+                    <td><strong>Database Node</strong></td>
+                    <td>MongoDB</td>
+                    <td>Not internet-facing. Accessible only by the hub (Express.js). Student data never leaves the institutional network.</td>
+                </tr>
+                <tr>
+                    <td><strong>ML Service Nodes</strong></td>
+                    <td>Flask :5002 and Flask :5003</td>
+                    <td>Internal-only microservices. Receive requests only from the hub. Not reachable by the browser directly.</td>
+                </tr>
+                <tr>
+                    <td><strong>External Exception</strong></td>
+                    <td>Jitsi Meet (meet.jit.si)</td>
+                    <td>The only node outside the star. Browsers connect directly via HTTPS. The backend has no visibility or control over this connection — which is why recording cannot be enforced.</td>
+                </tr>
+                <tr>
+                    <td><strong>Real-time Communication</strong></td>
+                    <td>Socket.io (WebSocket)</td>
+                    <td>Persistent bidirectional connection between browser and hub for in-session messaging. Still hub-mediated — not peer-to-peer.</td>
+                </tr>
+                <tr>
+                    <td><strong>Deployment</strong></td>
+                    <td>On-premise (Institutional)</td>
+                    <td>Backend, database, and ML services run within the institution's network. Supports privacy-first architecture — no student data transmitted to external servers.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="note-box">
+        <strong>Note on Jitsi Meet:</strong> Jitsi Meet is the only external dependency in Acadia's topology. The browser establishes a direct HTTPS connection to <em>meet.jit.si</em> without routing through the institutional backend. This is an intentional design choice that enables free, open-source video conferencing without infrastructure cost. However, it means the system has no control over the video stream or recording. Users who wish to record sessions must use Jitsi's built-in recording feature or external screen recording tools, and may share the resulting link through Acadia's in-app session chat.
+    </div>
+
+</div>
+</body>
+</html>

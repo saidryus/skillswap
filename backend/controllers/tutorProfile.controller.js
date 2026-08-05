@@ -606,6 +606,40 @@ const submitMLCorrection = async (req, res) => {
     };
 
     await profile.save();
+
+    // ── Auto-retrain: fetch all corrections and push to ML service ──
+    // Fire-and-forget — we never block the admin's response on this.
+    setImmediate(async () => {
+      try {
+        const { triggerRetrain, isMLServiceAvailable } = require('../utils/mlRecommendationClient');
+        const available = await isMLServiceAvailable();
+        if (!available) return;
+
+        // Pull all stored corrections that have usable text
+        const allProfiles = await TutorProfile.find({
+          'mlCorrection.correctedAt': { $exists: true, $ne: null },
+        }).select('extractedText aiAnalysis mlCorrection').lean();
+
+        const samples = allProfiles.map(p => {
+          const text = (p.extractedText || p.aiAnalysis?.summary || '').trim();
+          if (!text) return null;
+          return {
+            text,
+            strength: p.mlCorrection.correctedStrength || p.aiAnalysis?.recommendationStrength || 'none',
+            subjects: p.mlCorrection.correctedSubjects ?? (p.aiAnalysis?.subjectsMentioned || []),
+            softSkills: p.mlCorrection.correctedSoftSkills ?? (p.aiAnalysis?.softSkills || []),
+          };
+        }).filter(Boolean);
+
+        if (samples.length > 0) {
+          const result = await triggerRetrain(samples);
+          console.log(`[AutoRetrain] Recommendation model retrain triggered: ${result.queued ? 'started' : result.reason}`);
+        }
+      } catch (err) {
+        console.error('[AutoRetrain] Failed to trigger recommendation retrain:', err.message);
+      }
+    });
+
     res.json({ message: 'Correction saved. Thank you — this will improve future ML predictions.', mlCorrection: profile.mlCorrection });
   } catch (error) {
     res.status(500).json({ message: error.message });

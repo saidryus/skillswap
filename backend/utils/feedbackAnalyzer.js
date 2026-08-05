@@ -64,4 +64,42 @@ async function getAggregatedInsights(reviews) {
   }
 }
 
-module.exports = { isFeedbackServiceAvailable, analyzeReview, getAggregatedInsights };
+/**
+ * Submit new labelled review samples for incremental retraining.
+ * Called automatically after a rating with a comment is saved.
+ *
+ * @param {Array} samples - Array of { text, sentiment, strengths, improvements, topics }
+ * @returns {Promise<Object>}
+ */
+async function submitRetrainSamples(samples) {
+  try {
+    const response = await fetch(`${FEEDBACK_SERVICE_URL}/retrain`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ samples }),
+      signal: AbortSignal.timeout(10000),
+    });
+    const data = await response.json();
+    return { success: response.ok, ...data };
+  } catch (err) {
+    return { success: false, error: `Retrain submit failed: ${err.message}` };
+  }
+}
+
+/**
+ * Get current retraining status.
+ * @returns {Promise<Object|null>}
+ */
+async function getFeedbackRetrainStatus() {
+  try {
+    const response = await fetch(`${FEEDBACK_SERVICE_URL}/retrain/status`, {
+      signal: AbortSignal.timeout(3000),
+    });
+    if (!response.ok) return null;
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
+module.exports = { isFeedbackServiceAvailable, analyzeReview, getAggregatedInsights, submitRetrainSamples, getFeedbackRetrainStatus };

@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acadia - Network Model</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8fafc;
+            padding: 40px;
+        }
+        .title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #1e293b;
+        }
+        .subtitle {
+            text-align: center;
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 40px;
+        }
+        .diagram-container {
+            background: white;
+            border-radius: 12px;
+            padding: 48px 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* ── Layers ── */
+        .layer {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            margin-bottom: 0;
+        }
+        .layer-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 0;
+        }
+
+        /* ── Node boxes ── */
+        .node {
+            border-radius: 8px;
+            padding: 12px 18px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 140px;
+            position: relative;
+        }
+        .node-label {
+            font-size: 10px;
+            font-weight: 400;
+            margin-top: 3px;
+            opacity: 0.75;
+        }
+        .node-client {
+            background: #eff6ff;
+            border: 2px solid #3b82f6;
+            color: #1e40af;
+        }
+        .node-server {
+            background: #f0fdf4;
+            border: 2px solid #22c55e;
+            color: #15803d;
+        }
+        .node-db {
+            background: #faf5ff;
+            border: 2px solid #a855f7;
+            color: #7e22ce;
+        }
+        .node-ml {
+            background: #fff7ed;
+            border: 2px solid #f97316;
+            color: #c2410c;
+        }
+        .node-external {
+            background: #fef2f2;
+            border: 2px dashed #ef4444;
+            color: #b91c1c;
+        }
+
+        /* ── Arrow connectors ── */
+        .connector-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 6px 0;
+        }
+        .connector-line {
+            width: 2px;
+            background: #94a3b8;
+            flex-shrink: 0;
+        }
+        .connector-arrow-down {
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 8px solid #94a3b8;
+        }
+        .connector-arrow-up {
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 8px solid #94a3b8;
+        }
+        .connector-label {
+            font-size: 10px;
+            color: #64748b;
+            background: #f8fafc;
+            padding: 1px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
+            margin: 2px 0;
+        }
+        .bidirectional {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* ── Horizontal connector group (server → services) ── */
+        .h-connector-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            margin: 6px 0;
+        }
+        .h-line {
+            height: 2px;
+            background: #94a3b8;
+            width: 40px;
+        }
+        .h-arrow-right {
+            width: 0;
+            height: 0;
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+            border-left: 7px solid #94a3b8;
+        }
+        .h-label {
+            font-size: 10px;
+            color: #64748b;
+            background: #f8fafc;
+            padding: 1px 6px;
+            border-radius: 4px;
+            white-space: nowrap;
+            margin: 0 4px;
+        }
+
+        /* ── Protocol badge ── */
+        .proto-badge {
+            display: inline-block;
+            font-size: 9px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin: 0 2px;
+        }
+        .proto-https  { background: #dbeafe; color: #1e40af; }
+        .proto-ws     { background: #d1fae5; color: #065f46; }
+        .proto-tcp    { background: #ede9fe; color: #5b21b6; }
+        .proto-http   { background: #ffedd5; color: #9a3412; }
+        .proto-ext    { background: #fee2e2; color: #991b1b; }
+
+        /* ── Section separator ── */
+        .zone-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+            margin: 18px 0 12px;
+        }
+        .zone-box {
+            border: 1.5px dashed #e2e8f0;
+            border-radius: 10px;
+            padding: 20px 24px;
+            margin: 8px 0;
+            background: #fafafa;
+        }
+
+        /* ── Legend ── */
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-top: 32px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            justify-content: center;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: #475569;
+        }
+        .legend-box {
+            width: 28px;
+            height: 16px;
+            border-radius: 3px;
+            border: 2px solid;
+        }
+
+        /* ── Description table ── */
+        .desc-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 32px;
+            font-size: 12px;
+        }
+        .desc-table th {
+            background: #f1f5f9;
+            padding: 8px 12px;
+            text-align: left;
+            font-weight: 700;
+            color: #1e293b;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .desc-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+            vertical-align: top;
+        }
+        .desc-table tr:last-child td { border-bottom: none; }
+    </style>
+</head>
+<body>
+
+<div class="title">Network Model — Acadia</div>
+<div class="subtitle">Client-Server Model with Two-Tier Internal Service Communication</div>
+
+<div class="diagram-container">
+
+    <!-- CLIENT TIER -->
+    <div class="zone-label">Client Tier</div>
+    <div class="zone-box">
+        <div class="layer-row">
+            <div class="node node-client">
+                Student / Admin
+                <div class="node-label">Web Browser (React SPA)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Connector: Browser → Backend -->
+    <div class="connector-block">
+        <div style="display:flex;align-items:center;gap:8px;margin:4px 0;">
+            <span class="proto-badge proto-https">HTTPS / REST</span>
+            <span class="proto-badge proto-ws">WebSocket (Socket.io)</span>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;">
+            <div class="connector-arrow-up" style="margin-bottom:2px;"></div>
+            <div class="connector-line" style="height:32px;"></div>
+            <div class="connector-arrow-down"></div>
+        </div>
+        <div class="connector-label">Requests & Responses · Real-time Events</div>
+    </div>
+
+    <!-- SERVER TIER -->
+    <div class="zone-label">Server Tier — On-Premise (Institutional Network)</div>
+    <div class="zone-box">
+
+        <!-- Express Backend -->
+        <div class="layer-row" style="margin-bottom:16px;">
+            <div class="node node-server" style="min-width:200px;">
+                Express.js Backend
+                <div class="node-label">Node.js · REST API · Socket.io Server</div>
+            </div>
+        </div>
+
+        <!-- Backend → DB and ML services -->
+        <div class="h-connector-row" style="justify-content:space-around;max-width:600px;margin:0 auto 16px;">
+            <!-- left line to DB -->
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+                <div class="connector-arrow-up" style="margin-bottom:2px;"></div>
+                <div class="connector-line" style="height:28px;"></div>
+                <div class="connector-arrow-down"></div>
+                <div class="connector-label"><span class="proto-badge proto-tcp">TCP (Mongoose)</span></div>
+            </div>
+
+            <!-- spacer -->
+            <div style="width:60px;"></div>
+
+            <!-- middle line to ML Rec -->
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+                <div class="connector-arrow-up" style="margin-bottom:2px;"></div>
+                <div class="connector-line" style="height:28px;"></div>
+                <div class="connector-arrow-down"></div>
+                <div class="connector-label"><span class="proto-badge proto-http">HTTP :5002</span></div>
+            </div>
+
+            <!-- spacer -->
+            <div style="width:60px;"></div>
+
+            <!-- right line to ML Feedback -->
+            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+                <div class="connector-arrow-up" style="margin-bottom:2px;"></div>
+                <div class="connector-line" style="height:28px;"></div>
+                <div class="connector-arrow-down"></div>
+                <div class="connector-label"><span class="proto-badge proto-http">HTTP :5003</span></div>
+            </div>
+        </div>
+
+        <!-- Services row -->
+        <div class="layer-row" style="gap:16px;">
+            <div class="node node-db">
+                MongoDB
+                <div class="node-label">Database Server</div>
+            </div>
+            <div style="width:24px;"></div>
+            <div class="node node-ml">
+                ML Service 1
+                <div class="node-label">Recommendation Letter<br>Flask · Port 5002</div>
+            </div>
+            <div class="node node-ml">
+                ML Service 2
+                <div class="node-label">Tutor Feedback<br>Flask · Port 5003</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Connector: Browser → Jitsi (separate, external) -->
+    <div style="margin-top:28px;">
+        <div class="zone-label">External Service (Outside Institutional Network)</div>
+        <div class="zone-box" style="border-color:#fca5a5;background:#fff5f5;">
+            <div class="layer-row" style="gap:48px;">
+                <div class="node node-client" style="min-width:120px;">
+                    Browser
+                    <div class="node-label">Client</div>
+                </div>
+                <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+                    <div style="display:flex;align-items:center;gap:6px;">
+                        <div style="height:2px;width:60px;background:#ef4444;border-top:2px dashed #ef4444;"></div>
+                        <span class="proto-badge proto-ext">HTTPS (Direct)</span>
+                        <div style="height:2px;width:60px;background:#ef4444;border-top:2px dashed #ef4444;"></div>
+                    </div>
+                    <div style="font-size:10px;color:#ef4444;">bypasses backend — not controlled by the system</div>
+                </div>
+                <div class="node node-external">
+                    Jitsi Meet
+                    <div class="node-label">External Video<br>meet.jit.si</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-box" style="background:#eff6ff;border-color:#3b82f6;"></div>
+            Client (Browser)
+        </div>
+        <div class="legend-item">
+            <div class="legend-box" style="background:#f0fdf4;border-color:#22c55e;"></div>
+            Application Server
+        </div>
+        <div class="legend-item">
+            <div class="legend-box" style="background:#faf5ff;border-color:#a855f7;"></div>
+            Database Server
+        </div>
+        <div class="legend-item">
+            <div class="legend-box" style="background:#fff7ed;border-color:#f97316;"></div>
+            ML Microservice
+        </div>
+        <div class="legend-item">
+            <div class="legend-box" style="background:#fef2f2;border-color:#ef4444;border-style:dashed;"></div>
+            External Service
+        </div>
+    </div>
+
+    <!-- Communication table -->
+    <table class="desc-table">
+        <thead>
+            <tr>
+                <th>From</th>
+                <th>To</th>
+                <th>Protocol</th>
+                <th>Purpose</th>
+                <th>Direction</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Browser</td>
+                <td>Express.js Backend</td>
+                <td><span class="proto-badge proto-https">HTTPS / REST</span></td>
+                <td>All API requests (login, sessions, tutor search, file upload, etc.)</td>
+                <td>Bidirectional</td>
+            </tr>
+            <tr>
+                <td>Browser</td>
+                <td>Express.js Backend</td>
+                <td><span class="proto-badge proto-ws">WebSocket</span></td>
+                <td>Real-time in-session messaging via Socket.io</td>
+                <td>Bidirectional (persistent)</td>
+            </tr>
+            <tr>
+                <td>Express.js Backend</td>
+                <td>MongoDB</td>
+                <td><span class="proto-badge proto-tcp">TCP (Mongoose)</span></td>
+                <td>All database reads and writes</td>
+                <td>Bidirectional</td>
+            </tr>
+            <tr>
+                <td>Express.js Backend</td>
+                <td>ML Service 1 (Flask :5002)</td>
+                <td><span class="proto-badge proto-http">HTTP</span></td>
+                <td>Recommendation letter ML inference requests</td>
+                <td>Request / Response</td>
+            </tr>
+            <tr>
+                <td>Express.js Backend</td>
+                <td>ML Service 2 (Flask :5003)</td>
+                <td><span class="proto-badge proto-http">HTTP</span></td>
+                <td>Tutor feedback sentiment and analysis requests</td>
+                <td>Request / Response</td>
+            </tr>
+            <tr>
+                <td>Browser</td>
+                <td>Jitsi Meet (External)</td>
+                <td><span class="proto-badge proto-ext">HTTPS (Direct)</span></td>
+                <td>Video conferencing — connection made directly by the browser, backend not involved</td>
+                <td>Bidirectional (external)</td>
+            </tr>
+        </tbody>
+    </table>
+
+</div>
+</body>
+</html>
