@@ -230,28 +230,23 @@ Forces first-login users to set a new password before accessing any other page. 
 ### Admin Pages
 
 ### 35. Admin Dashboard
-**Path:** `/admin/dashboard`
-Overview statistics panel: total users, active sessions, pending tutor applications, recent activity feed. Uses GSAP for entry animations.
+**Path:** `/admin` (index route)
 
 ### 36. User Management Page
 **Path:** `/admin/users`
-Full CRUD interface for user accounts. Table view with search, filter by role/department, and pagination. Supports single user creation form and bulk CSV import with row-level error reporting.
 
 ### 37. Course Management Page
 **Path:** `/admin/courses`
-CRUD interface for courses. Includes CSV bulk import. Shows curriculum structure (year level, semester, department association).
 
 ### 38. Department Management Page
 **Path:** `/admin/departments`
-CRUD interface for departments. Simple form and table. Department records anchor all other scoped data.
 
 ### 39. Session Management Page
 **Path:** `/admin/sessions`
-Admin view of all sessions across departments. Filterable by status, date range, tutor, and tutee. Allows admins to cancel sessions or view session details.
 
 ### 40. Student Schedules Page
 **Path:** `/admin/student-schedules`
-Admin view of uploaded student schedules. Displays parsed class schedule data. Useful for resolving scheduling conflicts or verifying enrollment.
+Admin view of uploaded student schedules. Displayed separately from the main sessions page.
 
 ### 41. Tutor Applications Page
 **Path:** `/admin/tutor-applications`
@@ -262,45 +257,34 @@ Review interface for tutor applications. Displays the AI analysis panel (predict
 ### Student Pages
 
 ### 42. Student Dashboard
-**Path:** `/student/dashboard`
-Overview of upcoming sessions, recent notifications, and quick-action links. Entry point for the student experience.
+**Path:** `/student` (index route)
 
 ### 43. Find Tutor Page
 **Path:** `/student/find-tutor`
-Tutor discovery interface. Displays ranked tutors filtered by subject eligibility (curriculum filter), competency score, and availability. Shows each tutor's star rating, subject specialties, and session count.
 
-### 44. Book Session Page
-**Path:** `/student/book-session`
-Slot selection interface. Calls the slot suggestion endpoint to display mutually available time slots for the selected tutor. Student selects a slot and submits a session request.
-
-### 45. My Sessions Page
+### 44. My Sessions Page
 **Path:** `/student/my-sessions`
-Lists all sessions for the current student (as tutee or tutor). Displays session status, scheduled time, and action buttons (join, rate, cancel) appropriate to the session's current state.
 
-### 46. My Schedule Page
-**Path:** `/student/my-schedule`
-Allows students to upload their study load PDF (triggering OCR extraction) and manage their parsed class schedule. Also displays their set availability slots.
-
-### 47. Become Tutor Page
+### 45. Become Tutor Page
 **Path:** `/student/become-tutor`
-Tutor application form. Student uploads a faculty recommendation letter. Progress indicator shows the pipeline stages (uploading → OCR → analyzing → submitted). Displays current application status.
 
-### 48. My Analytics Page
+### 46. My Schedule / Availability Page
+**Path:** `/student/my-availability`
+
+### 47. My Analytics Page
 **Path:** `/student/my-analytics`
-Personalized analytics for the student. Shows session history, attendance rate, risk level (from ML Service 3), and feedback summary. Uses Framer Motion for animated chart entries.
 
-### 49. Tutor Dashboard Page
+### 48. Tutor Dashboard Page
 **Path:** `/student/tutor-dashboard`
-Available only to users with `isTutor: true`. Shows tutor-specific metrics: competency score breakdown, average rating, completed sessions, ML feedback insights from recent reviews, and pending session requests.
 
 ---
 
 ### Shared Pages
 
-### 50. Announcements Page
-**Path:** `/announcements`
-Displays role-targeted announcements in reverse chronological order. Available to all authenticated users. Announcements are marked read on view.
+### 49. Announcements Page
+**Path:** `/student/announcements` (student) · `/admin/announcements` (admin)
+Displays role-targeted announcements in reverse chronological order. Available to all authenticated users.
 
-### 51. Learning Resources Page
-**Path:** `/resources`
-Lists available learning materials with filter by course/department. Supports download. Tutors see an upload button to add new materials. Visibility-controlled — restricted materials only appear for eligible students.
+### 50. Learning Resources Page
+**Path:** `/student/resources`
+Lists available learning materials with filter by course/department. Supports download. Tutors see an upload button to add new materials.

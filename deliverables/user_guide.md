@@ -173,7 +173,7 @@ For deeper analytics, navigate to specific sections (Sessions, Users) and use th
 
 Your study load lets Acadia avoid scheduling sessions during your class hours.
 
-1. Go to **My Schedule** from the sidebar.
+1. Go to **My Schedule** from the sidebar (URL: `/student/my-availability`).
 2. Click **Upload Study Load**.
 3. Select your class schedule PDF (the official one from your registrar or enrollment system).
 4. Click **Upload**. The system reads your schedule automatically.

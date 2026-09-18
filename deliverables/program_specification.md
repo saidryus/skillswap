@@ -40,9 +40,9 @@ Acadia follows a **three-tier architecture**:
 |---|---|---|
 | Backend API | `backend/server.js` | 5000 |
 | Frontend Dev Server | Vite (`npm run dev` in frontend dir) | 5173 |
-| ML Recommendation Service | `ml_recommendation/app.py` | 5002 |
-| ML Feedback Service | `ml_feedback/app.py` | 5003 |
-| ML Attendance Service | `ml_attendance/app.py` | 5001 |
+| ML Recommendation Service | `ml/recommendation/app.py` | 5002 |
+| ML Feedback Service | `ml/feedback/app.py` | 5003 |
+| ML Attendance Risk Service | `ml/app.py` | 5001 |
 
 ---
 
@@ -72,7 +72,7 @@ Incoming Request
 6. Rate limiters         — Applied per route group (see rate limit table below)
       │
       ▼
-7. Route modules         — 16 route files mounted under /api/*
+7. Route modules         — 17 route files mounted under /api/*
       │
       ▼
 8. Global error handler  — Catches unhandled errors, returns JSON error response
@@ -83,8 +83,8 @@ Incoming Request
 | Route Group | Limit | Window |
 |---|---|---|
 | `POST /api/auth/login` | 10 requests | 15 minutes |
-| `POST /api/tutor-profiles/*/reauth` | 10 requests | 15 minutes |
-| `GET /api/tutor-profiles/*/document` | 30 requests | 5 minutes |
+| `POST /api/tutor-profiles/doc-access` | 10 requests | 15 minutes |
+| `GET /api/tutor-profiles/:id/document` | 30 requests | 5 minutes |
 | All other `/api/*` routes | 300 requests | 1 minute |
 
 ---
@@ -148,7 +148,7 @@ signatureDetector.js — keyword scan for faculty signature presence
         ▼
         ┌─────────────────────────────────────────┐
         │         TIER 1: ML Service              │
-        │  POST http://localhost:5002/analyze     │
+        │  POST http://localhost:5002/predict     │
         │  mlRecommendationClient.js              │
         │  TF-IDF + LinearSVC + LogReg            │
         └──────────────┬──────────────────────────┘
@@ -263,7 +263,7 @@ Protects access to encrypted recommendation letter documents:
 ```
 1. Admin clicks "View Document"
 2. Frontend prompts for admin password
-3. POST /api/tutor-profiles/:id/reauth  (rate limited: 10/15min)
+3. POST /api/tutor-profiles/doc-access  (rate limited: 10/15min)
    → bcrypt.compare(password, admin.passwordHash)
    → On success: docAccessToken.js generates a signed, short-lived token (15 min)
    → Returns { docToken }
@@ -272,9 +272,9 @@ Protects access to encrypted recommendation letter documents:
    → fileEncryption.js decrypts file in memory
    → Streams decrypted bytes to client
 5. Every document view is written to audit log:
-   { adminId, ip, action: 'view', documentId, timestamp }
+   { adminId, ip, action: 'viewed', timestamp }
 6. Failed re-auth attempts are counted in DB:
-   3 failures within window → 3-hour lockout stored on User record
+   3 failures within window → 3-hour lockout stored on User record (docAccessLockedUntil)
 ```
 
 ---
@@ -332,3 +332,4 @@ This ensures uploaded recommendation letters do not persist indefinitely on disk
 | `/api/messages` | `message.routes.js` | Send, list (per session) |
 | `/api/availability` | `availability.routes.js` | Add slot, remove slot, list |
 | `/api/curriculum` | `curriculum.routes.js` | Eligible courses by year/semester/department |
+| `/api/ml` | `mlStatus.routes.js` | ML service health + retraining status (admin only) |

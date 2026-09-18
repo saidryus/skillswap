@@ -68,28 +68,28 @@ JWT_SECRET=replace_with_a_long_random_string_at_least_32_chars
 FRONTEND_URL=http://localhost:5173
 
 # ML Service URLs
-ML_REC_URL=http://localhost:5002
+ML_RECOMMENDATION_URL=http://localhost:5002
 ML_FEEDBACK_URL=http://localhost:5003
-ML_ATTENDANCE_URL=http://localhost:5001
 
 # File Encryption (AES-256-CBC)
-# Generate ENCRYPTION_KEY:  node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-# Generate ENCRYPTION_IV:   node -e "console.log(require('crypto').randomBytes(16).toString('hex'))"
-ENCRYPTION_KEY=your_64_char_hex_key_here
-ENCRYPTION_IV=your_32_char_hex_iv_here
+# Generate with: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+DOC_ENCRYPTION_KEY=your_64_char_hex_key_here
 
-# OpenAI (optional — LLM fallback for document analysis)
+# Document expiry — days before unreviewed recommendation letters are auto-deleted
+DOC_EXPIRY_DAYS=30
+
+# OpenAI (optional — LLM fallback for recommendation letter analysis)
 # OPENAI_API_KEY=sk-...
+# OPENAI_MODEL=gpt-4o-mini
 ```
 
-Generate the encryption keys using the commands shown in the comments:
+Generate the encryption key using the command shown in the comment:
 
 ```bash
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-node -e "console.log(require('crypto').randomBytes(16).toString('hex'))"
 ```
 
-Copy the output of each command into `ENCRYPTION_KEY` and `ENCRYPTION_IV` respectively.
+Copy the output into `DOC_ENCRYPTION_KEY`.
 
 > **Important:** Keep `.env` private. Never commit it to version control. It is already listed in `backend/.gitignore`.
 
@@ -122,15 +122,15 @@ Navigate to each ML service directory and install dependencies:
 
 ```bash
 # ML Recommendation Service (port 5002)
-cd ../ml_recommendation
-pip install -r requirements.txt
+cd ../ml/recommendation
+pip install -r ../../ml/requirements.txt
 
 # ML Feedback Service (port 5003)
-cd ../ml_feedback
-pip install -r requirements.txt
+cd ../ml/feedback
+pip install -r ../../ml/requirements.txt
 
-# ML Attendance Service (port 5001)
-cd ../ml_attendance
+# ML Attendance Risk Service (port 5001)
+cd ../ml
 pip install -r requirements.txt
 ```
 
@@ -145,15 +145,31 @@ pip install flask==2.3.3 scikit-learn==1.3.2 numpy==1.24.4 joblib==1.3.2
 Each ML service includes a script to generate synthetic training data:
 
 ```bash
-# Inside each ML service directory:
+# Recommendation service
+cd ml/recommendation
 python generate_training_data.py
+
+# Feedback service
+cd ../feedback
+python generate_training_data.py
+
+# Attendance risk service uses synthetic generation inside train.py — skip this step
 ```
 
 ### 5.3 Train the Models
 
 ```bash
-# Inside each ML service directory:
+# Recommendation service
+cd ml/recommendation
 python train_model.py
+
+# Feedback service
+cd ../feedback
+python train_model.py
+
+# Attendance risk service
+cd ..
+python train.py
 ```
 
 This produces `.pkl` model files used for inference. Training takes 1–5 minutes per service depending on hardware.
@@ -257,21 +273,21 @@ Expected output:
 ### Terminal 3 — ML Recommendation Service (port 5002)
 
 ```bash
-cd ml_recommendation
+cd ml/recommendation
 python app.py
 ```
 
 ### Terminal 4 — ML Feedback Service (port 5003)
 
 ```bash
-cd ml_feedback
+cd ml/feedback
 python app.py
 ```
 
-### Terminal 5 — ML Attendance Service (port 5001)
+### Terminal 5 — ML Attendance Risk Service (port 5001)
 
 ```bash
-cd ml_attendance
+cd ml
 python app.py
 ```
 
@@ -295,16 +311,16 @@ Open your browser and go to `http://localhost:5173`. Use the checklist below to 
 
 ## 10. Demo Accounts
 
-| Role | Email | Password | Notes |
+| Role | Login ID | Password | Notes |
 |---|---|---|---|
-| Super Admin | `admin@acadia.edu` | `admin123` | Must change password on first login |
-| Student (Tutee) | `student001@acadia.edu` | `student001` | Regular student, no tutor profile |
-| Student (Tutor) | `tutor001@acadia.edu` | `tutor001` | Approved tutor with availability set |
-| Faculty | `faculty001@acadia.edu` | `faculty001` | Faculty role |
+| Super Admin | `admin@acadia.edu` | `admin123` | Full access — must change password on first login |
+| Student (Year 3) | `23063670` | `670` | Simone Makinano — no schedule, upload study load manually |
+| Student (Year 1) | `202401001` | `001` | Juan Dela Cruz |
+| Student (Year 2) | `202302001` | `001` | Miguel Dela Cruz |
+| Student (Year 3) | `202203001` | `001` | Rafael Dela Cruz — has tutor profile |
+| Student (Year 4) | `202104001` | `001` | Antonio Dela Cruz |
 
-> All demo passwords should be changed immediately if deploying to a real environment.
-
-Additional seeded student accounts follow the pattern `student{NNN}@acadia.edu` / `student{NNN}` for NNN from 001 to 100.
+> All student passwords are the **last 3 digits of their Student ID**. All seeded students will be prompted to change their password on first login.
 
 ---
 
@@ -320,7 +336,7 @@ Additional seeded student accounts follow the pattern `student{NNN}@acadia.edu` 
 | "Schedule required" error when booking | Student has no study load and no availability set | Student must upload study load or manually set availability before booking |
 | Document access locked (3-hour lockout) | 3 failed document re-auth attempts | Wait 3 hours, or have a super admin reset the `docAuthLockedUntil` field on the User document in MongoDB |
 | `dotenv: Missing .env file` | `.env` not created in `backend/` | Create `backend/.env` using the template in Step 3.2 |
-| `ENCRYPTION_KEY must be 64 hex chars` | Key is wrong length | Regenerate using `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
+| `DOC_ENCRYPTION_KEY must be 64 hex chars` | Key is wrong length | Regenerate using `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
 | Jitsi Meet room does not load | No internet access or browser blocking third-party iframes | Ensure internet is available; check browser popup/iframe blocking settings |
 
 ---
@@ -334,7 +350,7 @@ Before deploying Acadia to a production environment, apply the following changes
 | `NODE_ENV` | Set to `production` in `.env`. This activates the HTTPS redirect middleware and tightens error responses. |
 | `FRONTEND_URL` | Set to your actual production domain (e.g., `https://acadia.yourdomain.edu`). |
 | `JWT_SECRET` | Use a cryptographically random string of at least 64 characters. |
-| `ENCRYPTION_KEY` / `ENCRYPTION_IV` | Generate fresh keys for production. Store them securely (e.g., environment secret manager). |
+| `DOC_ENCRYPTION_KEY` | Generate a fresh key for production. Store securely (e.g., environment secret manager). |
 | HTTPS | Configure your reverse proxy (Nginx, Caddy, or Apache) to terminate SSL. The backend HTTPS redirect requires the server to be behind HTTPS. |
 | MongoDB | Use a dedicated MongoDB instance with authentication enabled. Update `MONGO_URI` to include credentials. |
 | Rate limits | The default limits (300/min general, 10/15min login) are appropriate for departmental use. Adjust in `backend/middleware/rateLimiter.js` if needed. |

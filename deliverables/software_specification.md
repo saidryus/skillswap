@@ -56,13 +56,13 @@ Create a `.env` file in the `backend/` directory. All variables below are requir
 | `MONGO_URI` | `mongodb://localhost:27017/trophe` | Full MongoDB connection string. Database name is `trophe`. |
 | `JWT_SECRET` | `your_jwt_secret_key_here` | Secret key used to sign and verify JWT tokens. Use a long, random string in production. |
 | `NODE_ENV` | `development` | Set to `production` to enable HTTPS redirect, stricter CSP, and production error handling |
-| `FRONTEND_URL` | `http://localhost:5173` | Allowed CORS origin. In production, set to the actual frontend domain (e.g., `https://acadia.yourdomain.edu`). |
-| `ML_REC_URL` | `http://localhost:5002` | Base URL of the Recommendation Letter ML service |
+| `FRONTEND_URL` | `http://localhost:5173` | Allowed CORS origin. In production, set to the actual frontend domain. |
+| `ML_RECOMMENDATION_URL` | `http://localhost:5002` | Base URL of the Recommendation Letter ML service |
 | `ML_FEEDBACK_URL` | `http://localhost:5003` | Base URL of the Tutor Feedback ML service |
-| `ML_ATTENDANCE_URL` | `http://localhost:5001` | Base URL of the Attendance Risk ML service |
-| `OPENAI_API_KEY` | `sk-...` | **(Optional)** OpenAI API key for LLM fallback in document analysis. If omitted, the system skips LLM and falls through to rule-based analysis. |
-| `ENCRYPTION_KEY` | `64-char hex string` | 256-bit key used for AES-256-CBC encryption of uploaded documents. Generate with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
-| `ENCRYPTION_IV` | `32-char hex string` | 128-bit IV for AES-256-CBC. Generate with `node -e "console.log(require('crypto').randomBytes(16).toString('hex'))"` |
+| `DOC_ENCRYPTION_KEY` | `64-char hex string` | 256-bit key used for AES-256-CBC encryption of uploaded documents. Generate with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` |
+| `DOC_EXPIRY_DAYS` | `30` | Number of days before an unreviewed recommendation document is auto-deleted |
+| `OPENAI_API_KEY` | `sk-...` | **(Optional)** OpenAI API key for LLM fallback in document analysis. If omitted, falls through to rule-based analysis. |
+| `OPENAI_MODEL` | `gpt-4o-mini` | **(Optional)** OpenAI model to use for LLM fallback |
 
 ---
 
@@ -95,15 +95,15 @@ Located in `frontend/package.json` (or root). Install with `npm install`.
 | Routing | `react-router-dom@6.x` |
 | Styling | `tailwindcss@3.4.x` |
 | Animation | `framer-motion`, `gsap` |
-| 3D | `three`, `@react-three/fiber` |
+| 3D | `three`, `@react-three/fiber`, `@react-three/drei` |
 | HTTP | `axios` |
-| Real-time | `socket.io-client` |
-| DnD | `@dnd-kit/core` |
-| Utilities | `jspdf`, `react-icons`, `react-hot-toast`, `howler` |
+| DnD | `@dnd-kit/core`, `@dnd-kit/utilities` |
+| PDF export | `jspdf`, `jspdf-autotable` |
+| Utilities | `react-icons`, `react-hot-toast`, `howler` |
 
 ### 5.3 ML Services (Python)
 
-Each ML service has its own `requirements.txt`. Install with `pip install -r requirements.txt`.
+All three ML services share a single `requirements.txt` located at `ml/requirements.txt`. Install with `pip install -r ml/requirements.txt`.
 
 | Package | Version | Used By |
 |---|---|---|
@@ -152,6 +152,8 @@ Each ML service has its own `requirements.txt`. Install with `pip install -r req
 |---|---|
 | Client → Server | LAN or internet; minimum 10 Mbps for video sessions |
 | Server → MongoDB | Localhost (same machine) or LAN |
-| Server → ML Services | Localhost (same machine); ports 5001, 5002, 5003 must be reachable |
+| Server → ML Recommendation Service | Localhost; port 5002 must be reachable |
+| Server → ML Feedback Service | Localhost; port 5003 must be reachable |
+| Server → ML Attendance Service | Localhost; port 5001 must be reachable |
 | Server → OpenAI | Internet access (optional) |
 | Client → Jitsi Meet | Internet access required for video |
