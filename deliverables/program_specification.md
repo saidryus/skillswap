@@ -16,7 +16,7 @@ Acadia follows a **three-tier architecture**:
 │  React 18 SPA (Vite, port 5173) │
 │  Browser — no server-side render│
 └────────────────┬────────────────┘
-                 │ HTTP/REST + WebSocket (Socket.io)
+                 │ HTTP/REST
 ┌────────────────▼────────────────┐
 │      APPLICATION TIER           │
 │  Node.js + Express (port 5000)  │
@@ -279,17 +279,21 @@ Protects access to encrypted recommendation letter documents:
 
 ---
 
-## 11. Real-Time Messaging (Socket.io)
+## 11. In-Session Messaging (HTTP REST)
 
 ```
 1. Session is created with status = 'scheduled'
-2. Frontend joins Socket.io room: socket.join(`session-${sessionId}`)
-3. Both tutor and tutee join the same room
-4. Messages sent via:  socket.to(`session-${sessionId}`).emit('message', payload)
-5. Messages persisted to Messages collection via message.controller.js
-6. Jitsi Meet room URL is generated:
-   https://meet.jit.si/acadia-session-<sessionId>
-   Embedded as a link/iframe within the session view
+2. Participant opens the session chat page
+3. Frontend calls GET /api/messages/:sessionId to load message history
+4. Participant types a message and clicks Send
+5. Frontend calls POST /api/messages/:sessionId with { content, type }
+6. Backend saves the Message document to MongoDB
+7. Frontend re-fetches messages to display the new message
+8. Chat is automatically locked when session status is
+   'completed', 'cancelled', or 'rejected' — the API rejects
+   new messages with "This conversation is locked."
+9. Jitsi Meet room URL is generated deterministically:
+   https://meet.jit.si/Acadia-<last8charsOfSessionId>
 ```
 
 ---

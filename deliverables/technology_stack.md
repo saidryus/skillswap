@@ -2,7 +2,7 @@
 
 ## Overview
 
-Acadia is a full-stack web application built on a three-tier architecture: a React-based single-page application on the frontend, a Node.js/Express REST API on the backend, and a set of Python Flask microservices for machine learning inference. All tiers communicate over HTTP/WebSocket and are designed to run on a single local or institutional server.
+Acadia is a full-stack web application built on a three-tier architecture: a React-based single-page application on the frontend, a Node.js/Express REST API on the backend, and a set of Python Flask microservices for machine learning inference. All tiers communicate over HTTP and are designed to run on a single local or institutional server.
 
 ---
 
@@ -21,7 +21,6 @@ Acadia is a full-stack web application built on a three-tier architecture: a Rea
 | @react-three/fiber | latest | React renderer for Three.js — 3D scene composition |
 | @dnd-kit/core | latest | Drag-and-drop primitives for schedule/availability management |
 | axios | latest | HTTP client for all REST API calls to the backend |
-| socket.io-client | latest | WebSocket client for real-time in-app messaging |
 | jspdf | latest | Client-side PDF generation (e.g., session summaries) |
 | react-icons | latest | Icon library (Font Awesome, Material, etc.) |
 | react-hot-toast | latest | Toast notification system for user feedback |
@@ -49,14 +48,13 @@ Vite compiles the React application into static assets (`dist/`) that can be ser
 | pdfjs-dist | 4.4.x | Server-side PDF parsing and text extraction |
 | tesseract.js | 7.0.x | Pure-JS OCR engine for extracting text from recommendation letter images and PDFs |
 | openai | 4.52.x | OpenAI API client — optional LLM fallback for document analysis |
-| socket.io | latest | WebSocket server for real-time messaging within session chat rooms |
 | cors | latest | Cross-Origin Resource Sharing headers for frontend–backend communication |
 | dotenv | latest | Loads environment variables from `.env` file |
 | crypto (Node built-in) | N/A | AES-256-CBC file encryption/decryption for documents at rest |
 
 ### Backend Entry Point
 
-`backend/server.js` — starts Express on **port 5000**, connects to MongoDB, registers all middleware and route modules, initializes the document expiry scheduler, and attaches Socket.io.
+`backend/server.js` — starts Express on **port 5000**, connects to MongoDB, registers all middleware and route modules, and initializes the document expiry scheduler.
 
 ---
 
@@ -148,7 +146,6 @@ All three ML services are standalone Python Flask applications. They are invoked
 | ML Recommendation | Python + Flask + scikit-learn | 3.10+ / 2.3+ / 1.3+ | 5002 |
 | ML Feedback | Python + Flask + scikit-learn | 3.10+ / 2.3+ / 1.3+ | 5003 |
 | ML Attendance | Python + Flask + scikit-learn | 3.10+ / 2.3+ / 1.3+ | 5001 |
-| Real-time | Socket.io | latest | (via 5000) |
 | Video Conferencing | Jitsi Meet | External | — |
 | LLM Fallback | OpenAI API | 4.52 (optional) | — |
 | API Testing | Newman | 6.1.1 | — |

@@ -80,7 +80,6 @@ Located in `backend/package.json`. Install with `npm install` inside the `backen
 | Security | `helmet@8.3.x`, `express-mongo-sanitize`, `express-rate-limit@8.5.x` |
 | File handling | `multer@2.1.x`, `sharp@0.35.x` |
 | OCR | `tesseract.js@7.0.x`, `pdfjs-dist@4.4.x` |
-| Real-time | `socket.io` |
 | LLM (optional) | `openai@4.52.x` |
 | Utilities | `cors`, `dotenv` |
 

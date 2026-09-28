@@ -113,7 +113,7 @@ Allows tutors and admins to upload learning resources (PDFs, documents, slides) 
 **File:** `backend/controllers/message.controller.js`
 **Routes:** `backend/routes/message.routes.js`
 
-Handles in-session chat messages stored in the `Messages` collection. Messages are scoped to a session (via `sessionId`). The HTTP endpoints handle persistence and retrieval; real-time delivery is handled by Socket.io rooms (`session-<sessionId>`). Also manages Jitsi Meet room URL generation for video sessions and supports sharing recording links.
+Handles in-session chat messages stored in the `Messages` collection. Messages are scoped to a session (via `sessionId`). The HTTP endpoints handle both persistence and retrieval — `POST /api/messages/:sessionId` to send, `GET /api/messages/:sessionId` to fetch. Chat is automatically locked when a session ends (completed, cancelled, or rejected). Also manages Jitsi Meet room URL generation for video sessions and supports sharing recording links.
 
 ---
 

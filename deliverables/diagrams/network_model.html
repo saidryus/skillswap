@@ -264,7 +264,6 @@
     <div class="connector-block">
         <div style="display:flex;align-items:center;gap:8px;margin:4px 0;">
             <span class="proto-badge proto-https">HTTPS / REST</span>
-            <span class="proto-badge proto-ws">WebSocket (Socket.io)</span>
         </div>
         <div style="display:flex;flex-direction:column;align-items:center;">
             <div class="connector-arrow-up" style="margin-bottom:2px;"></div>
@@ -278,63 +277,78 @@
     <div class="zone-label">Server Tier — On-Premise (Institutional Network)</div>
     <div class="zone-box">
 
-        <!-- Express Backend -->
-        <div class="layer-row" style="margin-bottom:16px;">
-            <div class="node node-server" style="min-width:200px;">
-                Express.js Backend
-                <div class="node-label">Node.js · REST API · Socket.io Server</div>
-            </div>
-        </div>
+        <!-- SVG-based server tier: backend box + lines connecting down to 3 services -->
+        <svg viewBox="0 0 620 220" width="100%" style="max-width:620px;display:block;margin:0 auto;" xmlns="http://www.w3.org/2000/svg">
 
-        <!-- Backend → DB and ML services -->
-        <div class="h-connector-row" style="justify-content:space-around;max-width:600px;margin:0 auto 16px;">
-            <!-- left line to DB -->
-            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-                <div class="connector-arrow-up" style="margin-bottom:2px;"></div>
-                <div class="connector-line" style="height:28px;"></div>
-                <div class="connector-arrow-down"></div>
-                <div class="connector-label"><span class="proto-badge proto-tcp">TCP (Mongoose)</span></div>
-            </div>
+            <!-- ── Express.js Backend (top center) ── -->
+            <rect x="185" y="10" width="250" height="60" rx="10"
+                  fill="#f0fdf4" stroke="#22c55e" stroke-width="2.5"/>
+            <text x="310" y="36" text-anchor="middle" font-family="Segoe UI,sans-serif"
+                  font-size="13" font-weight="700" fill="#15803d">Express.js Backend</text>
+            <text x="310" y="54" text-anchor="middle" font-family="Segoe UI,sans-serif"
+                  font-size="10" fill="#16a34a">Node.js · REST API</text>
 
-            <!-- spacer -->
-            <div style="width:60px;"></div>
+            <!-- ── Horizontal rail from bottom of backend ── -->
+            <!-- vertical stem down from backend -->
+            <line x1="310" y1="70" x2="310" y2="100" stroke="#94a3b8" stroke-width="2"/>
+            <!-- horizontal rail -->
+            <line x1="80" y1="100" x2="540" y2="100" stroke="#94a3b8" stroke-width="2"/>
 
-            <!-- middle line to ML Rec -->
-            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-                <div class="connector-arrow-up" style="margin-bottom:2px;"></div>
-                <div class="connector-line" style="height:28px;"></div>
-                <div class="connector-arrow-down"></div>
-                <div class="connector-label"><span class="proto-badge proto-http">HTTP :5002</span></div>
-            </div>
+            <!-- ── Left spoke → MongoDB ── -->
+            <line x1="80" y1="100" x2="80" y2="140" stroke="#94a3b8" stroke-width="2"/>
+            <polygon points="74,138 80,150 86,138" fill="#94a3b8"/>
+            <!-- label -->
+            <rect x="20" y="106" width="88" height="16" rx="4" fill="#ede9fe"/>
+            <text x="64" y="117" text-anchor="middle" font-family="Segoe UI,sans-serif"
+                  font-size="9" font-weight="700" fill="#5b21b6">TCP (Mongoose)</text>
+            <!-- MongoDB box -->
+            <rect x="20" y="152" width="120" height="52" rx="10"
+                  fill="#faf5ff" stroke="#a855f7" stroke-width="2.5"/>
+            <text x="80" y="175" text-anchor="middle" font-family="Segoe UI,sans-serif"
+                  font-size="13" font-weight="700" fill="#7e22ce">MongoDB</text>
+            <text x="80" y="193" text-anchor="middle" font-family="Segoe UI,sans-serif"
+                  font-size="10" fill="#9333ea">Database Server</text>
 
-            <!-- spacer -->
-            <div style="width:60px;"></div>
+            <!-- ── Middle spoke → ML Service 1 ── -->
+            <line x1="310" y1="100" x2="310" y2="140" stroke="#94a3b8" stroke-width="2"/>
+            <polygon points="304,138 310,150 316,138" fill="#94a3b8"/>
+            <!-- label -->
+            <rect x="262" y="106" width="72" height="16" rx="4" fill="#ffedd5"/>
+            <text x="298" y="117" text-anchor="middle" font-family="Segoe UI,sans-serif"
+                  font-size="9" font-weight="700" fill="#9a3412">HTTP :5002</text>
+            <!-- ML Service 1 box -->
+            <rect x="230" y="152" width="160" height="52" rx="10"
+                  fill="#fff7ed" stroke="#f97316" stroke-width="2.5"/>
+            <text x="310" y="172" text-anchor="middle" font-family="Segoe UI,sans-serif"
+                  font-size="12" font-weight="700" fill="#c2410c">ML Service 1</text>
+            <text x="310" y="187" text-anchor="middle" font-family="Segoe UI,sans-serif"
+                  font-size="9" fill="#ea580c">Recommendation Letter</text>
+            <text x="310" y="199" text-anchor="middle" font-family="Segoe UI,sans-serif"
+                  font-size="9" fill="#ea580c">Flask · Port 5002</text>
 
-            <!-- right line to ML Feedback -->
-            <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-                <div class="connector-arrow-up" style="margin-bottom:2px;"></div>
-                <div class="connector-line" style="height:28px;"></div>
-                <div class="connector-arrow-down"></div>
-                <div class="connector-label"><span class="proto-badge proto-http">HTTP :5003</span></div>
-            </div>
-        </div>
+            <!-- ── Right spoke → ML Service 2 ── -->
+            <line x1="540" y1="100" x2="540" y2="140" stroke="#94a3b8" stroke-width="2"/>
+            <polygon points="534,138 540,150 546,138" fill="#94a3b8"/>
+            <!-- label -->
+            <rect x="492" y="106" width="72" height="16" rx="4" fill="#ffedd5"/>
+            <text x="528" y="117" text-anchor="middle" font-family="Segoe UI,sans-serif"
+                  font-size="9" font-weight="700" fill="#9a3412">HTTP :5003</text>
+            <!-- ML Service 2 box -->
+            <rect x="460" y="152" width="160" height="52" rx="10"
+                  fill="#fff7ed" stroke="#f97316" stroke-width="2.5"/>
+            <text x="540" y="172" text-anchor="middle" font-family="Segoe UI,sans-serif"
+                  font-size="12" font-weight="700" fill="#c2410c">ML Service 2</text>
+            <text x="540" y="187" text-anchor="middle" font-family="Segoe UI,sans-serif"
+                  font-size="9" fill="#ea580c">Tutor Feedback</text>
+            <text x="540" y="199" text-anchor="middle" font-family="Segoe UI,sans-serif"
+                  font-size="9" fill="#ea580c">Flask · Port 5003</text>
 
-        <!-- Services row -->
-        <div class="layer-row" style="gap:16px;">
-            <div class="node node-db">
-                MongoDB
-                <div class="node-label">Database Server</div>
-            </div>
-            <div style="width:24px;"></div>
-            <div class="node node-ml">
-                ML Service 1
-                <div class="node-label">Recommendation Letter<br>Flask · Port 5002</div>
-            </div>
-            <div class="node node-ml">
-                ML Service 2
-                <div class="node-label">Tutor Feedback<br>Flask · Port 5003</div>
-            </div>
-        </div>
+            <!-- ── Return arrows (bidirectional ticks on spokes) ── -->
+            <polygon points="74,102 80,90 86,102" fill="#94a3b8"/>
+            <polygon points="304,102 310,90 316,102" fill="#94a3b8"/>
+            <polygon points="534,102 540,90 546,102" fill="#94a3b8"/>
+
+        </svg>
 
     </div>
 
@@ -409,9 +423,9 @@
             <tr>
                 <td>Browser</td>
                 <td>Express.js Backend</td>
-                <td><span class="proto-badge proto-ws">WebSocket</span></td>
-                <td>Real-time in-session messaging via Socket.io</td>
-                <td>Bidirectional (persistent)</td>
+                <td><span class="proto-badge proto-https">HTTPS / REST</span></td>
+                <td>In-session chat messages sent and retrieved via REST API (POST to send, GET to fetch)</td>
+                <td>Request / Response</td>
             </tr>
             <tr>
                 <td>Express.js Backend</td>
