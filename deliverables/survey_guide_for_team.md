@@ -37,6 +37,7 @@ Do this once before the first session, not before each participant.
   - `python app.py` inside `ml/recommendation/` → should say **port 5002**
   - `python app.py` inside `ml/feedback/` → should say **port 5003**
 - [ ] Open Chrome and go to `http://localhost:5173` — login page should appear
+- [ ] **Note the LAN address** shown in the Vite terminal (e.g. `http://192.168.100.3:5173`) — this is what participants on other devices use. Run `ipconfig` if you need to confirm the machine's IP.
 - [ ] Log out of any previous session before each new participant
 - [ ] Have the Google Forms survey link ready to paste into Messenger
 - [ ] Have the sample recommendation letter PDF ready (`deliverables/sample_letters/01_STRONG_full_formal.pdf`)
@@ -186,6 +187,7 @@ If they're completely stuck for more than 2 minutes and can't continue, say *"Le
 | Problem | What to do |
 |---|---|
 | Can't log in | Check the credentials table above. First login forces password change — normal. |
+| Participant's device can't reach the app | Make sure both devices are on the same WiFi. Check the LAN IP in the Vite terminal — give participants `http://<that IP>:5173`. Avoid `localhost` on other devices. |
 | "You need to set availability first" error | They skipped Task T3 or U2. Help them add one slot and note it. |
 | OCR takes a long time on the PDF | Normal — can take up to 30 seconds. Tell them "it's processing, please wait." |
 | ML analysis shows "rule-based" instead of AI | ML service might not be running. Not a blocker — system still works, just note it. |
