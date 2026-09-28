@@ -18,8 +18,8 @@ Your job is to **watch and record**, not teach. The goal is to see how real user
 
 | Role | How many | Who to recruit |
 |---|---|---|
-| Tutee | 4 | Any CCS student willing to act as someone looking for tutoring |
-| Tutor | 3 | CCS students willing to act as peer tutors (they'll upload a sample letter) |
+| Tutee | 7 | Any CCS student willing to act as someone looking for tutoring |
+| Tutor | 5 | CCS students willing to act as peer tutors (they'll upload a sample letter) |
 | Admin | 3 | Faculty, department staff, or a classmate you assign the admin account to |
 
 They don't need real tutoring experience. They just need to be currently enrolled in or employed by CCS and willing to participate.
@@ -53,11 +53,18 @@ Give each participant only the credentials for their assigned role.
 | Role | Login ID | Password |
 |---|---|---|
 | Admin | `admin@acadia.edu` | `admin123` |
-| Tutor | `23063670` | `670` |
-| Tutee (Year 1) | `202401001` | `001` |
-| Tutee (Year 2) | `202302001` | `001` |
-| Tutee (Year 3) | `202203001` | `001` |
-| Tutee (Year 4) | `202104001` | `001` |
+| Tutor 1 | `23063670` | `670` |
+| Tutor 2 | `202203001` | `001` |
+| Tutor 3 | `202104001` | `001` |
+| Tutor 4 | `202302001` | `001` |
+| Tutor 5 | `202401001` | `001` |
+| Tutee 1 | `202201001` | `001` |
+| Tutee 2 | `202201002` | `002` |
+| Tutee 3 | `202201003` | `003` |
+| Tutee 4 | `202301001` | `001` |
+| Tutee 5 | `202301002` | `002` |
+| Tutee 6 | `202401002` | `002` |
+| Tutee 7 | `202401003` | `003` |
 
 > All student passwords = last 3 digits of their student ID. Everyone gets a forced password change on first login — this is normal, tell them to just set any new password.
 

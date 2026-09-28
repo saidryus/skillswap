@@ -8,8 +8,8 @@ University of Cebu Pardo-Talisay Campus | College of Computer Studies
 
 This guide is for teammates facilitating the Acadia usability evaluation sessions. Your job is to guide participants through the testing tasks, observe their behavior, and collect their survey responses. You are **not** here to teach them how to use the system — you are here to watch and record what happens when they try to use it on their own.
 
-**Total participants needed:** 10
-**Role breakdown:** ~4 tutees · ~3 tutors · ~3 admins
+**Total participants needed:** 15
+**Role breakdown:** ~7 tutees · ~5 tutors · ~3 admins
 
 **Per session estimate:** 45–60 minutes
 - 5 min — briefing and consent

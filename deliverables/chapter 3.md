@@ -37,13 +37,13 @@ The Acadia platform is deployed in a controlled testing environment accessible t
 
 ## **Respondents**
 
-The study employs purposive sampling to select ten (10) participants (n = 10) who represent the target users of the Acadia system. Participants are drawn from the College of Computer Studies and include the following groups:
+The study employs purposive sampling to select fifteen (15) participants (n = 15) who represent the target users of the Acadia system. Participants are drawn from the College of Computer Studies and include the following groups:
 
-- Students who have experienced the need for academic assistance from peers (potential tutees)
+- Students who have experienced the need for academic assistance from peers (potential tutees) — approximately seven (7) participants
 
-- Students with strong academic performance in IT-related subjects who are willing to serve as peer tutors (potential tutors)
+- Students with strong academic performance in IT-related subjects who are willing to serve as peer tutors (potential tutors) — approximately five (5) participants
 
-- Faculty members or department staff involved in academic coordination and administrative processes (administrators)
+- Faculty members or department staff involved in academic coordination and administrative processes (administrators) — approximately three (3) participants
 
 ## **Inclusion Criteria**
 

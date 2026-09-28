@@ -16,10 +16,10 @@ The system is considered to pass acceptance testing when ≥ 70% of participants
 
 | Attribute | Details |
 |---|---|
-| Sample size | n = 10 participants |
+| Sample size | n = 15 participants |
 | Source | College of Computer Studies (CCS) |
 | Sampling method | Purposive sampling — participants selected based on role alignment (actual students who tutor or seek tutoring, and faculty/admin staff) |
-| Role distribution | ~4 tutees (student role), ~3 tutors (student with tutor experience), ~3 admin/faculty staff |
+| Role distribution | ~7 tutees (student role), ~5 tutors (student with tutor experience), ~3 admin/faculty staff |
 
 Participants are recruited from within the target department. They should have no prior exposure to the Acadia system to ensure the evaluation measures first-use experience.
 
