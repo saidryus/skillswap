@@ -50,23 +50,25 @@ Do this once before the first session, not before each participant.
 
 Give each participant only the credentials for their assigned role.
 
-| Role | Login ID | Password |
-|---|---|---|
-| Admin | `admin@acadia.edu` | `admin123` |
-| Tutor 1 | `23063670` | `670` |
-| Tutor 2 | `202203001` | `001` |
-| Tutor 3 | `202104001` | `001` |
-| Tutor 4 | `202302001` | `001` |
-| Tutor 5 | `202401001` | `001` |
-| Tutee 1 | `202201001` | `001` |
-| Tutee 2 | `202201002` | `002` |
-| Tutee 3 | `202201003` | `003` |
-| Tutee 4 | `202301001` | `001` |
-| Tutee 5 | `202301002` | `002` |
-| Tutee 6 | `202401002` | `002` |
-| Tutee 7 | `202401003` | `003` |
+| Role | Login ID | Password | Name | Letter File |
+|---|---|---|---|---|
+| Admin | `admin@acadia.edu` | `admin123` | Admin Acadia | — |
+| Tutor 1 | `23063670` | `670` | Simone Dominique Makinano | `tutor_23063670_makinano.pdf` |
+| Tutor 2 | `202203001` | `001` | Kenneth Dela Cruz | `tutor_202203001_cruz.pdf` |
+| Tutor 3 | `202104001` | `001` | Charmaine Dela Cruz | `tutor_202104001_cruz.pdf` |
+| Tutor 4 | `202302001` | `001` | Trisha Dela Cruz | `tutor_202302001_cruz.pdf` |
+| Tutor 5 | `202401001` | `001` | Juan Dela Cruz | `tutor_202401001_cruz.pdf` |
+| Tutee 1 | `202201001` | `001` | — | — |
+| Tutee 2 | `202201002` | `002` | — | — |
+| Tutee 3 | `202201003` | `003` | — | — |
+| Tutee 4 | `202301001` | `001` | — | — |
+| Tutee 5 | `202301002` | `002` | — | — |
+| Tutee 6 | `202401002` | `002` | — | — |
+| Tutee 7 | `202401003` | `003` | — | — |
 
 > All student passwords = last 3 digits of their student ID. Everyone gets a forced password change on first login — this is normal, tell them to just set any new password.
+>
+> **For tutor participants:** hand them the matching PDF from `deliverables/sample_letters/` during Task U3. Each letter has that person's exact name and student ID so the AI analysis correctly detects the name match.
 
 ---
 
