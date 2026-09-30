@@ -169,9 +169,14 @@ This produces `.pkl` model files used for inference. Training takes 1–5 minute
 After training, verify that `.pkl` files exist in each service directory:
 
 ```bash
+# Windows
+dir *.pkl
+
+# Linux/macOS
 ls *.pkl
-# Expected: vectorizer.pkl, model.pkl (names vary by service)
 ```
+
+Expected: `recommendation_model.pkl` in `ml/recommendation/` and `feedback_model.pkl` in `ml/feedback/`
 
 ---
 
@@ -299,9 +304,9 @@ Open your browser and go to `http://localhost:5173`. Use the checklist below to 
 | Super Admin | `admin@acadia.edu` | `admin123` | Full access — must change password on first login |
 | Student (Year 3) | `23063670` | `670` | Simone Makinano — no schedule, upload study load manually |
 | Student (Year 1) | `202401001` | `001` | Juan Dela Cruz |
-| Student (Year 2) | `202302001` | `001` | Miguel Dela Cruz |
-| Student (Year 3) | `202203001` | `001` | Rafael Dela Cruz — has tutor profile |
-| Student (Year 4) | `202104001` | `001` | Antonio Dela Cruz |
+| Student (Year 2) | `202302001` | `001` | Trisha Dela Cruz |
+| Student (Year 3) | `202203001` | `001` | Kenneth Dela Cruz — has tutor profile |
+| Student (Year 4) | `202104001` | `001` | Charmaine Dela Cruz |
 
 > All student passwords are the **last 3 digits of their Student ID**. All seeded students will be prompted to change their password on first login.
 
@@ -313,7 +318,7 @@ Open your browser and go to `http://localhost:5173`. Use the checklist below to 
 |---|---|---|
 | `Error: ECONNREFUSED 127.0.0.1:27017` | MongoDB is not running | Start MongoDB (`mongod`) before starting the backend |
 | Frontend shows blank page | Vite not started, or built files not found | Run `npm run dev` in the frontend directory; check browser console for JS errors |
-| ML analysis always shows "rule-based" | ML service not running or ECONNREFUSED on port 5002 | Start `ml_recommendation/app.py`; check that port 5002 is not blocked by firewall |
+| ML analysis always shows "rule-based" | ML service not running or ECONNREFUSED on port 5002 | Start `ml/recommendation/app.py`; check that port 5002 is not blocked by firewall |
 | OCR takes very long (>60 seconds) | Low RAM; Tesseract.js loading large language model | Ensure at least 8 GB RAM is available; close other applications |
 | Login fails with correct credentials | Database not seeded, or wrong `MONGO_URI` | Run `node seed.js`; verify `MONGO_URI` in `.env` points to the correct database |
 | "Schedule required" error when booking | Student has no study load and no availability set | Student must upload study load or manually set availability before booking |

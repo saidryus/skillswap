@@ -32,7 +32,7 @@ Accounts are created by administrators — students cannot self-register.
    - Email address
    - Student ID
    - Department
-   - Role (Student, Faculty, or Admin)
+   - Role (Student or Admin)
 4. Click **Create User**.
 5. The account is created with a default password. The student will be prompted to change their password on first login.
 
@@ -126,7 +126,7 @@ You have 3 attempts to enter the correct password. After 3 failures, document ac
 4. Set the **Target Audience**:
    - All Users
    - Students only
-   - Faculty only
+   - Admins only
 5. Click **Publish**.
 
 The announcement is saved and all matching active users receive an in-app notification.
@@ -257,10 +257,10 @@ Your feedback helps the system refine tutor rankings and gives your tutor useful
 2. The page shows:
    - Your session history (how many sessions you've attended)
    - Attendance rate
-   - Risk level (low/medium/high) based on your attendance pattern
-   - Session trend over time
+   - Monthly session trend
+   - Per-course breakdown and upcoming sessions
 
-Use this page to track your tutoring activity and identify if you are falling behind on sessions.
+Use this page to track your tutoring activity over time.
 
 ---
 
