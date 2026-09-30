@@ -26,9 +26,9 @@ Acadia follows a **three-tier architecture**:
        │ HTTP (internal)         │ Mongoose
 ┌──────▼───────┐         ┌───────▼───────┐
 │  ML SERVICES │         │  DATA TIER    │
-│  Flask ×3    │         │  MongoDB 7.x  │
-│  5001/5002/  │         │  DB: trophe   │
-│  5003        │         │  13 collections│
+│  Flask ×2    │         │  MongoDB 7.x  │
+│  5002/5003   │         │  DB: trophe   │
+│              │         │  13 collections│
 └──────────────┘         └───────────────┘
 ```
 
@@ -42,7 +42,6 @@ Acadia follows a **three-tier architecture**:
 | Frontend Dev Server | Vite (`npm run dev` in frontend dir) | 5173 |
 | ML Recommendation Service | `ml/recommendation/app.py` | 5002 |
 | ML Feedback Service | `ml/feedback/app.py` | 5003 |
-| ML Attendance Risk Service | `ml/app.py` | 5001 |
 
 ---
 
@@ -60,7 +59,7 @@ Incoming Request
 2. HTTPS redirect        — Active in NODE_ENV=production; redirects HTTP → HTTPS
       │
       ▼
-3. cors()                — Allows requests from FRONTEND_URL origin only
+3. cors()                — Allows requests from localhost (any port), LAN IP ranges (192.168.x, 10.x, 172.16–31.x), and the configured FRONTEND_URL (defaults to http://localhost:5173)
       │
       ▼
 4. express.json()        — Parses JSON request bodies
@@ -69,10 +68,10 @@ Incoming Request
 5. express-mongo-sanitize — Strips $ and . from req.body, req.params, req.query
       │
       ▼
-6. Rate limiters         — Applied per route group (see rate limit table below)
+6. Rate limiters         — Applied globally (apiLimiter: 300/min on all /api/*) and per-route for sensitive endpoints
       │
       ▼
-7. Route modules         — 17 route files mounted under /api/*
+7. Route modules         — 16 route files mounted under /api/*
       │
       ▼
 8. Global error handler  — Catches unhandled errors, returns JSON error response
@@ -114,16 +113,15 @@ Token expiry is **7 days**. There is no refresh token mechanism — users are re
 | Role | Value | Description |
 |---|---|---|
 | Student | `student` | Default role. Can be a tutee, and optionally a tutor (`isTutor: true`). |
-| Admin | `admin` | Department-scoped administrator. Manages users, sessions, applications. |
-| Faculty | `faculty` | Read-only + announcement creation. Cannot manage users directly. |
+| Admin | `admin` | Department-scoped administrator. Manages users, sessions, applications. Elevated to cross-department access via `isSuperAdmin: true`. |
 
 ### Permission System
 
 The `User` model includes:
-- `role` — string enum (`student`, `admin`, `faculty`)
+- `role` — string enum (`student`, `admin`)
 - `isSuperAdmin` — boolean; grants cross-department access to admin users
-- `permissions` — array of permission strings (fine-grained overrides)
-- `assignedDepartments` — array of Department ObjectIds (scopes admin's data visibility)
+- `permissions` — array of permission strings: `users`, `courses`, `tutor-applications`, `sessions`, `announcements`
+- `assignedDepartments` — array of department name strings (scopes admin's data visibility)
 
 Middleware `departmentScope.js` filters queries to only return records belonging to the admin's `assignedDepartments` unless `isSuperAdmin` is true.
 
@@ -229,11 +227,11 @@ competencyScore =
 | Component | Weight | Source |
 |---|---|---|
 | Average rating (1–5 stars normalized to 0–1) | 45% | `Ratings` collection |
-| Faculty recommendation ML score (0–100) | 15% | ML Service 1 output stored in `TutorProfile` |
+| Faculty recommendation ML score (0–100) | 15% | ML Service 1 output stored in `TutorProfile.confidenceScore` |
 | Session completion rate (completed / total accepted) | 20% | `Sessions` collection |
 | Completed session count (capped at 20 for full score) | 20% | `Sessions` collection |
 
-The computed score (0.0–1.0) is stored in `TutorProfile.competencyScore` and used to rank tutors on the Find Tutor page.
+The composite score (0.0–1.0) is computed dynamically from the above sources and used to rank tutors on the Find Tutor page. It is not stored as a persistent field — it is recalculated on demand.
 
 ---
 

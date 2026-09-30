@@ -32,7 +32,6 @@ Testing is conducted in three sequential phases:
 | Database | MongoDB 7.x, local instance, database: `trophe` |
 | ML Service 1 (Recommendation) | Python Flask on `localhost:5002` |
 | ML Service 2 (Feedback) | Python Flask on `localhost:5003` |
-| ML Service 3 (Attendance) | Python Flask on `localhost:5001` |
 | Operating System | Windows 10 64-bit |
 | Browser | Google Chrome (latest) |
 | Network | Localhost; internet access available for Jitsi Meet and OpenAI fallback testing |

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Acadia is composed of 50 named modules spanning three layers: backend controllers, backend utility helpers, and frontend pages. ML services add three additional inference modules. Each module is listed below with its location, role, and primary responsibility.
+Acadia is composed of 52 named modules spanning three layers: backend controllers, backend utility helpers, and frontend pages. Two ML services add additional inference modules. Each module is listed below with its location, role, and primary responsibility.
 
 ---
 
@@ -126,7 +126,7 @@ Manages weekly recurring availability slots in the `Availability` collection. Tu
 ---
 
 ### 14. Curriculum Module
-**File:** (curriculum filtering logic)
+**File:** `backend/utils/curriculumFilter.js`
 **Routes:** `backend/routes/curriculum.routes.js`
 
 Exposes an endpoint that returns eligible courses for a given year level, semester, and department. The eligibility filter is implemented in `backend/utils/curriculumFilter.js`. Used by the Find Tutor and Book Session flows to restrict tutor search to courses the tutee is currently enrolled in or eligible for based on their curriculum.
@@ -159,11 +159,11 @@ Accepts POST requests with written tutor feedback text. Returns structured insig
 
 ---
 
-### 18. Attendance Risk ML Service
-**Location:** ML service on **port 5001**
-**Algorithm:** Random Forest classifier on attendance features (attended sessions, missed sessions, ratio, trend)
+### 18. ML Status Route (`/api/ml`)
+**File:** `backend/routes/mlStatus.routes.js`
+**Routes:** `backend/routes/mlStatus.routes.js`
 
-Accepts POST requests with a student's session attendance features. Returns a predicted risk level: `low`, `medium`, or `high`. Used in the student analytics view and admin session overview to flag students who may need intervention.
+Exposes a lightweight health-check endpoint that the frontend can query to determine whether the ML services are reachable. Returns the live status of both ML Service 1 (port 5002) and ML Service 2 (port 5003) so the UI can display appropriate fallback messaging when a service is unavailable.
 
 ---
 
@@ -225,30 +225,35 @@ Entry point for all users. Email + password form. On successful authentication, 
 **Path:** `/change-password`
 Forces first-login users to set a new password before accessing any other page. Also accessible voluntarily from the profile menu. Validates new password confirmation match.
 
+### 35. Register Page
+**Path:** `/register`
+**File:** `frontend/src/pages/RegisterPage.jsx`
+Self-registration entry point for new users. Collects name, student ID, email, and password. Submits to the backend auth/register endpoint. Redirects to login on success.
+
 ---
 
 ### Admin Pages
 
-### 35. Admin Dashboard
+### 36. Admin Dashboard
 **Path:** `/admin` (index route)
 
-### 36. User Management Page
+### 37. User Management Page
 **Path:** `/admin/users`
 
-### 37. Course Management Page
+### 38. Course Management Page
 **Path:** `/admin/courses`
 
-### 38. Department Management Page
+### 39. Department Management Page
 **Path:** `/admin/departments`
 
-### 39. Session Management Page
+### 40. Session Management Page
 **Path:** `/admin/sessions`
 
-### 40. Student Schedules Page
+### 41. Student Schedules Page
 **Path:** `/admin/student-schedules`
 Admin view of uploaded student schedules. Displayed separately from the main sessions page.
 
-### 41. Tutor Applications Page
+### 42. Tutor Applications Page
 **Path:** `/admin/tutor-applications`
 Review interface for tutor applications. Displays the AI analysis panel (predicted subjects, strengths, soft skills, confidence score), document re-auth gate for viewing the original recommendation letter, and approve / reject / request-resubmission action buttons. Includes the ML correction feedback loop.
 
@@ -256,35 +261,40 @@ Review interface for tutor applications. Displays the AI analysis panel (predict
 
 ### Student Pages
 
-### 42. Student Dashboard
+### 43. Student Dashboard
 **Path:** `/student` (index route)
 
-### 43. Find Tutor Page
+### 44. Find Tutor Page
 **Path:** `/student/find-tutor`
 
-### 44. My Sessions Page
+### 45. Book Session Page
+**Path:** `/student/book-session`
+**File:** `frontend/src/pages/student/BookSessionPage.jsx`
+Dedicated booking flow for scheduling a session with a selected tutor. Displays conflict-free slot suggestions based on tutor availability, tutee schedule, Philippine holidays, and existing bookings. Allows the tutee to select a slot, choose a venue (online or on-campus), and confirm the session request.
+
+### 46. My Sessions Page
 **Path:** `/student/my-sessions`
 
-### 45. Become Tutor Page
+### 47. Become Tutor Page
 **Path:** `/student/become-tutor`
 
-### 46. My Schedule / Availability Page
+### 48. My Schedule / Availability Page
 **Path:** `/student/my-availability`
 
-### 47. My Analytics Page
+### 49. My Analytics Page
 **Path:** `/student/my-analytics`
 
-### 48. Tutor Dashboard Page
+### 50. Tutor Dashboard Page
 **Path:** `/student/tutor-dashboard`
 
 ---
 
 ### Shared Pages
 
-### 49. Announcements Page
+### 51. Announcements Page
 **Path:** `/student/announcements` (student) · `/admin/announcements` (admin)
 Displays role-targeted announcements in reverse chronological order. Available to all authenticated users.
 
-### 50. Learning Resources Page
+### 52. Learning Resources Page
 **Path:** `/student/resources`
 Lists available learning materials with filter by course/department. Supports download. Tutors see an upload button to add new materials.

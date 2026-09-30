@@ -70,8 +70,12 @@
             position: relative;
         }
         .card-icon {
-            font-size: 20px;
-            margin-bottom: 2px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            opacity: 0.5;
+            margin-bottom: 4px;
         }
         .card-name {
             font-size: 12px;
@@ -108,7 +112,6 @@
         .c-ml        { background: #fff7ed; border-color: #f97316; color: #c2410c; }
         .c-db        { background: #faf5ff; border-color: #a855f7; color: #7e22ce; }
         .c-security  { background: #fff1f2; border-color: #f43f5e; color: #be123c; }
-        .c-realtime  { background: #ecfdf5; border-color: #10b981; color: #065f46; }
         .c-external  { background: #fef2f2; border-color: #ef4444; color: #b91c1c; }
         .c-testing   { background: #fefce8; border-color: #eab308; color: #713f12; }
         .c-devtools  { background: #f1f5f9; border-color: #64748b; color: #334155; }
@@ -159,14 +162,21 @@
         <div class="cards-row">
 
             <div class="card c-frontend">
-                <div class="card-icon">⚛️</div>
+                <div class="card-icon">UI</div>
                 <div class="card-name">React</div>
                 <div class="card-version">v18.x</div>
                 <div class="card-role">UI component library, virtual DOM, hooks</div>
             </div>
 
             <div class="card c-frontend">
-                <div class="card-icon">⚡</div>
+                <div class="card-icon">DOM</div>
+                <div class="card-name">react-dom</div>
+                <div class="card-version">v18.x</div>
+                <div class="card-role">DOM rendering layer for React</div>
+            </div>
+
+            <div class="card c-frontend">
+                <div class="card-icon">BUILD</div>
                 <div class="card-name">Vite</div>
                 <div class="card-version">v5.x</div>
                 <div class="card-role">Build tool &amp; dev server</div>
@@ -174,45 +184,108 @@
             </div>
 
             <div class="card c-frontend">
-                <div class="card-icon">🎨</div>
+                <div class="card-icon">CSS</div>
                 <div class="card-name">Tailwind CSS</div>
                 <div class="card-version">v3.4</div>
                 <div class="card-role">Utility-first styling &amp; layout</div>
             </div>
 
             <div class="card c-frontend">
-                <div class="card-icon">🎞</div>
+                <div class="card-icon">ANIM</div>
                 <div class="card-name">Framer Motion</div>
                 <div class="card-version">v10.x</div>
                 <div class="card-role">Page transitions &amp; UI animations</div>
             </div>
 
             <div class="card c-frontend">
-                <div class="card-icon">🔀</div>
+                <div class="card-icon">ROUTE</div>
                 <div class="card-name">React Router</div>
                 <div class="card-version">v6.x</div>
                 <div class="card-role">Client-side routing &amp; protected routes</div>
             </div>
 
             <div class="card c-frontend">
-                <div class="card-icon">🌐</div>
+                <div class="card-icon">HTTP</div>
                 <div class="card-name">Axios</div>
                 <div class="card-version">v1.6</div>
                 <div class="card-role">HTTP client for all API requests</div>
             </div>
 
             <div class="card c-frontend">
-                <div class="card-icon">📄</div>
+                <div class="card-icon">PDF</div>
                 <div class="card-name">jsPDF</div>
                 <div class="card-version">v2.5</div>
                 <div class="card-role">Client-side PDF export</div>
             </div>
 
             <div class="card c-frontend">
-                <div class="card-icon">🖱</div>
+                <div class="card-icon">TABLE</div>
+                <div class="card-name">jspdf-autotable</div>
+                <div class="card-version">v3.8</div>
+                <div class="card-role">Table rendering plugin for jsPDF exports</div>
+            </div>
+
+            <div class="card c-frontend">
+                <div class="card-icon">DND</div>
                 <div class="card-name">DnD Kit</div>
                 <div class="card-version">v6.x</div>
-                <div class="card-role">Drag-and-drop for schedule management</div>
+                <div class="card-role">Drag-and-drop primitives for schedule management</div>
+            </div>
+
+            <div class="card c-frontend">
+                <div class="card-icon">UTIL</div>
+                <div class="card-name">@dnd-kit/utilities</div>
+                <div class="card-version">v3.2</div>
+                <div class="card-role">CSS &amp; transform helpers for DnD Kit</div>
+            </div>
+
+            <div class="card c-frontend">
+                <div class="card-icon">3D</div>
+                <div class="card-name">Three.js</div>
+                <div class="card-version">v0.164</div>
+                <div class="card-role">WebGL 3D rendering engine</div>
+            </div>
+
+            <div class="card c-frontend">
+                <div class="card-icon">R3F</div>
+                <div class="card-name">@react-three/fiber</div>
+                <div class="card-version">v8.x</div>
+                <div class="card-role">React renderer for Three.js 3D scenes</div>
+            </div>
+
+            <div class="card c-frontend">
+                <div class="card-icon">DREI</div>
+                <div class="card-name">@react-three/drei</div>
+                <div class="card-version">v9.x</div>
+                <div class="card-role">Helper components &amp; abstractions for R3F</div>
+            </div>
+
+            <div class="card c-frontend">
+                <div class="card-icon">ANIM</div>
+                <div class="card-name">GSAP</div>
+                <div class="card-version">v3.15</div>
+                <div class="card-role">High-performance animation for landing &amp; dashboard sequences</div>
+            </div>
+
+            <div class="card c-frontend">
+                <div class="card-icon">TOAST</div>
+                <div class="card-name">react-hot-toast</div>
+                <div class="card-version">v2.4</div>
+                <div class="card-role">Toast notification system for user feedback</div>
+            </div>
+
+            <div class="card c-frontend">
+                <div class="card-icon">AUDIO</div>
+                <div class="card-name">Howler.js</div>
+                <div class="card-version">v2.2</div>
+                <div class="card-role">Audio playback for notification sounds</div>
+            </div>
+
+            <div class="card c-frontend">
+                <div class="card-icon">ICONS</div>
+                <div class="card-name">react-icons</div>
+                <div class="card-version">v4.12</div>
+                <div class="card-role">Icon library (Font Awesome, Material, etc.)</div>
             </div>
 
         </div>
@@ -226,14 +299,14 @@
         <div class="cards-row">
 
             <div class="card c-backend">
-                <div class="card-icon">🟢</div>
+                <div class="card-icon">RUNTIME</div>
                 <div class="card-name">Node.js</div>
                 <div class="card-version">v18+ LTS</div>
                 <div class="card-role">JavaScript runtime environment</div>
             </div>
 
             <div class="card c-backend">
-                <div class="card-icon">🚂</div>
+                <div class="card-icon">API</div>
                 <div class="card-name">Express.js</div>
                 <div class="card-version">v4.18</div>
                 <div class="card-role">REST API framework, 16 route modules, 60+ endpoints</div>
@@ -241,38 +314,66 @@
             </div>
 
             <div class="card c-backend">
-                <div class="card-icon">📤</div>
+                <div class="card-icon">UPLOAD</div>
                 <div class="card-name">Multer</div>
                 <div class="card-version">v2.1</div>
                 <div class="card-role">Multipart file upload handling</div>
             </div>
 
             <div class="card c-backend">
-                <div class="card-icon">🔍</div>
+                <div class="card-icon">OCR</div>
                 <div class="card-name">Tesseract.js</div>
                 <div class="card-version">v7.0</div>
                 <div class="card-role">OCR text extraction from PDF &amp; image documents</div>
             </div>
 
             <div class="card c-backend">
-                <div class="card-icon">📑</div>
+                <div class="card-icon">PDF</div>
                 <div class="card-name">pdfjs-dist</div>
                 <div class="card-version">v4.4</div>
                 <div class="card-role">Server-side PDF text layer extraction</div>
             </div>
 
             <div class="card c-backend">
-                <div class="card-icon">🖼</div>
+                <div class="card-icon">IMG</div>
                 <div class="card-name">Sharp</div>
                 <div class="card-version">v0.35</div>
                 <div class="card-role">Image preprocessing before OCR</div>
             </div>
 
             <div class="card c-backend">
-                <div class="card-icon">🤖</div>
+                <div class="card-icon">LLM</div>
                 <div class="card-name">OpenAI SDK</div>
                 <div class="card-version">v4.52</div>
                 <div class="card-role">LLM fallback for document analysis (optional)</div>
+            </div>
+
+            <div class="card c-backend">
+                <div class="card-icon">CORS</div>
+                <div class="card-name">cors</div>
+                <div class="card-version">v2.8</div>
+                <div class="card-role">Cross-Origin Resource Sharing headers</div>
+            </div>
+
+            <div class="card c-backend">
+                <div class="card-icon">ENV</div>
+                <div class="card-name">dotenv</div>
+                <div class="card-version">v16.x</div>
+                <div class="card-role">Loads environment variables from .env file</div>
+            </div>
+
+            <div class="card c-backend">
+                <div class="card-icon">DOCX</div>
+                <div class="card-name">docx</div>
+                <div class="card-version">v8.5</div>
+                <div class="card-role">Server-side Word (.docx) document generation</div>
+            </div>
+
+            <div class="card c-backend">
+                <div class="card-icon">PDF</div>
+                <div class="card-name">PDFKit</div>
+                <div class="card-version">v0.19</div>
+                <div class="card-role">Server-side PDF document generation</div>
             </div>
 
         </div>
@@ -286,42 +387,42 @@
         <div class="cards-row">
 
             <div class="card c-security">
-                <div class="card-icon">🔐</div>
+                <div class="card-icon">AUTH</div>
                 <div class="card-name">JSON Web Token</div>
                 <div class="card-version">v9.0</div>
                 <div class="card-role">Stateless auth — 7-day expiry, Bearer token</div>
             </div>
 
             <div class="card c-security">
-                <div class="card-icon">🔒</div>
+                <div class="card-icon">HASH</div>
                 <div class="card-name">bcryptjs</div>
                 <div class="card-version">v2.4</div>
                 <div class="card-role">Password hashing with salt rounds</div>
             </div>
 
             <div class="card c-security">
-                <div class="card-icon">🛡</div>
+                <div class="card-icon">HDR</div>
                 <div class="card-name">Helmet</div>
                 <div class="card-version">v8.3</div>
                 <div class="card-role">Secure HTTP headers (CSP, HSTS, X-Frame)</div>
             </div>
 
             <div class="card c-security">
-                <div class="card-icon">🚫</div>
+                <div class="card-icon">LIMIT</div>
                 <div class="card-name">express-rate-limit</div>
                 <div class="card-version">v8.5</div>
                 <div class="card-role">Per-IP rate limiting — login, doc auth, API</div>
             </div>
 
             <div class="card c-security">
-                <div class="card-icon">🧹</div>
+                <div class="card-icon">SANIT</div>
                 <div class="card-name">express-mongo-sanitize</div>
                 <div class="card-version">v2.2</div>
                 <div class="card-role">NoSQL injection prevention</div>
             </div>
 
             <div class="card c-security">
-                <div class="card-icon">🔑</div>
+                <div class="card-icon">AES</div>
                 <div class="card-name">AES-256-CBC</div>
                 <div class="card-version">Node crypto (built-in)</div>
                 <div class="card-role">File encryption at rest for uploaded documents</div>
@@ -338,7 +439,7 @@
         <div class="cards-row">
 
             <div class="card c-db">
-                <div class="card-icon">🍃</div>
+                <div class="card-icon">DB</div>
                 <div class="card-name">MongoDB</div>
                 <div class="card-version">v7.x</div>
                 <div class="card-role">NoSQL document database · DB name: trophe · 13 collections</div>
@@ -346,7 +447,14 @@
             </div>
 
             <div class="card c-db">
-                <div class="card-icon">🔗</div>
+                <div class="card-icon">DRIVER</div>
+                <div class="card-name">mongodb</div>
+                <div class="card-version">v7.x</div>
+                <div class="card-role">Native MongoDB driver — underlying transport layer used by Mongoose</div>
+            </div>
+
+            <div class="card c-db">
+                <div class="card-icon">ODM</div>
                 <div class="card-name">Mongoose</div>
                 <div class="card-version">v8.x</div>
                 <div class="card-role">ODM — schema definition, validation, query building</div>
@@ -363,21 +471,21 @@
         <div class="cards-row">
 
             <div class="card c-ml">
-                <div class="card-icon">🐍</div>
+                <div class="card-icon">RUNTIME</div>
                 <div class="card-name">Python</div>
                 <div class="card-version">3.10+</div>
-                <div class="card-role">Runtime for all ML services</div>
+                <div class="card-role">Runtime for both ML services</div>
             </div>
 
             <div class="card c-ml">
-                <div class="card-icon">🌶</div>
+                <div class="card-icon">API</div>
                 <div class="card-name">Flask</div>
                 <div class="card-version">2.3+</div>
-                <div class="card-role">HTTP inference API for all 3 ML services</div>
+                <div class="card-role">HTTP inference API for both ML services</div>
             </div>
 
             <div class="card c-ml">
-                <div class="card-icon">📜</div>
+                <div class="card-icon">ML-1</div>
                 <div class="card-name">ML Service 1 — Recommendation Letter</div>
                 <div class="card-version">TF-IDF + LinearSVC + LogReg</div>
                 <div class="card-role">Subject prediction · Strength classification · Soft skills · Auto-retraining</div>
@@ -385,7 +493,7 @@
             </div>
 
             <div class="card c-ml">
-                <div class="card-icon">💬</div>
+                <div class="card-icon">ML-2</div>
                 <div class="card-name">ML Service 2 — Tutor Feedback</div>
                 <div class="card-version">TF-IDF + 4 classifiers</div>
                 <div class="card-role">Sentiment · Strengths · Improvements · Topics · Auto-retraining</div>
@@ -393,22 +501,14 @@
             </div>
 
             <div class="card c-ml">
-                <div class="card-icon">📊</div>
-                <div class="card-name">ML Service 3 — Attendance Risk</div>
-                <div class="card-version">Random Forest</div>
-                <div class="card-role">Attendance risk prediction — none / low / medium / high</div>
-                <div class="port-badge">:5001</div>
-            </div>
-
-            <div class="card c-ml">
-                <div class="card-icon">🧠</div>
+                <div class="card-icon">SKL</div>
                 <div class="card-name">scikit-learn</div>
                 <div class="card-version">1.3+</div>
                 <div class="card-role">ML algorithms — SVM, LogReg, Random Forest, TF-IDF</div>
             </div>
 
             <div class="card c-ml">
-                <div class="card-icon">🔢</div>
+                <div class="card-icon">NUM</div>
                 <div class="card-name">numpy + joblib</div>
                 <div class="card-version">1.24+ / 1.3+</div>
                 <div class="card-role">Numerical processing &amp; model serialization</div>
@@ -425,14 +525,14 @@
         <div class="cards-row">
 
             <div class="card c-external">
-                <div class="card-icon">📹</div>
+                <div class="card-icon">VIDEO</div>
                 <div class="card-name">Jitsi Meet</div>
                 <div class="card-version">meet.jit.si</div>
                 <div class="card-role">Video conferencing — browser connects directly, no backend infrastructure needed</div>
             </div>
 
             <div class="card c-external">
-                <div class="card-icon">🧬</div>
+                <div class="card-icon">LLM</div>
                 <div class="card-name">OpenAI API</div>
                 <div class="card-version">GPT-4o-mini (optional)</div>
                 <div class="card-role">LLM fallback for recommendation letter analysis when ML service is unavailable</div>
@@ -449,28 +549,35 @@
         <div class="cards-row">
 
             <div class="card c-testing">
-                <div class="card-icon">🧪</div>
+                <div class="card-icon">TEST</div>
                 <div class="card-name">Newman</div>
                 <div class="card-version">v6.1.1</div>
                 <div class="card-role">CLI runner for Postman API test collections</div>
             </div>
 
             <div class="card c-testing">
-                <div class="card-icon">📋</div>
+                <div class="card-icon">RPT</div>
                 <div class="card-name">newman-reporter-htmlextra</div>
                 <div class="card-version">latest</div>
                 <div class="card-role">Rich HTML test reports from Newman runs</div>
             </div>
 
+            <div class="card c-testing">
+                <div class="card-icon">API</div>
+                <div class="card-name">Postman</div>
+                <div class="card-version">latest</div>
+                <div class="card-role">API collection authoring and manual endpoint testing</div>
+            </div>
+
             <div class="card c-devtools">
-                <div class="card-icon">🔄</div>
+                <div class="card-icon">DEV</div>
                 <div class="card-name">nodemon</div>
                 <div class="card-version">v3.0</div>
                 <div class="card-role">Auto-restart backend on file changes during dev</div>
             </div>
 
             <div class="card c-devtools">
-                <div class="card-icon">📦</div>
+                <div class="card-icon">VCS</div>
                 <div class="card-name">Git</div>
                 <div class="card-version">latest</div>
                 <div class="card-role">Version control</div>

@@ -4,7 +4,7 @@
 
 Integration tests verify end-to-end workflows that span multiple modules, collections, and service boundaries. Each test case describes a complete flow, the steps required, the expected final system state, and the pass/fail result.
 
-All integration tests are run against the full local environment (backend on port 5000, ML services on ports 5001–5003, MongoDB with seeded data). Newman is used for automated HTTP steps; notifications and database state are verified manually or via follow-up API calls.
+All integration tests are run against the full local environment (backend on port 5000, ML services on ports 5002–5003, MongoDB with seeded data). Newman is used for automated HTTP steps; notifications and database state are verified manually or via follow-up API calls.
 
 ---
 
@@ -25,7 +25,7 @@ All integration tests are run against the full local environment (backend on por
 | 9 | Admin approves application (`PATCH /api/tutor-profiles/:id/approve`) | HTTP 200; `TutorProfile.status = 'approved'`; `User.isTutor = true`; competency score calculated |
 | 10 | Verify final state | `User.isTutor === true`; encrypted document file deleted from disk; student notification of approval created |
 
-**Expected Result:** Student's `isTutor` flag is `true`, `TutorProfile.status` is `'approved'`, competency score is computed and stored, original document file is deleted from the filesystem, and audit log has at least one `'view'` entry.
+**Expected Result:** Student's `isTutor` flag is `true`, `TutorProfile.status` is `'approved'`, competency score is computed dynamically from available data, original document file is deleted from the filesystem, and audit log has at least one `'view'` entry.
 
 **Pass/Fail:** Pass
 
@@ -45,9 +45,9 @@ All integration tests are run against the full local environment (backend on por
 | 6 | Tutor logs in and accepts session (`PATCH /api/sessions/:id/accept`) | HTTP 200; `Session.status = 'scheduled'`; tutee receives `session_accepted` notification |
 | 7 | After scheduled time: tutor marks session complete (`PATCH /api/sessions/:id/complete`) | HTTP 200; `Session.status = 'completed'` |
 | 8 | Tutee submits rating (`POST /api/ratings`) | HTTP 201; `Rating` document created; ML feedback analysis queued |
-| 9 | Competency score recalculated | `TutorProfile.competencyScore` reflects updated average rating |
+| 9 | Competency score recalculated | Tutor ranking on Find Tutor page reflects updated average rating when queried |
 
-**Expected Result:** `Session.status === 'completed'`, `Rating` document exists and linked to session, `TutorProfile.competencyScore` is updated, both tutor and tutee received correct notifications at each step.
+**Expected Result:** `Session.status === 'completed'`, `Rating` document exists and linked to session, tutor's competency score is recalculated dynamically on the next query, both tutor and tutee received correct notifications at each step.
 
 **Pass/Fail:** Pass
 

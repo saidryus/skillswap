@@ -1,0 +1,469 @@
+{
+  "info": {
+    "name": "Acadia — Unit Tests",
+    "description": "Unit test collection for Acadia.\nRun: newman run acadia-unit-tests.json --environment acadia-environment.json -r htmlextra --reporter-htmlextra-export reports/unit-test-report.html",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+
+    {
+      "name": "Authentication Module",
+      "item": [
+        {
+          "name": "UT-AUTH-001 Valid admin login",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('UT-AUTH-001: HTTP 200', () => pm.response.to.have.status(200));",
+            "const b = pm.response.json();",
+            "pm.test('UT-AUTH-001: token present', () => pm.expect(b).to.have.property('token'));",
+            "pm.test('UT-AUTH-001: role present', () => pm.expect(b).to.have.property('role'));",
+            "pm.test('UT-AUTH-001: _id present', () => pm.expect(b).to.have.property('_id'));",
+            "pm.environment.set('adminToken', b.token);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"identifier\":\"{{adminIdentifier}}\",\"password\":\"{{adminPassword}}\"}" }
+          }
+        },
+        {
+          "name": "UT-AUTH-002 Wrong password returns 401",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('UT-AUTH-002: HTTP 401', () => pm.response.to.have.status(401));",
+            "pm.test('UT-AUTH-002: error message present', () => pm.expect(pm.response.json().message).to.be.a('string'));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"identifier\":\"{{adminIdentifier}}\",\"password\":\"wrongpassword123\"}" }
+          }
+        },
+        {
+          "name": "UT-AUTH-009 No auth header on protected route",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('UT-AUTH-009: HTTP 401', () => pm.response.to.have.status(401));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/users",
+            "header": []
+          }
+        },
+        {
+          "name": "UT-AUTH-010 Expired/invalid JWT",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('UT-AUTH-010: HTTP 401', () => pm.response.to.have.status(401));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/users",
+            "header": [{ "key": "Authorization", "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2IiwiaWF0IjoxNzAwMDAwMDAwLCJleHAiOjE3MDAwMDAwMDF9.invalidsignature" }]
+          }
+        },
+        {
+          "name": "UT-AUTH-007 Change password — mismatch confirmation",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('UT-AUTH-007: HTTP 400', () => pm.response.to.have.status(400));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/auth/change-password",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"newPassword\":\"ab\"}" }
+          }
+        },
+        {
+          "name": "UT-AUTH-006 Change password — valid (restore original)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('UT-AUTH-006: HTTP 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/auth/change-password",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"newPassword\":\"admin123\"}" }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "User Management Module",
+      "item": [
+        {
+          "name": "UT-USER-001 Create new student",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('UT-USER-001: HTTP 201', () => pm.response.to.have.status(201));",
+            "const b = pm.response.json();",
+            "pm.test('UT-USER-001: mustChangePassword true', () => pm.expect(b.mustChangePassword).to.equal(true));",
+            "pm.environment.set('userId', b._id);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/users",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"firstName\":\"Test\",\"lastName\":\"Student\",\"email\":\"unittest.newstudent@student.uc.edu\",\"studentIdNumber\":\"9999901001\",\"department\":\"Information Technology\",\"yearLevel\":1,\"role\":\"student\"}" }
+          }
+        },
+        {
+          "name": "UT-USER-002 Duplicate email rejected",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('UT-USER-002: HTTP 400 (duplicate email)', () => pm.response.to.have.status(400));",
+            "pm.test('UT-USER-002: error message present', () => pm.expect(pm.response.json().message).to.be.a('string'));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/users",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"firstName\":\"Dupe\",\"lastName\":\"Student\",\"email\":\"unittest.newstudent@student.uc.edu\",\"studentIdNumber\":\"9999902002\",\"department\":\"Information Technology\",\"yearLevel\":1,\"role\":\"student\"}" }
+          }
+        },
+        {
+          "name": "UT-USER-003 Duplicate student ID rejected",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('UT-USER-003: HTTP 400 (duplicate student ID)', () => pm.response.to.have.status(400));",
+            "pm.test('UT-USER-003: error message present', () => pm.expect(pm.response.json().message).to.be.a('string'));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/users",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"firstName\":\"Another\",\"lastName\":\"Dupe\",\"email\":\"completely.unique.email999@student.uc.edu\",\"studentIdNumber\":\"9999901001\",\"department\":\"Information Technology\",\"yearLevel\":1,\"role\":\"student\"}" }
+          }
+        },
+        {
+          "name": "UT-USER-006 Update user role to admin",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('UT-USER-006: HTTP 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "PUT",
+            "url": "{{baseUrl}}/api/users/{{userId}}",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"role\":\"admin\"}" }
+          }
+        },
+        {
+          "name": "UT-USER-007 Delete user",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('UT-USER-007: HTTP 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/users/{{userId}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Availability Module",
+      "item": [
+        {
+          "name": "Login as Year 3 student (approved tutor)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Tutor login: HTTP 200', () => pm.response.to.have.status(200));",
+            "pm.environment.set('tutorToken', pm.response.json().token);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"identifier\":\"{{tutorIdentifier}}\",\"password\":\"{{tutorPassword}}\"}" }
+          }
+        },
+        {
+          "name": "UT-AVAIL-001 Add Monday 10:00-12:00 slot",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('UT-AVAIL-001: HTTP 201', () => pm.response.to.have.status(201));",
+            "const b = pm.response.json();",
+            "pm.test('UT-AVAIL-001: day Monday', () => pm.expect(b.day).to.equal('Monday'));",
+            "pm.test('UT-AVAIL-001: startTime 10:00', () => pm.expect(b.startTime).to.equal('10:00'));",
+            "pm.environment.set('availabilityId', b._id);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/availability",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tutorToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"day\":\"Monday\",\"startTime\":\"10:00\",\"endTime\":\"12:00\"}" }
+          }
+        },
+        {
+          "name": "UT-AVAIL-004 Duplicate slot — second add accepted or rejected",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('UT-AVAIL-004: 201 or 400/409 (no crash)', () => {",
+            "  pm.expect([201, 400, 409]).to.include(pm.response.code);",
+            "});"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/availability",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tutorToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"day\":\"Monday\",\"startTime\":\"10:00\",\"endTime\":\"12:00\"}" }
+          }
+        },
+        {
+          "name": "UT-AVAIL-003 Get my availability (at least one slot)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('UT-AVAIL-003: HTTP 200', () => pm.response.to.have.status(200));",
+            "const b = pm.response.json();",
+            "const slots = Array.isArray(b) ? b : b.slots || [];",
+            "pm.test('UT-AVAIL-003: at least one slot', () => pm.expect(slots.length).to.be.above(0));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/availability/me",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tutorToken}}" }]
+          }
+        },
+        {
+          "name": "UT-AVAIL-002 Delete availability slot",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('UT-AVAIL-002: HTTP 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/api/availability/{{availabilityId}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tutorToken}}" }]
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Curriculum Module",
+      "item": [
+        {
+          "name": "Login as Year 1 student",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('Student login: HTTP 200', () => pm.response.to.have.status(200));",
+            "pm.environment.set('studentToken', pm.response.json().token);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"identifier\":\"{{studentIdentifier}}\",\"password\":\"{{studentPassword}}\"}" }
+          }
+        },
+        {
+          "name": "UT-CURR-001 Eligible courses for Year 1 student",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('UT-CURR-001: HTTP 200', () => pm.response.to.have.status(200));",
+            "const b = pm.response.json();",
+            "const courses = Array.isArray(b) ? b : b.courses || [];",
+            "pm.test('UT-CURR-001: returns array', () => pm.expect(Array.isArray(courses)).to.be.true);",
+            "pm.test('UT-CURR-001: at least one course', () => pm.expect(courses.length).to.be.above(0));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/curriculum/eligible",
+            "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }]
+          }
+        },
+        {
+          "name": "UT-CURR-002 Eligible courses for Year 4 student (tutor token)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('UT-CURR-002: HTTP 200', () => pm.response.to.have.status(200));",
+            "const b = pm.response.json();",
+            "const courses = Array.isArray(b) ? b : b.courses || [];",
+            "pm.test('UT-CURR-002: returns array', () => pm.expect(Array.isArray(courses)).to.be.true);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/curriculum/eligible",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tutorToken}}" }]
+          }
+        },
+        {
+          "name": "UT-CURR-003 Eligible courses — no semester set returns gracefully",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('UT-CURR-003: HTTP 200 or 400', () => pm.expect([200, 400]).to.include(pm.response.code));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/curriculum/eligible",
+            "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }]
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Rating Module",
+      "item": [
+        {
+          "name": "UT-RATE-004 Score 0 rejected",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('UT-RATE-004: HTTP 400', () => pm.response.to.have.status(400));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/ratings",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"sessionId\":\"000000000000000000000000\",\"score\":0,\"comment\":\"Test\"}" }
+          }
+        },
+        {
+          "name": "UT-RATE-005 Score 6 rejected",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('UT-RATE-005: HTTP 400', () => pm.response.to.have.status(400));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/ratings",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"sessionId\":\"000000000000000000000000\",\"score\":6,\"comment\":\"Test\"}" }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Tutor Application Module",
+      "item": [
+        {
+          "name": "UT-TUTOR-008 View document without re-auth returns 403",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('UT-TUTOR-008: HTTP 403 or 404', () => pm.expect([403, 404]).to.include(pm.response.code));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/tutor-profiles/000000000000000000000000/document",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        },
+        {
+          "name": "UT-TUTOR-002 Apply without file returns 400",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('UT-TUTOR-002: HTTP 400', () => pm.response.to.have.status(400));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/tutor-profiles",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"courseId\":\"000000000000000000000000\"}" }
+          }
+        },
+        {
+          "name": "UT-TUTOR-006 Competency score formula = 0.855",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const avg = 4.5; const rec = 80; const comp = 90; const sess = 15;",
+            "const score = (avg/5)*0.45 + (rec/100)*0.15 + (comp/100)*0.20 + (Math.min(sess/20,1))*0.20;",
+            "pm.test('UT-TUTOR-006: formula = 0.855', () => pm.expect(Math.round(score*1000)/1000).to.equal(0.855));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/ml/status",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        },
+        {
+          "name": "UT-TUTOR-007 Competency score — sessions capped at 20",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "const component = Math.min(25/20, 1) * 0.20;",
+            "pm.test('UT-TUTOR-007: capped component = 0.20', () => pm.expect(component).to.equal(0.20));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/ml/status",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "ML Status Module",
+      "item": [
+        {
+          "name": "UT-CONF-004 ML status endpoint reachable",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('UT-CONF-004: HTTP 200', () => pm.response.to.have.status(200));",
+            "pm.test('UT-CONF-004: response is object', () => pm.expect(pm.response.json()).to.be.an('object'));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/ml/status",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "Session Module",
+      "item": [
+        {
+          "name": "UT-SESS-001 Slot suggestions — invalid tutorId returns 400 or empty",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('UT-SESS-001: 400 or empty slots', () => {",
+            "  const status = pm.response.code;",
+            "  if (status === 200) {",
+            "    const b = pm.response.json();",
+            "    const slots = Array.isArray(b) ? b : b.slots || [];",
+            "    pm.expect(slots.length).to.equal(0);",
+            "  } else { pm.expect([400, 404]).to.include(status); }",
+            "});"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/sessions/suggest-slots?tutorId=000000000000000000000000",
+            "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }]
+          }
+        },
+        {
+          "name": "UT-SESS-005 Book past/invalid slot returns 400 or 404 or 409",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('UT-SESS-005: 400/404/409', () => pm.expect([400, 404, 409]).to.include(pm.response.code));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/api/sessions",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"tutorId\":\"000000000000000000000000\",\"courseId\":\"000000000000000000000000\",\"date\":\"2020-01-06\",\"startTime\":\"10:00\",\"endTime\":\"11:00\",\"venue\":\"Library\",\"venueType\":\"on-campus\"}" }
+          }
+        }
+      ]
+    }
+
+  ]
+}

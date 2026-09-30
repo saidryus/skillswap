@@ -277,8 +277,19 @@
     <div class="zone-label">Server Tier — On-Premise (Institutional Network)</div>
     <div class="zone-box">
 
-        <!-- SVG-based server tier: backend box + lines connecting down to 4 services -->
-        <svg viewBox="0 0 780 220" width="100%" style="max-width:780px;display:block;margin:0 auto;" xmlns="http://www.w3.org/2000/svg">
+        <!-- SVG-based server tier: backend box + lines connecting down to services -->
+        <svg viewBox="0 0 620 220" width="100%" style="max-width:620px;display:block;margin:0 auto;" xmlns="http://www.w3.org/2000/svg">
+
+            <defs>
+                <!-- Arrowhead pointing in line direction (forward) -->
+                <marker id="nm-arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+                    <path d="M0,0 L0,6 L8,3 z" fill="#94a3b8"/>
+                </marker>
+                <!-- Arrowhead pointing against line direction (reverse, for bidirectional) -->
+                <marker id="nm-arr-rev" markerWidth="8" markerHeight="8" refX="2" refY="3" orient="auto">
+                    <path d="M8,0 L8,6 L0,3 z" fill="#94a3b8"/>
+                </marker>
+            </defs>
 
             <!-- ── Express.js Backend (top center) ── -->
             <rect x="265" y="10" width="250" height="60" rx="10"
@@ -288,14 +299,16 @@
             <text x="390" y="54" text-anchor="middle" font-family="Segoe UI,sans-serif"
                   font-size="10" fill="#16a34a">Node.js · REST API</text>
 
-            <!-- ── Horizontal rail from bottom of backend ── -->
+            <!-- ── Vertical stem from backend bottom to horizontal rail ── -->
             <line x1="390" y1="70" x2="390" y2="100" stroke="#94a3b8" stroke-width="2"/>
-            <line x1="80" y1="100" x2="700" y2="100" stroke="#94a3b8" stroke-width="2"/>
+            <!-- ── Horizontal rail ── -->
+            <line x1="80" y1="100" x2="600" y2="100" stroke="#94a3b8" stroke-width="2"/>
 
-            <!-- ── Spoke 1 → MongoDB ── -->
-            <line x1="80" y1="100" x2="80" y2="140" stroke="#94a3b8" stroke-width="2"/>
-            <polygon points="74,138 80,150 86,138" fill="#94a3b8"/>
-            <polygon points="74,102 80,90 86,102" fill="#94a3b8"/>
+            <!-- ── Spoke 1: MongoDB (bidirectional — reads and writes) ── -->
+            <line x1="80" y1="100" x2="80" y2="150"
+                  stroke="#94a3b8" stroke-width="2"
+                  marker-start="url(#nm-arr-rev)"
+                  marker-end="url(#nm-arr)"/>
             <rect x="20" y="106" width="88" height="16" rx="4" fill="#ede9fe"/>
             <text x="64" y="117" text-anchor="middle" font-family="Segoe UI,sans-serif"
                   font-size="9" font-weight="700" fill="#5b21b6">TCP (Mongoose)</text>
@@ -306,10 +319,10 @@
             <text x="80" y="193" text-anchor="middle" font-family="Segoe UI,sans-serif"
                   font-size="10" fill="#9333ea">Database Server</text>
 
-            <!-- ── Spoke 2 → ML Service 1 (:5002) ── -->
-            <line x1="260" y1="100" x2="260" y2="140" stroke="#94a3b8" stroke-width="2"/>
-            <polygon points="254,138 260,150 266,138" fill="#94a3b8"/>
-            <polygon points="254,102 260,90 266,102" fill="#94a3b8"/>
+            <!-- ── Spoke 2: ML Service 1 :5002 (one-way — backend calls ML) ── -->
+            <line x1="260" y1="100" x2="260" y2="150"
+                  stroke="#94a3b8" stroke-width="2"
+                  marker-end="url(#nm-arr)"/>
             <rect x="212" y="106" width="72" height="16" rx="4" fill="#ffedd5"/>
             <text x="248" y="117" text-anchor="middle" font-family="Segoe UI,sans-serif"
                   font-size="9" font-weight="700" fill="#9a3412">HTTP :5002</text>
@@ -322,10 +335,10 @@
             <text x="260" y="199" text-anchor="middle" font-family="Segoe UI,sans-serif"
                   font-size="9" fill="#ea580c">Flask · Port 5002</text>
 
-            <!-- ── Spoke 3 → ML Service 2 (:5003) ── -->
-            <line x1="520" y1="100" x2="520" y2="140" stroke="#94a3b8" stroke-width="2"/>
-            <polygon points="514,138 520,150 526,138" fill="#94a3b8"/>
-            <polygon points="514,102 520,90 526,102" fill="#94a3b8"/>
+            <!-- ── Spoke 3: ML Service 2 :5003 (one-way — backend calls ML) ── -->
+            <line x1="520" y1="100" x2="520" y2="150"
+                  stroke="#94a3b8" stroke-width="2"
+                  marker-end="url(#nm-arr)"/>
             <rect x="472" y="106" width="72" height="16" rx="4" fill="#ffedd5"/>
             <text x="508" y="117" text-anchor="middle" font-family="Segoe UI,sans-serif"
                   font-size="9" font-weight="700" fill="#9a3412">HTTP :5003</text>
@@ -337,22 +350,6 @@
                   font-size="9" fill="#ea580c">Tutor Feedback</text>
             <text x="520" y="199" text-anchor="middle" font-family="Segoe UI,sans-serif"
                   font-size="9" fill="#ea580c">Flask · Port 5003</text>
-
-            <!-- ── Spoke 4 → ML Service 3 (:5001) ── -->
-            <line x1="700" y1="100" x2="700" y2="140" stroke="#94a3b8" stroke-width="2"/>
-            <polygon points="694,138 700,150 706,138" fill="#94a3b8"/>
-            <polygon points="694,102 700,90 706,102" fill="#94a3b8"/>
-            <rect x="652" y="106" width="72" height="16" rx="4" fill="#ffedd5"/>
-            <text x="688" y="117" text-anchor="middle" font-family="Segoe UI,sans-serif"
-                  font-size="9" font-weight="700" fill="#9a3412">HTTP :5001</text>
-            <rect x="620" y="152" width="160" height="52" rx="10"
-                  fill="#fff7ed" stroke="#f97316" stroke-width="2.5"/>
-            <text x="700" y="172" text-anchor="middle" font-family="Segoe UI,sans-serif"
-                  font-size="12" font-weight="700" fill="#c2410c">ML Service 3</text>
-            <text x="700" y="187" text-anchor="middle" font-family="Segoe UI,sans-serif"
-                  font-size="9" fill="#ea580c">Attendance Risk</text>
-            <text x="700" y="199" text-anchor="middle" font-family="Segoe UI,sans-serif"
-                  font-size="9" fill="#ea580c">Flask · Port 5001</text>
 
         </svg>
 
@@ -452,13 +449,6 @@
                 <td>ML Service 2 (Flask :5003)</td>
                 <td><span class="proto-badge proto-http">HTTP</span></td>
                 <td>Tutor feedback sentiment and analysis requests</td>
-                <td>Request / Response</td>
-            </tr>
-            <tr>
-                <td>Express.js Backend</td>
-                <td>ML Service 3 (Flask :5001)</td>
-                <td><span class="proto-badge proto-http">HTTP</span></td>
-                <td>Attendance risk prediction requests</td>
                 <td>Request / Response</td>
             </tr>
             <tr>

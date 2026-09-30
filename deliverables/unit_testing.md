@@ -34,7 +34,7 @@ Unit tests verify individual module behavior in isolation. Each test case define
 | UT-USER-003 | User | Admin creates student with a `studentId` already in the database | HTTP 409; error: "Student ID already in use"; no new document created | Pass |
 | UT-USER-004 | User | Admin uploads CSV with 5 valid rows + 1 row missing required `email` field | HTTP 207; 5 users created; 1 row returned in `errors` array with row number and reason; valid rows are not rolled back | Pass |
 | UT-USER-005 | User | Admin with department A tries to view/edit a user in department B | HTTP 403 or empty result (department scope enforced) | Pass |
-| UT-USER-006 | User | Admin updates a user's role from `student` to `faculty` | HTTP 200; User document updated; role change reflected in next login JWT | Pass |
+| UT-USER-006 | User | Admin updates a user's role from `student` to `admin` | HTTP 200; User document updated; role change reflected in next login JWT | Pass |
 | UT-USER-007 | User | Admin deletes a user | HTTP 200; User document removed from `Users` collection | Pass |
 
 ---
@@ -46,7 +46,7 @@ Unit tests verify individual module behavior in isolation. Each test case define
 | UT-TUTOR-001 | Tutor Application | Student submits application without having set any availability slots | HTTP 400; error: "You must set your availability before applying"; no `TutorProfile` created | Pass |
 | UT-TUTOR-002 | Tutor Application | Student submits application without attaching a recommendation letter file | HTTP 400; validation error for missing file; no document processing triggered | Pass |
 | UT-TUTOR-003 | Tutor Application | Student submits application with availability set + valid PDF recommendation letter | HTTP 202; `TutorProfile` created with `status: 'pending'`; OCR and ML analysis triggered; encrypted document stored; admin notification created | Pass |
-| UT-TUTOR-004 | Tutor Application | Admin approves a pending tutor application | HTTP 200; `TutorProfile.status = 'approved'`; `User.isTutor = true`; competency score calculated and stored | Pass |
+| UT-TUTOR-004 | Tutor Application | Admin approves a pending tutor application | HTTP 200; `TutorProfile.status = 'approved'`; `User.isTutor = true`; competency score recalculated dynamically from existing ratings, recommendation score, and session data | Pass |
 | UT-TUTOR-005 | Tutor Application | Admin rejects a pending application | HTTP 200; `TutorProfile.status = 'rejected'`; `User.isTutor` remains false; applicant notification created | Pass |
 | UT-TUTOR-006 | Tutor Application | Competency score calculation with: avgRating=4.5, recommendationScore=80, completionRate=90%, completedSessions=15 | `competencyScore = (4.5/5)×0.45 + (80/100)×0.15 + (90/100)×0.20 + (15/20)×0.20 = 0.405 + 0.12 + 0.18 + 0.15 = 0.855` | Pass |
 | UT-TUTOR-007 | Tutor Application | Competency score with completedSessions=25 (above cap of 20) | Session count component uses `min(25/20, 1) = 1.0`; full 0.20 weight applied | Pass |

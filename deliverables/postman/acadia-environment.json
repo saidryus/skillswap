@@ -1,0 +1,31 @@
+{
+  "id": "acadia-env-001",
+  "name": "Acadia Local",
+  "values": [
+    { "key": "baseUrl",           "value": "http://localhost:5000", "enabled": true },
+    { "key": "adminIdentifier",   "value": "admin@acadia.edu",      "enabled": true },
+    { "key": "adminPassword",     "value": "admin123",              "enabled": true },
+    { "key": "studentIdentifier", "value": "202401001",             "enabled": true },
+    { "key": "studentPassword",   "value": "001",                   "enabled": true },
+    { "key": "tutorIdentifier",   "value": "202203001",             "enabled": true },
+    { "key": "tutorPassword",     "value": "001",                   "enabled": true },
+    { "key": "adminToken",        "value": "",                      "enabled": true },
+    { "key": "studentToken",      "value": "",                      "enabled": true },
+    { "key": "tutorToken",        "value": "",                      "enabled": true },
+    { "key": "sessionId",         "value": "",                      "enabled": true },
+    { "key": "tutorProfileId",    "value": "",                      "enabled": true },
+    { "key": "tutorUserId",       "value": "",                      "enabled": true },
+    { "key": "tutorCourseId",     "value": "",                      "enabled": true },
+    { "key": "notificationId",    "value": "",                      "enabled": true },
+    { "key": "availabilityId",    "value": "",                      "enabled": true },
+    { "key": "userId",            "value": "",                      "enabled": true },
+    { "key": "lockedUserId",      "value": "",                      "enabled": true },
+    { "key": "docToken",          "value": "",                      "enabled": true },
+    { "key": "announcementId",    "value": "",                      "enabled": true },
+    { "key": "courseId",          "value": "",                      "enabled": true },
+    { "key": "slotDate",          "value": "",                      "enabled": true },
+    { "key": "slotStart",         "value": "",                      "enabled": true },
+    { "key": "slotEnd",           "value": "",                      "enabled": true }
+  ],
+  "_postman_variable_scope": "environment"
+}

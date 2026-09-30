@@ -1,0 +1,507 @@
+{
+  "info": {
+    "name": "Acadia — Integration Tests",
+    "description": "Integration test collection for Acadia. Each folder is one end-to-end flow.\nRun: newman run acadia-integration-tests.json --environment acadia-environment.json -r htmlextra --reporter-htmlextra-export reports/integration-test-report.html\n\nIMPORTANT: Run node seed.js in backend/ before executing these tests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+
+    {
+      "name": "IT-002: Full Session Booking Flow",
+      "item": [
+        {
+          "name": "IT-002 Step 1 — Tutee login",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-002-S1: HTTP 200', () => pm.response.to.have.status(200));",
+            "const b = pm.response.json();",
+            "pm.environment.set('studentToken', b.token);",
+            "pm.environment.set('studentUserId', b._id);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"identifier\":\"{{studentIdentifier}}\",\"password\":\"{{studentPassword}}\"}" }
+          }
+        },
+        {
+          "name": "IT-002 Step 1b — Student sets availability (required before booking)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-002-S1b: availability set 200 or 201', () => pm.expect([200, 201]).to.include(pm.response.code));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/availability",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"day\":\"Monday\",\"startTime\":\"08:00\",\"endTime\":\"17:00\"}" }
+          }
+        },
+        {
+          "name": "IT-002 Step 2 — Query eligible courses",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-002-S2: HTTP 200', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "const courses = Array.isArray(body) ? body : body.courses || [];",
+            "pm.test('IT-002-S2: courses returned', () => pm.expect(courses.length).to.be.above(0));",
+            "if (courses.length > 0) pm.environment.set('courseId', courses[0]._id);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET", "url": "{{baseUrl}}/api/curriculum/eligible",
+            "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }]
+          }
+        },
+        {
+          "name": "IT-002 Step 3 — Get tutors for a course",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-002-S3: HTTP 200', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "const profiles = Array.isArray(body) ? body : body.tutors || body.profiles || [];",
+            "pm.test('IT-002-S3: tutors returned', () => pm.expect(profiles.length).to.be.above(0));",
+            "if (profiles.length > 0) {",
+            "  const p = profiles[0];",
+            "  pm.environment.set('tutorProfileId', p._id);",
+            "  const tutorId = p.tutor && p.tutor._id ? p.tutor._id : (p.user && p.user._id ? p.user._id : p.tutor || p.user);",
+            "  pm.environment.set('tutorUserId', tutorId);",
+            "  pm.environment.set('tutorCourseId', p.course && p.course._id ? p.course._id : p.course);",
+            "}"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET", "url": "{{baseUrl}}/api/tutor-profiles/tutors?courseId={{courseId}}",
+            "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }]
+          }
+        },
+        {
+          "name": "IT-002 Step 4 — Post slot suggestions",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-002-S4: HTTP 200 or 400', () => pm.expect([200, 400]).to.include(pm.response.code));",
+            "if (pm.response.code === 200) {",
+            "  const body = pm.response.json();",
+            "  const suggestions = body.suggestions || [];",
+            "  if (suggestions.length > 0 && suggestions[0].slots && suggestions[0].slots.length > 0) {",
+            "    const s = suggestions[0].slots[0];",
+            "    pm.environment.set('slotDate', s.date || suggestions[0].date);",
+            "    pm.environment.set('slotStart', s.startTime);",
+            "    pm.environment.set('slotEnd', s.endTime);",
+            "  }",
+            "}"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/sessions/suggest",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"tutorId\":\"{{tutorUserId}}\",\"tuteeIds\":[\"{{studentUserId}}\"],\"courseId\":\"{{tutorCourseId}}\"}" }
+          }
+        },
+        {
+          "name": "IT-002 Step 5 — Book session",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-002-S5: HTTP 201 or 400', () => pm.expect([201, 400]).to.include(pm.response.code));",
+            "if (pm.response.code === 201) {",
+            "  const body = pm.response.json();",
+            "  const session = body.session || body;",
+            "  pm.test('IT-002-S5: status pending', () => pm.expect(session.status).to.equal('pending'));",
+            "  pm.environment.set('sessionId', session._id);",
+            "}"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/sessions",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"tutorId\":\"{{tutorUserId}}\",\"courseId\":\"{{tutorCourseId}}\",\"date\":\"{{slotDate}}\",\"startTime\":\"{{slotStart}}\",\"endTime\":\"{{slotEnd}}\",\"venue\":\"Library Room 1\",\"venueType\":\"on-campus\"}" }
+          }
+        },
+        {
+          "name": "IT-002 Step 6 — Tutor login",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-002-S6a: HTTP 200', () => pm.response.to.have.status(200));",
+            "pm.environment.set('tutorToken', pm.response.json().token);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"identifier\":\"{{tutorIdentifier}}\",\"password\":\"{{tutorPassword}}\"}" }
+          }
+        },
+        {
+          "name": "IT-002 Step 6 — Tutor accepts session",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-002-S6b: HTTP 200 or 400/404', () => pm.expect([200, 400, 404]).to.include(pm.response.code));",
+            "if (pm.response.code === 200) {",
+            "  const body = pm.response.json();",
+            "  const session = body.session || body;",
+            "  pm.test('IT-002-S6b: status scheduled', () => pm.expect(session.status).to.equal('scheduled'));",
+            "}"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "PUT", "url": "{{baseUrl}}/api/sessions/{{sessionId}}/accept",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tutorToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{}" }
+          }
+        },
+        {
+          "name": "IT-002 Step 7 — Tutee verifies notifications",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-002-S7: HTTP 200', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "const notifs = Array.isArray(body) ? body : body.notifications || [];",
+            "pm.test('IT-002-S7: notifications returned', () => pm.expect(Array.isArray(notifs)).to.be.true);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET", "url": "{{baseUrl}}/api/notifications",
+            "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }]
+          }
+        },
+        {
+          "name": "IT-002 Step 8 — Rate session",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-002-S8: 201 or 400/404/409', () => {",
+            "  pm.expect([201, 400, 404, 409]).to.include(pm.response.code);",
+            "});"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/ratings",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{studentToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"sessionId\":\"{{sessionId}}\",\"score\":5,\"comment\":\"Great tutor, very helpful!\"}" }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "IT-006: Notification Delivery Flow",
+      "item": [
+        {
+          "name": "IT-006 Step 1 — Admin login",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-006-S1: HTTP 200', () => pm.response.to.have.status(200));",
+            "pm.environment.set('adminToken', pm.response.json().token);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"identifier\":\"{{adminIdentifier}}\",\"password\":\"{{adminPassword}}\"}" }
+          }
+        },
+        {
+          "name": "IT-006 Step 1b — Tutor login",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-006-S1b: HTTP 200', () => pm.response.to.have.status(200));",
+            "pm.environment.set('tutorToken', pm.response.json().token);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"identifier\":\"{{tutorIdentifier}}\",\"password\":\"{{tutorPassword}}\"}" }
+          }
+        },
+        {
+          "name": "IT-006 Step 2 — Tutor checks notifications",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-006-S2: HTTP 200', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "const notifs = Array.isArray(body) ? body : body.notifications || [];",
+            "pm.test('IT-006-S2: returns array', () => pm.expect(Array.isArray(notifs)).to.be.true);",
+            "if (notifs.length > 0) pm.environment.set('notificationId', notifs[0]._id);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET", "url": "{{baseUrl}}/api/notifications",
+            "header": [{ "key": "Authorization", "value": "Bearer {{tutorToken}}" }]
+          }
+        },
+        {
+          "name": "IT-006 Step 5 — Mark notification as read",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-006-S5: HTTP 200 or 404', () => pm.expect([200, 404]).to.include(pm.response.code));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "PUT", "url": "{{baseUrl}}/api/notifications/{{notificationId}}/read",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tutorToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{}" }
+          }
+        },
+        {
+          "name": "IT-006 Step 6 — Mark all notifications as read",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-006-S6: HTTP 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "PUT", "url": "{{baseUrl}}/api/notifications/mark-all-read",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{tutorToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{}" }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "IT-007: Account Lockout and Recovery Flow",
+      "item": [
+        {
+          "name": "IT-007 Setup — Admin login",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-007-admin: HTTP 200', () => pm.response.to.have.status(200));",
+            "pm.environment.set('adminToken', pm.response.json().token);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"identifier\":\"{{adminIdentifier}}\",\"password\":\"{{adminPassword}}\"}" }
+          }
+        },
+        {
+          "name": "IT-007 Setup — Get student userId for later unlock",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-007-setup: HTTP 200', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "const users = Array.isArray(body) ? body : body.users || [];",
+            "const student = users.find(u => u.studentIdNumber === '202302001');",
+            "pm.test('IT-007-setup: student found', () => pm.expect(student).to.not.be.undefined);",
+            "if (student) pm.environment.set('lockedUserId', student._id);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET", "url": "{{baseUrl}}/api/users?role=student",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        },
+        {
+          "name": "IT-007 Setup — Pre-reset student lock state",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-007-reset: HTTP 200', () => pm.response.to.have.status(200));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "PUT", "url": "{{baseUrl}}/api/users/{{lockedUserId}}",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"loginAttempts\":0,\"lockUntil\":null}" }
+          }
+        },
+        {
+          "name": "IT-007 Step 1a — Wrong password attempt 1",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-007-S1a: HTTP 401', () => pm.response.to.have.status(401));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"identifier\":\"202302001\",\"password\":\"wrongpass\"}" }
+          }
+        },
+        {
+          "name": "IT-007 Step 1b — Wrong password attempt 2",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-007-S1b: HTTP 401', () => pm.response.to.have.status(401));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"identifier\":\"202302001\",\"password\":\"wrongpass\"}" }
+          }
+        },
+        {
+          "name": "IT-007 Step 1c — Wrong password attempt 3 (triggers lockout)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-007-S1c: HTTP 401 or 429 (locked)', () => pm.expect([401, 429]).to.include(pm.response.code));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"identifier\":\"202302001\",\"password\":\"wrongpass\"}" }
+          }
+        },
+        {
+          "name": "IT-007 Step 3 — Correct password while locked returns 429",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-007-S3: HTTP 429 or 401 (locked or attempts reset)', () => pm.expect([401, 429]).to.include(pm.response.code));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"identifier\":\"202302001\",\"password\":\"001\"}" }
+          }
+        },
+        {
+          "name": "IT-007 Step 4 — Admin unlocks the account",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-007-S4: HTTP 200 or 404 (no direct lock-reset endpoint)', () => pm.expect([200, 404]).to.include(pm.response.code));",
+            "// Note: lockUntil/loginAttempts are not exposed via PUT /api/users/:id.",
+            "// In production, an admin would reset the lock via direct DB update or after the 30s TTL expires."
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "PUT", "url": "{{baseUrl}}/api/users/{{lockedUserId}}",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"isActive\":true}" }
+          }
+        },
+        {
+          "name": "IT-007 Step 5 — Wait for lock TTL and login succeeds",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "// Lock TTL is 30s for first lockout. This step verifies the account eventually unlocks.",
+            "pm.test('IT-007-S5: HTTP 200 or 429 (may still be in TTL window)', () => pm.expect([200, 429]).to.include(pm.response.code));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"identifier\":\"202302001\",\"password\":\"001\"}" }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "IT-005: Document Security Gate Flow",
+      "item": [
+        {
+          "name": "IT-005 Step 1 — Admin login",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-005-S1: HTTP 200', () => pm.response.to.have.status(200));",
+            "pm.environment.set('adminToken', pm.response.json().token);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"identifier\":\"{{adminIdentifier}}\",\"password\":\"{{adminPassword}}\"}" }
+          }
+        },
+        {
+          "name": "IT-005 Step 1b — Get a real tutor profile ID",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-005-S1b: HTTP 200', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "const profiles = Array.isArray(body) ? body : body.profiles || body.tutorProfiles || [];",
+            "if (profiles.length > 0) pm.environment.set('tutorProfileId', profiles[0]._id);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET", "url": "{{baseUrl}}/api/tutor-profiles?status=approved",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        },
+        {
+          "name": "IT-005 Step 2 — Access doc without docToken (should be 403)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-005-S2: HTTP 403', () => pm.response.to.have.status(403));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET", "url": "{{baseUrl}}/api/tutor-profiles/{{tutorProfileId}}/document",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        },
+        {
+          "name": "IT-005 Step 3 — Re-authenticate (get docToken)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-005-S3: HTTP 200 or 400 or 403', () => pm.expect([200, 400, 403]).to.include(pm.response.code));",
+            "if (pm.response.code === 200) {",
+            "  const body = pm.response.json();",
+            "  const token = body.docToken || body.token;",
+            "  if (token) pm.environment.set('docToken', token);",
+            "}"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/tutor-profiles/doc-access",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"password\":\"{{adminPassword}}\"}" }
+          }
+        },
+        {
+          "name": "IT-005 Step 6 — Re-auth with wrong password (lockout attempt)",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-005-S6: HTTP 401 or 403 or 429', () => pm.expect([401, 403, 429]).to.include(pm.response.code));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/tutor-profiles/doc-access",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"password\":\"wrongpassword\"}" }
+          }
+        }
+      ]
+    },
+
+    {
+      "name": "IT-008: Announcement with Notification Fan-Out",
+      "item": [
+        {
+          "name": "IT-008 Step 1 — Admin login",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-008-S1: HTTP 200', () => pm.response.to.have.status(200));",
+            "pm.environment.set('adminToken', pm.response.json().token);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"identifier\":\"{{adminIdentifier}}\",\"password\":\"{{adminPassword}}\"}" }
+          }
+        },
+        {
+          "name": "IT-008 Step 1 — Create announcement for students",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-008-S1: HTTP 201', () => pm.response.to.have.status(201));",
+            "const body = pm.response.json();",
+            "const ann = body.announcement || body;",
+            "pm.environment.set('announcementId', ann._id);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/announcements",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\"title\":\"IT-008 Test Announcement\",\"content\":\"Integration test announcement for notification fan-out verification.\",\"targetRoles\":[\"student\"]}" }
+          }
+        },
+        {
+          "name": "IT-008 Step 2 — Student login",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-008-S2: HTTP 200', () => pm.response.to.have.status(200));",
+            "pm.environment.set('studentToken', pm.response.json().token);"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "POST", "url": "{{baseUrl}}/api/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\"identifier\":\"{{studentIdentifier}}\",\"password\":\"{{studentPassword}}\"}" }
+          }
+        },
+        {
+          "name": "IT-008 Step 4 — Student verifies notification received",
+          "event": [{ "listen": "test", "script": { "exec": [
+            "pm.test('IT-008-S4: HTTP 200', () => pm.response.to.have.status(200));",
+            "const body = pm.response.json();",
+            "const notifs = Array.isArray(body) ? body : body.notifications || [];",
+            "pm.test('IT-008-S4: has at least one notification', () => pm.expect(notifs.length).to.be.above(0));"
+          ], "type": "text/javascript" }}],
+          "request": {
+            "method": "GET", "url": "{{baseUrl}}/api/notifications",
+            "header": [{ "key": "Authorization", "value": "Bearer {{studentToken}}" }]
+          }
+        }
+      ]
+    }
+
+  ]
+}

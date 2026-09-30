@@ -114,7 +114,7 @@ This installs all React, Vite, Tailwind, and other frontend packages. Expect 300
 
 ## 5. ML Services Setup
 
-There are three separate ML services. Each requires the same Python dependencies.
+There are two separate ML services. Each requires the same Python dependencies.
 
 ### 5.1 Install Python Dependencies
 
@@ -128,10 +128,6 @@ pip install -r ../../ml/requirements.txt
 # ML Feedback Service (port 5003)
 cd ../ml/feedback
 pip install -r ../../ml/requirements.txt
-
-# ML Attendance Risk Service (port 5001)
-cd ../ml
-pip install -r requirements.txt
 ```
 
 If a `requirements.txt` is not present, install dependencies manually:
@@ -152,8 +148,6 @@ python generate_training_data.py
 # Feedback service
 cd ../feedback
 python generate_training_data.py
-
-# Attendance risk service uses synthetic generation inside train.py — skip this step
 ```
 
 ### 5.3 Train the Models
@@ -166,10 +160,6 @@ python train_model.py
 # Feedback service
 cd ../feedback
 python train_model.py
-
-# Attendance risk service
-cd ..
-python train.py
 ```
 
 This produces `.pkl` model files used for inference. Training takes 1–5 minutes per service depending on hardware.
@@ -281,13 +271,6 @@ python app.py
 
 ```bash
 cd ml/feedback
-python app.py
-```
-
-### Terminal 5 — ML Attendance Risk Service (port 5001)
-
-```bash
-cd ml
 python app.py
 ```
 

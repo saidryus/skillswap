@@ -5,7 +5,7 @@
 This document defines the hardware requirements for running Acadia. Two sets of specifications are provided: **minimum** (the lowest configuration on which the system has been tested and confirmed functional) and **recommended** (the configuration for comfortable, stable operation under typical departmental load).
 
 Hardware requirements differ by role:
-- **Server** — the machine hosting the Node.js backend, MongoDB database, and all three Python ML services.
+- **Server** — the machine hosting the Node.js backend, MongoDB database, and both Python ML services.
 - **Client** — any device used by students, tutors, or admins to access Acadia through a web browser.
 
 ---
@@ -50,7 +50,7 @@ Client devices run only a web browser. No local software installation is require
 Jitsi Meet runs on Jitsi's external public servers — no WebRTC infrastructure, TURN/STUN servers, or video relay hardware is needed on the Acadia server. The server only generates and delivers a Jitsi room URL. All video/audio traffic flows directly between participant browsers and Jitsi's infrastructure. Internet access is required on client devices for video sessions to work.
 
 ### ML Services Memory Profile
-Running all three ML services simultaneously (ports 5001, 5002, 5003) alongside Node.js and MongoDB is the primary reason the 8 GB RAM minimum is tight. Under the minimum spec:
+Running both ML services simultaneously (ports 5002, 5003) alongside Node.js and MongoDB is the primary reason the 8 GB RAM minimum is tight. Under the minimum spec:
 - MongoDB: ~200–400 MB resident
 - Node.js backend: ~150–300 MB resident
 - Tesseract.js OCR (per document): ~300–500 MB during inference
@@ -62,4 +62,4 @@ On 8 GB RAM, this leaves limited headroom. 16 GB is strongly recommended for mul
 The `backend/uploads/` directory stores AES-256-CBC encrypted document files. Each recommendation letter (PDF or image) averages 500 KB–2 MB encrypted. Documents are auto-deleted after processing or upon expiry (`documentExpiresAt`). The 10 GB minimum accounts for node_modules, ML models, MongoDB data, and a modest uploads volume. For production use, 20 GB+ SSD is recommended.
 
 ### Single-Machine vs. Distributed
-All services (backend, MongoDB, ML ×3) can run on a single machine at minimum spec. For larger deployments, ML services can be moved to a separate machine — update `ML_REC_URL`, `ML_FEEDBACK_URL`, and `ML_ATTENDANCE_URL` in the backend `.env` accordingly.
+All services (backend, MongoDB, ML ×2) can run on a single machine at minimum spec. For larger deployments, ML services can be moved to a separate machine — update `ML_RECOMMENDATION_URL` and `ML_FEEDBACK_URL` in the backend `.env` accordingly.

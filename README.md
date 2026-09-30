@@ -16,7 +16,8 @@ Built by Team Odyssey | University of Cebu Pardo-Talisay Campus | College of Com
 | OCR | Tesseract.js |
 | Auth | JWT + bcrypt |
 | ML Services | Python + Flask + scikit-learn (2 microservices) |
-| Real-time | Socket.io (messaging + video) |
+| Messaging | REST polling (HTTP, no WebSocket) |
+| Video | Jitsi Meet (external, browser-direct) |
 | File Security | AES-256-CBC encryption at rest |
 
 ---
@@ -167,7 +168,7 @@ App starts at `http://localhost:5173`
 - **Competency-Based Tutor Ranking** — Weighted formula: Ratings (45%) + Faculty Recommendation Score (15%) + Completion Rate (20%) + Sessions (20%)
 - **Study Load Upload** — Students upload their study load PDF; system extracts schedule via OCR, detects semester, and links to courses
 - **Session Lifecycle** — Pending → Scheduled → Completed / Cancelled with in-app notifications at every step
-- **Real-time Messaging** — In-session chat with Socket.io
+- **In-Session Messaging** — REST-based chat; frontend polls every 3 seconds for new messages
 - **Video Rooms** — Integrated video call support per session
 - **Learning Materials** — Tutors can upload and share resources per session
 - **Availability Management** — Tutors set weekly availability; scheduling respects it
@@ -281,8 +282,7 @@ Acadia/
 │   └── index.html
 ├── ml/
 │   ├── recommendation/   # Recommendation letter ML service (port 5002)
-│   ├── feedback/         # Tutor feedback ML service (port 5003)
-│   └── train.py          # Attendance risk ML model (port 5001)
+│   └── feedback/         # Tutor feedback ML service (port 5003)
 └── deliverables/         # Documentation, ER diagrams, workflow diagrams
 ```
 
